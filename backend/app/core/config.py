@@ -1,6 +1,5 @@
 from pydantic_settings import BaseSettings
 from typing import List, Optional
-import os
 
 class Settings(BaseSettings):
     APP_NAME: str = "AI Resume Builder API"
@@ -9,17 +8,24 @@ class Settings(BaseSettings):
     API_V1_PREFIX: str = "/api/v1"
     HOST: str = "127.0.0.1"
     PORT: int = 8000
-    
-    # CORS
-    ALLOWED_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,*"
-    
+
+    # CORS — comma-separated list of allowed origins.
+    # Never ship "*" to production when credentials or auth are involved.
+    ALLOWED_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000"
+    CORS_ALLOW_CREDENTIALS: bool = False
+
     # Upload limits
     MAX_UPLOAD_SIZE_MB: int = 10
-    
+
+    # Observability & protection
+    LOG_LEVEL: str = "INFO"
+    RATE_LIMIT_PER_MINUTE: int = 60  # set to 0 to disable
+    GZIP_MINIMUM_SIZE: int = 1024
+
     # AI Provider configuration: "gemini", "groq", "openrouter", or "local"
     AI_PROVIDER: str = "local"
     AI_MODEL: Optional[str] = None
-    
+
     GEMINI_API_KEY: Optional[str] = None
     GROQ_API_KEY: Optional[str] = None
     OPENROUTER_API_KEY: Optional[str] = None
@@ -27,8 +33,16 @@ class Settings(BaseSettings):
     @property
     def cors_origins(self) -> List[str]:
         if not self.ALLOWED_ORIGINS:
-            return ["*"]
+            return []
         return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",") if origin.strip()]
+
+    @property
+    def is_production(self) -> bool:
+        return self.APP_ENV.lower() in ("production", "prod")
+
+    @property
+    def allow_wildcard_origin(self) -> bool:
+        return "*" in self.cors_origins
 
     class Config:
         env_file = ".env"

@@ -17,5 +17,15 @@ services:
         value: local
       - key: MAX_UPLOAD_SIZE_MB
         value: 10
+      - key: RATE_LIMIT_PER_MINUTE
+        value: 60
+      - key: LOG_LEVEL
+        value: INFO
+      # IMPORTANT: replace with your deployed frontend origin(s), comma-separated.
+      # Never ship "*" to production.
       - key: ALLOWED_ORIGINS
-        value: "*"
+        value: https://your-frontend-domain.example
+      # Set to "groq" / "gemini" / "openrouter" and provide the matching key to
+      # enable hosted AI generation (falls back to the local engine otherwise).
+      - key: GROQ_API_KEY
+        sync: false

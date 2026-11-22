@@ -6,6 +6,24 @@
   body {
     @apply bg-slate-50 text-slate-900 font-sans;
   }
+
+  /* Consistent, accessible keyboard focus ring across the app. */
+  :focus-visible {
+    outline: 2px solid #0c87eb;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Print styling for exact A4 rendering */

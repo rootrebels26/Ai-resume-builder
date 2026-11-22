@@ -1,0 +1,27 @@
+services:
+  api:
+    build:
+      context: ./backend
+    container_name: resume-api
+    environment:
+      APP_ENV: production
+      AI_PROVIDER: local
+      ALLOWED_ORIGINS: http://localhost:8080
+      RATE_LIMIT_PER_MINUTE: "60"
+      LOG_LEVEL: INFO
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        # Baked into the static bundle; must be reachable from the browser.
+        VITE_API_BASE_URL: http://localhost:8000
+    container_name: resume-web
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+    restart: unless-stopped
