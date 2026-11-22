@@ -70,11 +70,20 @@ Return JSON matching:
         return await self.fallback.generate_summary(request)
 
     async def improve_bullet(self, request: ImproveBulletRequest) -> ImproveBulletResponse:
-        prompt = f"""Improve bullet: "{request.bullet}" for role {request.role}.
-Return JSON matching:
-{{"original": "{request.bullet}", "options": [{{"text": "...", "rationale": "...", "metrics_included": true}}]}}"""
+        prompt = f"""Generate 3 distinct professional bullet point improvements for role '{request.role}' using the STAR method for this bullet:
+"{request.bullet}"
+One focusing on quantifiable metrics/scale, one on cross-functional impact/collaboration, and one on technical/architectural excellence.
+Return valid JSON matching:
+{{
+  "original": "{request.bullet}",
+  "options": [
+    {{"text": "Option 1...", "rationale": "Quantifiable metric rationale...", "metrics_included": true}},
+    {{"text": "Option 2...", "rationale": "Cross-functional impact...", "metrics_included": false}},
+    {{"text": "Option 3...", "rationale": "Technical/architectural excellence...", "metrics_included": false}}
+  ]
+}}"""
         res = await self._call_groq(prompt)
-        if res and "options" in res:
+        if res and "options" in res and len(res["options"]) >= 3:
             try:
                 return ImproveBulletResponse(**res)
             except Exception:

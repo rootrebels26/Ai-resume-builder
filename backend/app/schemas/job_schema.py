@@ -53,6 +53,7 @@ class ATSAnalyzeResponse(BaseModel):
     critical_issues: List[str] = Field(default_factory=list)
     recommendations: List[str] = Field(default_factory=list)
     is_ats_friendly: bool
+    detailed_checks: List[Dict[str, Any]] = Field(default_factory=list)
 
 class TailorResumeRequest(BaseModel):
     resume_data: Dict[str, Any]

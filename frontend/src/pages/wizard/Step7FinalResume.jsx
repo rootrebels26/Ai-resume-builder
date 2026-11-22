@@ -123,24 +123,34 @@ export function Step7FinalResume({ onPrev }) {
       )}
 
       {/* A4 Sheet Container */}
-      <div className="bg-slate-200/70 p-4 sm:p-10 rounded-2xl overflow-auto flex justify-center items-start shadow-inner">
+      <div className="bg-slate-200/70 p-4 sm:p-10 rounded-2xl overflow-y-auto overflow-x-auto flex justify-center items-start shadow-inner">
         <div
-          ref={printRef}
-          id="final-printable-resume"
-          className="resume-a4-page bg-white shadow-2xl transition-transform origin-top text-slate-900"
           style={{
-            width: '210mm',
-            minHeight: '297mm',
-            padding: '18mm',
-            boxSizing: 'border-box',
-            transform: `scale(${zoomScale})`,
-            transformOrigin: 'top center'
+            width: `${210 * zoomScale}mm`,
+            minHeight: `${297 * zoomScale}mm`,
+            display: 'flex',
+            justifyContent: 'center',
+            marginBottom: '96px'
           }}
         >
-          <ResumeTemplate
-            templateId={selectedTemplateId || "ats-01"}
-            resumeData={resumeData}
-          />
+          <div
+            ref={printRef}
+            id="final-printable-resume"
+            className="resume-a4-page bg-white shadow-2xl transition-transform origin-top text-slate-900 shrink-0"
+            style={{
+              width: '210mm',
+              minHeight: '297mm',
+              padding: '16mm 18mm',
+              boxSizing: 'border-box',
+              transform: `scale(${zoomScale})`,
+              transformOrigin: 'top center'
+            }}
+          >
+            <ResumeTemplate
+              templateId={selectedTemplateId || "ats-01"}
+              resumeData={resumeData}
+            />
+          </div>
         </div>
       </div>
     </div>

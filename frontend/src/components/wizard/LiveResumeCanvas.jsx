@@ -27,7 +27,7 @@ export function LiveResumeCanvas({ className = "" }) {
     updatePreferences
   } = useResume();
 
-  const [zoomScale, setZoomScale] = useState(0.85);
+  const [zoomScale, setZoomScale] = useState(0.65);
   const [activeColor, setActiveColor] = useState(
     resumeData?.preferences?.accentColor || '#1e293b'
   );
@@ -166,21 +166,35 @@ export function LiveResumeCanvas({ className = "" }) {
       </div>
 
       {/* Live Canvas Surface with Centered A4 Page */}
-      <div className="flex-1 bg-slate-950 overflow-auto p-4 sm:p-6 flex justify-center items-start no-scrollbar">
+      <div className="flex-1 bg-slate-950 overflow-y-auto overflow-x-auto p-4 sm:p-6 flex justify-center items-start">
         <div
-          ref={canvasPrintRef}
           style={{
-            transform: `scale(${zoomScale})`,
-            transformOrigin: 'top center',
-            transition: 'transform 0.12s ease-out'
+            width: `${210 * zoomScale}mm`,
+            minHeight: `${297 * zoomScale}mm`,
+            display: 'flex',
+            justifyContent: 'center',
+            marginBottom: '80px'
           }}
-          className="shadow-2xl rounded-sm bg-white text-slate-900 border border-slate-300 my-2 select-none"
         >
-          {/* Dynamic Real-Time Resume Template */}
-          <ResumeTemplate
-            templateId={selectedTemplateId || 'ats-01'}
-            resumeData={resumeData}
-          />
+          <div
+            ref={canvasPrintRef}
+            style={{
+              width: '210mm',
+              minHeight: '297mm',
+              padding: '16mm 18mm',
+              boxSizing: 'border-box',
+              transform: `scale(${zoomScale})`,
+              transformOrigin: 'top center',
+              transition: 'transform 0.12s ease-out'
+            }}
+            className="shadow-2xl rounded-sm bg-white text-slate-900 border border-slate-300 my-2 select-text shrink-0"
+          >
+            {/* Dynamic Real-Time Resume Template */}
+            <ResumeTemplate
+              templateId={selectedTemplateId || 'ats-01'}
+              resumeData={resumeData}
+            />
+          </div>
         </div>
       </div>
 
