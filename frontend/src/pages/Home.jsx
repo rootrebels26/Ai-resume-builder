@@ -1,141 +1,126 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   FileText, Sparkles, CheckCircle2, ShieldCheck, Zap, Download,
-  ArrowRight, Star, Target, Database, Laptop, Lock, RefreshCw
+  ArrowRight, Star, Target, Lock, RefreshCw, Briefcase, Eye
 } from 'lucide-react';
 import { TEMPLATES } from '../constants/templatesList';
+import { useResume } from '../context/ResumeContext';
 
 export function Home() {
+  const navigate = useNavigate();
+  const { setWizardStep, selectTemplate } = useResume();
   const featuredTemplates = TEMPLATES.slice(0, 6);
+
+  const handleStartCreation = () => {
+    setWizardStep(1);
+    navigate('/wizard');
+  };
+
+  const handleSelectTemplateCard = (templateId) => {
+    selectTemplate(templateId);
+    setWizardStep(2); // Immediately advance to Target Job
+    navigate('/wizard');
+  };
 
   return (
     <div className="flex-1 flex flex-col">
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-white pt-20 pb-28 px-4 sm:px-6 lg:px-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(12,135,235,0.15),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(12,135,235,0.18),transparent_50%)]" />
         <div className="relative max-w-5xl mx-auto text-center space-y-8">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-400 text-xs font-semibold">
             <Sparkles className="w-4 h-4" />
-            <span>Next-Gen AI Resume Architecture • 100% Free & Private</span>
+            <span>Template-First • Job-Targeted • Privacy-First</span>
           </div>
 
           <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight leading-tight">
-            Build ATS-Winning Resumes <br />
+            Build Your Career-Ready <br />
             <span className="bg-gradient-to-r from-brand-400 via-sky-300 to-indigo-300 bg-clip-text text-transparent">
-              In Seconds, Zero Signup.
+              Resume with AI
             </span>
           </h1>
 
           <p className="max-w-2xl mx-auto text-slate-300 text-base sm:text-lg leading-relaxed">
-            Create, tailor, and audit your resume with real-time ATS scoring, AI bullet enhancements, and 50+ battle-tested templates. All drafts stay securely in your browser's IndexedDB.
+            Choose a professional template, select your dream job, and let AI help you create a tailored resume that highlights your real skills and experience.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
-            <Link
-              to="/builder"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-sm shadow-lg shadow-brand-600/25 transition active:scale-95"
+            <button
+              onClick={handleStartCreation}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-sm shadow-lg shadow-brand-600/25 transition active:scale-95 cursor-pointer"
             >
               <FileText className="w-4 h-4" />
-              <span>Create Resume From Scratch</span>
+              <span>Create My Resume</span>
               <ArrowRight className="w-4 h-4 ml-1" />
-            </Link>
+            </button>
 
             <Link
-              to="/upload"
+              to="/templates"
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold text-sm transition"
             >
-              <Sparkles className="w-4 h-4 text-brand-400" />
-              <span>Upload Existing PDF / DOCX</span>
+              <span>Explore Templates</span>
             </Link>
           </div>
 
-          {/* Privacy badge banner */}
+          {/* Value props */}
           <div className="pt-8 flex flex-wrap justify-center items-center gap-6 text-xs text-slate-400">
             <span className="flex items-center gap-1.5">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              Database-Free (Browser Local Storage)
+              100% Privacy (IndexedDB Browser Storage)
             </span>
             <span className="flex items-center gap-1.5">
               <Lock className="w-4 h-4 text-emerald-400" />
-              No Registration Required
+              Zero Sign-Up Required
             </span>
             <span className="flex items-center gap-1.5">
               <Target className="w-4 h-4 text-emerald-400" />
-              ATS Parsable Formats
+              50+ ATS-Optimized Templates
             </span>
           </div>
         </div>
       </section>
 
-      {/* Key Features Grid */}
+      {/* How It Works Sequential Workflow */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
-          <h2 className="text-xs uppercase font-bold tracking-widest text-brand-600">Engineered For Impact</h2>
-          <p className="text-3xl font-bold text-slate-900 tracking-tight">Everything You Need To Land Interviews</p>
+          <h2 className="text-xs uppercase font-bold tracking-widest text-brand-600">The Template-First Workflow</h2>
+          <p className="text-3xl font-bold text-slate-900 tracking-tight">How AI Resume Builder Works</p>
           <p className="text-slate-600 text-sm">
-            Designed for software engineers, product managers, executives, and new graduates alike.
+            No filling out generic forms blindly. Every step is tied directly to your selected design and target career.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm hover:shadow-md transition">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4">
-              <Sparkles className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-bold text-slate-900 mb-2">AI Bullet & Summary Enhancer</h3>
-            <p className="text-slate-600 text-xs leading-relaxed">
-              Transforms passive duties into quantified STAR-formatted achievement statements with strong action verbs.
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-xs">
+          <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm relative">
+            <span className="w-7 h-7 rounded-full bg-brand-50 text-brand-700 font-bold flex items-center justify-center mb-3">1</span>
+            <h3 className="font-bold text-sm text-slate-900 mb-1">Select Template First</h3>
+            <p className="text-slate-600 leading-relaxed">
+              Browse 50+ templates across ATS, Modern, Tech, Data, Executive, and Student categories. Choose your visual style upfront.
             </p>
           </div>
 
-          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm hover:shadow-md transition">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
-              <Target className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-bold text-slate-900 mb-2">Automated ATS Auditor</h3>
-            <p className="text-slate-600 text-xs leading-relaxed">
-              Real-time scanner detects missing skills, contact formatting flaws, and gives a compatibility score before you submit.
+          <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm relative">
+            <span className="w-7 h-7 rounded-full bg-brand-50 text-brand-700 font-bold flex items-center justify-center mb-3">2</span>
+            <h3 className="font-bold text-sm text-slate-900 mb-1">Target Job Description</h3>
+            <p className="text-slate-600 leading-relaxed">
+              Select your target role or paste the exact job posting. AI extracts required skills, soft skills, and keywords.
             </p>
           </div>
 
-          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm hover:shadow-md transition">
-            <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mb-4">
-              <FolderGit2 className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-bold text-slate-900 mb-2">50+ Diverse Templates</h3>
-            <p className="text-slate-600 text-xs leading-relaxed">
-              From pure single-column Harvard ATS to modern developer terminal layouts, switch instantly without losing a single word.
+          <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm relative">
+            <span className="w-7 h-7 rounded-full bg-brand-50 text-brand-700 font-bold flex items-center justify-center mb-3">3</span>
+            <h3 className="font-bold text-sm text-slate-900 mb-1">Add Real Qualifications</h3>
+            <p className="text-slate-600 leading-relaxed">
+              Enter details with our 10-step guided form or upload an existing PDF/DOCX to pre-populate sections in seconds.
             </p>
           </div>
 
-          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm hover:shadow-md transition">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-4">
-              <Search className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-bold text-slate-900 mb-2">Job Description Tailoring</h3>
-            <p className="text-slate-600 text-xs leading-relaxed">
-              Paste target job postings. The system identifies keyword gaps and generates tailored bullets aligned to employer expectations.
-            </p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm hover:shadow-md transition">
-            <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center mb-4">
-              <RefreshCw className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-bold text-slate-900 mb-2">PDF & DOCX Extractor</h3>
-            <p className="text-slate-600 text-xs leading-relaxed">
-              Upload your old resume in seconds. Our dual-engine PyMuPDF and python-docx parser pre-populates all structured sections.
-            </p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm hover:shadow-md transition">
-            <div className="w-10 h-10 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center mb-4">
-              <Download className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-bold text-slate-900 mb-2">Pixel-Perfect A4 PDF Export</h3>
-            <p className="text-slate-600 text-xs leading-relaxed">
-              Export crisp vector PDFs with zero cut-off, preserved margins, and strict standard print CSS stylesheets.
+          <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm relative">
+            <span className="w-7 h-7 rounded-full bg-brand-50 text-brand-700 font-bold flex items-center justify-center mb-3">4</span>
+            <h3 className="font-bold text-sm text-slate-900 mb-1">AI Optimize & Download</h3>
+            <p className="text-slate-600 leading-relaxed">
+              Review ATS compatibility, approve tailored STAR bullet recommendations, and export a pixel-perfect A4 PDF.
             </p>
           </div>
         </div>
@@ -146,14 +131,14 @@ export function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-10 gap-4">
             <div>
-              <h2 className="text-xs uppercase font-bold tracking-widest text-brand-600 mb-1">Curated Designs</h2>
-              <p className="text-2xl sm:text-3xl font-bold text-slate-900">Featured Templates</p>
+              <h2 className="text-xs uppercase font-bold tracking-widest text-brand-600 mb-1">Step 1 Preview</h2>
+              <p className="text-2xl sm:text-3xl font-bold text-slate-900">Featured Templates (65+ Designs)</p>
             </div>
             <Link
               to="/templates"
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-600 hover:text-brand-700"
             >
-              <span>Explore all 50+ templates</span>
+              <span>Browse all categories</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -162,44 +147,47 @@ export function Home() {
             {featuredTemplates.map((template) => (
               <div
                 key={template.id}
-                className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition group"
+                className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition group flex flex-col justify-between"
               >
-                <div className="h-44 bg-slate-50 border-b border-slate-100 p-4 flex flex-col justify-between relative overflow-hidden">
+                <div className="h-44 bg-slate-50 border-b border-slate-100 p-4 flex flex-col justify-between relative">
                   <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-brand-50 text-brand-700 border border-brand-200">
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-white text-slate-700 border border-slate-200 shadow-2xs">
                       {template.badge}
                     </span>
-                    <span className="text-xs font-medium text-slate-600 flex items-center gap-1">
+                    <span className="text-xs font-semibold text-slate-600 flex items-center gap-1">
                       <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
                       {template.rating}
                     </span>
                   </div>
 
-                  <div className="space-y-1">
-                    <div className="w-24 h-2 rounded" style={{ backgroundColor: template.accentColor }} />
-                    <div className="w-16 h-1.5 bg-slate-300 rounded" />
-                    <div className="w-32 h-1 bg-slate-200 rounded mt-2" />
-                    <div className="w-28 h-1 bg-slate-200 rounded" />
+                  <div className="space-y-1.5 p-2 bg-white rounded border border-slate-200/80 shadow-2xs">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-3.5 h-3.5 rounded-full" style={{ backgroundColor: template.accentColor }} />
+                      <div className="w-20 h-2 bg-slate-800 rounded" />
+                    </div>
+                    <div className="w-full h-1 bg-slate-200 rounded" />
+                    <div className="w-4/5 h-1 bg-slate-200 rounded" />
                   </div>
 
-                  <div className="flex justify-end">
-                    <span className="text-[11px] font-mono text-slate-400 uppercase">ID: {template.id}</span>
+                  <div className="flex justify-between items-center text-[11px] font-mono text-slate-400">
+                    <span>{template.id}</span>
+                    <span className="capitalize">{template.category}</span>
                   </div>
                 </div>
 
                 <div className="p-4 flex justify-between items-center">
                   <div>
-                    <h3 className="font-semibold text-sm text-slate-900 group-hover:text-brand-600 transition">
+                    <h3 className="font-bold text-sm text-slate-900 group-hover:text-brand-600 transition">
                       {template.name}
                     </h3>
-                    <p className="text-xs text-slate-500 capitalize">{template.category} Template</p>
+                    <p className="text-xs text-slate-500">{template.layout}</p>
                   </div>
-                  <Link
-                    to={`/builder?template=${template.id}`}
-                    className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-brand-600 hover:text-white transition"
+                  <button
+                    onClick={() => handleSelectTemplateCard(template.id)}
+                    className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-brand-50 text-brand-700 hover:bg-brand-600 hover:text-white transition cursor-pointer"
                   >
-                    Use
-                  </Link>
+                    Select & Continue
+                  </button>
                 </div>
               </div>
             ))}
@@ -207,32 +195,26 @@ export function Home() {
         </div>
       </section>
 
-      {/* Privacy Guarantees */}
+      {/* Privacy Guarantee Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto text-center space-y-6">
         <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
           <ShieldCheck className="w-6 h-6" />
         </div>
-        <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Your Resume Never Leaves Your Control</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Privacy-First Architecture</h2>
         <p className="text-slate-600 text-sm leading-relaxed">
-          Traditional resume sites lock your data behind accounts, subscriptions, and invasive tracking. AI Resume Builder requires no registration, maintains no cloud database of candidate profiles, and stores drafts in your browser via Dexie.js IndexedDB.
+          Your career data belongs to you. We maintain zero database servers. All drafts, job comparisons, and customized templates are stored exclusively in your browser's IndexedDB sandbox.
         </p>
         <div>
-          <Link
-            to="/privacy"
-            className="inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:underline"
+          <button
+            onClick={handleStartCreation}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs transition cursor-pointer"
           >
-            <span>Read our complete privacy manifesto</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+            <Sparkles className="w-4 h-4 text-brand-400" />
+            <span>Launch Resume Builder</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
         </div>
       </section>
     </div>
   );
-}
-
-function FolderGit2(props) {
-  return <FileText {...props} />;
-}
-function Search(props) {
-  return <FileText {...props} />;
 }

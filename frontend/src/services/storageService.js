@@ -1,11 +1,32 @@
 import Dexie from 'dexie';
 import { INITIAL_RESUME_DATA } from '../constants/initialResumeData';
 
+export const INITIAL_WIZARD_STATE = {
+  id: 'active_wizard_session',
+  currentStep: 1, // 1: Template Selection, 2: Target Job, 3: Creation Method, 4: Guided Info, 5: AI Optimization, 6: ATS Audit, 7: Final Resume
+  selectedTemplateId: 'ats-01',
+  selectedJob: {
+    role: '',
+    company: '',
+    location: '',
+    url: '',
+    description: '',
+    isSkipped: false
+  },
+  jobAnalysis: null,
+  creationMethod: 'scratch', // 'scratch' | 'upload'
+  resumeData: INITIAL_RESUME_DATA,
+  optimizationResults: null,
+  atsResults: null,
+  updatedAt: new Date().toISOString()
+};
+
 class ResumeDatabase extends Dexie {
   constructor() {
     super('AIResumeBuilderDB');
-    this.version(1).stores({
-      drafts: 'id, title, updatedAt, createdAt, templateId'
+    this.version(2).stores({
+      drafts: 'id, title, updatedAt, createdAt, templateId',
+      wizard: 'id, updatedAt, currentStep, selectedTemplateId'
     });
   }
 }
@@ -13,11 +34,43 @@ class ResumeDatabase extends Dexie {
 export const db = new ResumeDatabase();
 
 export const storageService = {
+  // Wizard State Persistence
+  async getWizardState() {
+    try {
+      const state = await db.wizard.get('active_wizard_session');
+      return state || null;
+    } catch (e) {
+      console.error('Dexie getWizardState error:', e);
+      return null;
+    }
+  },
+
+  async saveWizardState(wizardState) {
+    try {
+      const record = {
+        ...wizardState,
+        id: 'active_wizard_session',
+        updatedAt: new Date().toISOString()
+      };
+      await db.wizard.put(record);
+      return record;
+    } catch (e) {
+      console.error('Dexie saveWizardState error:', e);
+    }
+  },
+
+  async clearWizardState() {
+    try {
+      await db.wizard.delete('active_wizard_session');
+    } catch (e) {
+      console.error('Dexie clearWizardState error:', e);
+    }
+  },
+
   // Get all drafts
   async getAllDrafts() {
     try {
-      const drafts = await db.drafts.orderBy('updatedAt').reverse().toArray();
-      return drafts;
+      return await db.drafts.orderBy('updatedAt').reverse().toArray();
     } catch (e) {
       console.error('Dexie getAllDrafts error:', e);
       return [];
@@ -41,7 +94,7 @@ export const storageService = {
       const existing = await db.drafts.get(id);
       const draftRecord = {
         id: id || `draft_${Date.now()}`,
-        title: title || resumeData.personalInfo?.fullName ? `${resumeData.personalInfo.fullName}'s Resume` : 'Untitled Resume',
+        title: title || (resumeData.personalInfo?.fullName ? `${resumeData.personalInfo.fullName}'s Resume` : 'Untitled Resume'),
         templateId: resumeData.templateId || 'ats-01',
         data: resumeData,
         createdAt: existing?.createdAt || now,
@@ -70,6 +123,7 @@ export const storageService = {
   async clearAll() {
     try {
       await db.drafts.clear();
+      await db.wizard.clear();
       return true;
     } catch (e) {
       console.error('Dexie clearAll error:', e);

@@ -1,106 +1,97 @@
-# IMPLEMENTATION PLAN: AI RESUME BUILDER (PRODUCTION READY)
+# IMPLEMENTATION PLAN: AI RESUME BUILDER (TEMPLATE-FIRST & JOB-TARGETED)
 
-## Project Overview
-A privacy-first, database-free, registration-free AI-powered Resume Builder web platform with:
-- React (Vite, JavaScript, Tailwind CSS, Dexie.js, Lucide Icons)
-- FastAPI (Python 3.11, PyMuPDF, python-docx, Pydantic, pluggable AI providers: Gemini, Groq, OpenRouter, and Local Rule-Based Mode)
-- 50+ diverse resume templates across 7 categories
-- Live real-time preview, high-fidelity A4 PDF export and print styling
-- Full PDF/DOCX parser and structured extraction
-- Job Description Analyzer, ATS Compatibility Engine, and Job-Specific Resume Tailoring
-- IndexedDB multi-draft local persistence, JSON import/export
+## Core Philosophy
+**TEMPLATE FIRST → JOB DESCRIPTION SECOND → USER INFORMATION THIRD → AI OPTIMIZATION FOURTH → ATS AUDIT FIFTH → RESUME GENERATION SIXTH → PDF DOWNLOAD**
 
 ---
 
-## Execution Phases & Checklist
+## Master Implementation Checklist
 
-### Phase 0: Workspace Inspection & Planning
-- [x] Inspect workspace files and runtime environments (Python 3.11.9, Node 24.15.0, npm 11.12.1).
-- [x] Create comprehensive `IMPLEMENTATION_PLAN.md` and project blueprint.
+### Phase 1: Foundation & Audit
+- [x] Comprehensive codebase inspection and audit (`docs/PROJECT_AUDIT.md`).
+- [x] Verify existing FastAPI backend routes, PyMuPDF parser, Groq AI adapter, and Vite frontend.
 
-### Phase 1: Architecture and Foundation Setup
-- [x] Initialize React + Vite frontend with Tailwind CSS, Lucide React, React Router, Dexie, Axios.
-- [x] Initialize FastAPI backend structure with virtual environment and requirements.
-- [x] Configure CORS, unified API response format, and environment configuration.
-- [x] Verify both backend health check and frontend dev server.
+### Phase 2: Wizard State & Data Architecture
+- [ ] Define unified `WizardState` schema in `ResumeContext` and `Dexie.js`:
+  - `selectedTemplateId`: string
+  - `selectedJob`: { role: string, company: string, location: string, description: string, isSkipped: boolean }
+  - `jobAnalysis`: { technicalSkills: [], preferredSkills: [], softSkills: [], responsibilities: [], keywords: [] }
+  - `creationMethod`: 'scratch' | 'upload'
+  - `resumeData`: full normalized ResumeData
+  - `optimizationResults`: { tailoredSummary: string, bulletSuggestions: [], skillRecommendations: [] }
+  - `currentStep`: number (1 through 7)
+- [ ] Implement automatic IndexedDB auto-save and restoration of unfinished wizard progress across browser refreshes.
 
-### Phase 2: Design System & Shared Components
-- [x] Establish Tailwind design tokens, typography, button variants, inputs, cards, dialogs, badges, and tooltips.
-- [x] Create layout components (Navbar, Footer, AppLayout) and responsive navigation.
+### Phase 3: Template Catalog & Engine Enhancements
+- [ ] Expand templates list to 50+ templates across all 10 requested categories:
+  - 1. ATS-Friendly (10)
+  - 2. Modern Professional (10)
+  - 3. Minimalist (10)
+  - 4. Student & Fresher (5)
+  - 5. Software Developer (5)
+  - 6. Data Analyst & Data Scientist (5)
+  - 7. AI/ML Engineer (5)
+  - 8. Executive (5)
+  - 9. Creative & Designer (5)
+  - 10. Business Professional (5)
+- [ ] Implement Data Analyst/Scientist and AI/ML template layouts in `SpecializedTemplates.jsx`.
 
-### Phase 3: Landing Page
-- [x] Build Hero with CTAs ("Create Resume", "Browse Templates", "Upload Existing").
-- [x] Build Feature showcase, How it Works, AI capabilities, Privacy-first guarantees, FAQ, and Footer.
+### Phase 4: Page 1 — Landing Page Optimization
+- [ ] Update Hero headline to: *"Build Your Career-Ready Resume with AI"*
+- [ ] Update Description: *"Choose a professional template, select your dream job, and let AI help you create a tailored resume that highlights your real skills and experience."*
+- [ ] Primary CTA: *"Create My Resume"* (immediately opens Wizard Step 1: Template Selection)
+- [ ] Secondary CTA: *"Explore Templates"*
+- [ ] Keep how it works, features, privacy guarantees, and FAQ.
 
-### Phase 4: Template Engine & Core Resume Schema
-- [x] Define central normalized `ResumeData` schema with sample default data.
-- [x] Build the dynamic `TemplateRenderer` and master template registry.
-- [x] Build core templates representing diverse styling approaches.
-- [x] Create interactive Template Gallery with live previews, search, category filters, and selection modal.
+### Phase 5: Page 2 — Template Selection (Wizard Step 1)
+- [ ] Template selection as the first mandatory step before user or job info.
+- [ ] Grid of 50+ visual cards with actual miniature layout preview, category badges, and layout tags.
+- [ ] Category tabs, search input, and popular/featured filters.
+- [ ] Clicking "Select Template" confirms selection and navigates immediately to Step 2 (Target Job).
 
-### Phase 5: Dynamic Resume Editor
-- [x] Build multi-step / tabbed modular editor:
-  - Personal Info & Socials
-  - Professional Summary with AI assist button
-  - Work Experience (add, edit, delete, reorder, bullet AI enhancer)
-  - Education & Academics
-  - Projects (add, edit, delete, links, AI enhancer)
-  - Skills categorized (Languages, Frameworks, Tools, Soft Skills)
-  - Certifications, Achievements, Languages, Custom Sections
-- [x] Integrate split-screen live preview with zoom controls and template switcher.
+### Phase 6: Page 3 & 4 — Target Job Selection & Analysis (Wizard Step 2 & 2b)
+- [ ] Option A: Curated selectable role chips (16 roles: Software Engineer, Frontend, Backend, Full Stack, Python, Data Analyst, Data Scientist, ML Engineer, AI Engineer, GenAI, Business Analyst, Cloud, DevOps, UI/UX, Product Manager, Other).
+- [ ] Option B: Paste Job Description text area with optional company, title, location, URL.
+- [ ] "Skip job targeting" option for general resumes.
+- [ ] If JD provided: Step 2b triggers `/api/v1/jobs/analyze` and displays extracted technical skills, preferred skills, soft skills, and responsibilities with editing ability.
 
-### Phase 6: Database-Free Local Storage (Dexie.js / IndexedDB)
-- [x] Configure Dexie database for drafts, auto-save debounce, version history.
-- [x] Implement Draft Manager (save, rename, duplicate, delete, restore).
-- [x] Implement JSON export and import with schema validation.
+### Phase 7: Page 5 — Creation Method (Wizard Step 3)
+- [ ] Option A: "Create Resume From Scratch" (initializes guided blank or sample form).
+- [ ] Option B: "Upload Existing Resume" (drag & drop PDF/DOCX via PyMuPDF backend extractor, pre-populates form, shows extraction notices).
 
-### Phase 7: Document Upload & Parsing (PyMuPDF & python-docx)
-- [x] Backend parsing endpoints (`/api/v1/resume/parse`) extracting raw text, detecting sections, parsing entities.
-- [x] Frontend upload dropzone for PDF and DOCX with validation and extraction warning display.
-- [x] Populate parsed data into editor state with user confirmation and editable diff.
+### Phase 8: Guided Resume Information Form (Wizard Step 4)
+- [ ] 10-step progressive guided form with progress bar and back/continue navigation:
+  - Step 1: Personal Information
+  - Step 2: Professional Summary (AI summary generator calibrated to target job)
+  - Step 3: Education (multiple entries, degrees, GPA)
+  - Step 4: Work Experience (multiple entries, AI bullet improver per bullet)
+  - Step 5: Internships
+  - Step 6: Projects (technologies, links, AI project improver)
+  - Step 7: Skills (Categorized, highlights target job skill matches)
+  - Step 8: Certifications
+  - Step 9: Additional Information (Achievements, Languages, Publications, Volunteer, Custom)
+  - Step 10: Review & Summary of all entered data
+- [ ] Auto-save on every keystroke in IndexedDB.
 
-### Phase 8: AI Integration Layer & Provider Abstraction
-- [x] Base AI Provider interface in Python.
-- [x] Adapters: Gemini (`google-generativeai`), Groq, OpenRouter, and Deterministic Local Heuristic Fallback (Local Rule-based engine when no API keys are provided).
-- [x] Endpoints for summary generation, bullet improvement, project improvement, and comprehensive resume review.
+### Phase 9: Page 6 — AI Resume Optimization (Wizard Step 5)
+- [ ] Backend `/api/v1/resume/tailor` & `/api/v1/ai/optimize-resume`.
+- [ ] Aligns user's real qualifications with target job keywords.
+- [ ] Side-by-side Before/After diffs for summary and experience bullets.
+- [ ] Individual Accept, Reject, Edit, and Restore controls.
+- [ ] Zero fabrication rule: explains missing skill gaps instead of inventing fake qualifications.
 
-### Phase 9: Job Description Analyzer
-- [x] Endpoint `/api/v1/jobs/analyze` extracting required skills, preferred skills, soft skills, responsibilities, keywords.
-- [x] Frontend Job Analyzer page with interactive badge matching and gap identification.
+### Phase 10: Page 7 — ATS-Oriented Analysis (Wizard Step 6)
+- [ ] Evaluates tailored resume against target job description.
+- [ ] Compatibility score gauge, readability score, keyword match rate, section-by-section audit.
+- [ ] Actionable improvement checklist.
 
-### Phase 10: ATS Optimization Engine
-- [x] Endpoint `/api/v1/ats/analyze` calculating keyword match score, formatting audit, section completeness, readability.
-- [x] Frontend ATS Checker with visual score gauge, categorized warnings, and actionable recommendations.
+### Phase 11: Page 8 & 9 — Final Resume Generation & Live Preview (Wizard Step 7)
+- [ ] Renders the resume inside the template selected in Step 1.
+- [ ] Target job badge and connection preserved.
+- [ ] Live A4 view with zoom, template switching without data loss, print CSS.
+- [ ] High-resolution PDF export, print, JSON export, and local draft manager.
 
-### Phase 11: Job-Specific Resume Tailoring
-- [x] Endpoint `/api/v1/resume/tailor` generating tailored summary, matched bullet points, highlighted relevant keywords.
-- [x] Frontend Tailoring interface with side-by-side comparison, accept/reject controls, and non-destructive updates.
-
-### Phase 12: High-Fidelity PDF Generation
-- [x] Implement exact A4 CSS `@media print` stylesheets and client-side high-resolution PDF download using standard browser print & canvas/PDF export.
-- [x] Multi-page flow handling, zero text cut-off, preserved typography and margins across all templates.
-
-### Phase 13: Template Expansion to 50+ Unique Templates
-- [x] Implement all 50+ templates across 7 categories:
-  - ATS-Friendly (10)
-  - Modern Professional (10)
-  - Minimalist (10)
-  - Student / Fresher (5)
-  - Software Developer / Tech (5)
-  - Executive / Leadership (5)
-  - Creative / Designer (5)
-- [x] Verify every template renders the central `ResumeData` cleanly with missing-field resilience.
-
-### Phase 14: Security, QA, and Comprehensive Testing
-- [x] Backend unit & API tests (Pytest + HTTPX) for all routes, parsers, ATS engine, and AI fallbacks.
-- [x] Frontend build verification (`npm run build`).
-- [x] Security audit: CORS validation, safe temporary file cleanup, payload size limits, zero credential leakage.
-
-### Phase 15: Deployment Configurations & Documentation
-- [x] Frontend configuration (Vercel `vercel.json`, Cloudflare Pages `_redirects`).
-- [x] Backend configuration (`render.yaml`).
-- [x] Comprehensive documentation: `docs/ARCHITECTURE.md`, `docs/API_DOCUMENTATION.md`, `docs/DEPLOYMENT.md`, `docs/PRIVACY.md`, and top-level `README.md`.
-
-### Phase 16: Final End-to-End Verification & Production Readiness Report
-- [x] Verify all routes, buttons, templates, parser, AI flows, and PDF export.
-- [x] Generate comprehensive final delivery report.
+### Phase 12: End-to-End Verification & Production Readiness
+- [ ] Run backend tests and verify all API endpoints.
+- [ ] Run frontend production build (`npm run build`).
+- [ ] Test the full user journey: Landing → Template → Job → Info → AI Optimize → ATS Audit → Live Preview → PDF.

@@ -1,22 +1,18 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { INITIAL_RESUME_DATA } from '../constants/initialResumeData';
-import { storageService } from '../services/storageService';
+import { storageService, INITIAL_WIZARD_STATE } from '../services/storageService';
 
 const ResumeContext = createContext(null);
 
 export function ResumeProvider({ children }) {
-  const [resumeData, setResumeData] = useState(() => {
-    // Attempt to load active draft from localStorage if available
+  // Wizard Master State
+  const [wizardState, setWizardState] = useState(() => {
     try {
-      const saved = localStorage.getItem('active_resume_data');
-      return saved ? JSON.parse(saved) : INITIAL_RESUME_DATA;
+      const local = localStorage.getItem('active_wizard_state');
+      return local ? JSON.parse(local) : INITIAL_WIZARD_STATE;
     } catch (e) {
-      return INITIAL_RESUME_DATA;
+      return INITIAL_WIZARD_STATE;
     }
-  });
-
-  const [currentDraftId, setCurrentDraftId] = useState(() => {
-    return localStorage.getItem('active_draft_id') || 'draft_default';
   });
 
   const [draftsList, setDraftsList] = useState([]);
@@ -24,17 +20,27 @@ export function ResumeProvider({ children }) {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const saveTimeoutRef = useRef(null);
 
-  // Load drafts list on mount
+  // Resume Data is the core document inside wizardState
+  const resumeData = wizardState.resumeData || INITIAL_RESUME_DATA;
+
+  // Restore saved wizard state from Dexie IndexedDB on mount
+  useEffect(() => {
+    async function restoreFromIndexedDB() {
+      const saved = await storageService.getWizardState();
+      if (saved && saved.resumeData) {
+        setWizardState(saved);
+      }
+    }
+    restoreFromIndexedDB();
+    refreshDraftsList();
+  }, []);
+
   const refreshDraftsList = useCallback(async () => {
     const list = await storageService.getAllDrafts();
     setDraftsList(list);
   }, []);
 
-  useEffect(() => {
-    refreshDraftsList();
-  }, [refreshDraftsList]);
-
-  // Debounced auto-save to Dexie & localStorage
+  // Debounced auto-save of entire WizardState to IndexedDB and localStorage
   useEffect(() => {
     setSaveStatus('unsaved');
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
@@ -42,28 +48,106 @@ export function ResumeProvider({ children }) {
     saveTimeoutRef.current = setTimeout(async () => {
       setSaveStatus('saving');
       try {
-        localStorage.setItem('active_resume_data', JSON.stringify(resumeData));
-        localStorage.setItem('active_draft_id', currentDraftId);
-        
-        await storageService.saveDraft(
-          currentDraftId,
-          resumeData.personalInfo?.fullName ? `${resumeData.personalInfo.fullName}'s Resume` : 'My Resume',
-          resumeData
-        );
+        localStorage.setItem('active_wizard_state', JSON.stringify(wizardState));
+        await storageService.saveWizardState(wizardState);
+
+        // Also save draft record
+        const draftTitle = resumeData.personalInfo?.fullName
+          ? `${resumeData.personalInfo.fullName}'s Resume`
+          : 'My Resume';
+        await storageService.saveDraft('active_resume_draft', draftTitle, resumeData);
         refreshDraftsList();
         setSaveStatus('saved');
       } catch (e) {
-        console.error('Failed to auto-save:', e);
+        console.error('Failed to auto-save wizard state:', e);
         setSaveStatus('unsaved');
       }
-    }, 800);
+    }, 600);
 
     return () => {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     };
-  }, [resumeData, currentDraftId, refreshDraftsList]);
+  }, [wizardState, resumeData, refreshDraftsList]);
 
-  // Helper actions for updating sections
+  // Wizard Step Navigation
+  const setWizardStep = (step) => {
+    setWizardState(prev => ({ ...prev, currentStep: step }));
+  };
+
+  const nextStep = () => {
+    setWizardState(prev => ({ ...prev, currentStep: Math.min(7, prev.currentStep + 1) }));
+  };
+
+  const prevStep = () => {
+    setWizardState(prev => ({ ...prev, currentStep: Math.max(1, prev.currentStep - 1) }));
+  };
+
+  // Step 1: Select Template
+  const selectTemplate = (templateId) => {
+    setWizardState(prev => ({
+      ...prev,
+      selectedTemplateId: templateId,
+      resumeData: {
+        ...prev.resumeData,
+        templateId: templateId
+      }
+    }));
+  };
+
+  // Step 2: Target Job Selection & Analysis
+  const setTargetJob = (jobPayload) => {
+    setWizardState(prev => ({
+      ...prev,
+      selectedJob: {
+        ...prev.selectedJob,
+        ...jobPayload
+      }
+    }));
+  };
+
+  const setJobAnalysis = (analysis) => {
+    setWizardState(prev => ({
+      ...prev,
+      jobAnalysis: analysis
+    }));
+  };
+
+  // Step 3: Creation Method
+  const setCreationMethod = (method) => {
+    setWizardState(prev => ({
+      ...prev,
+      creationMethod: method
+    }));
+  };
+
+  // Step 5: Optimization Results
+  const setOptimizationResults = (results) => {
+    setWizardState(prev => ({
+      ...prev,
+      optimizationResults: results
+    }));
+  };
+
+  // Step 6: ATS Results
+  const setAtsResults = (results) => {
+    setWizardState(prev => ({
+      ...prev,
+      atsResults: results
+    }));
+  };
+
+  // Full resumeData setter
+  const setResumeData = (updater) => {
+    setWizardState(prev => {
+      const nextResume = typeof updater === 'function' ? updater(prev.resumeData) : updater;
+      return {
+        ...prev,
+        resumeData: nextResume
+      };
+    });
+  };
+
+  // Resume Section Updaters
   const updatePersonalInfo = (field, value) => {
     setResumeData(prev => ({
       ...prev,
@@ -79,7 +163,7 @@ export function ResumeProvider({ children }) {
   };
 
   const setTemplateId = (templateId) => {
-    setResumeData(prev => ({ ...prev, templateId }));
+    selectTemplate(templateId);
   };
 
   const updatePreferences = (field, value) => {
@@ -92,7 +176,6 @@ export function ResumeProvider({ children }) {
     }));
   };
 
-  // Section item handlers
   const updateSection = (sectionKey, updatedList) => {
     setResumeData(prev => ({ ...prev, [sectionKey]: updatedList }));
   };
@@ -124,65 +207,42 @@ export function ResumeProvider({ children }) {
     }));
   };
 
-  // Load draft
-  const loadDraft = async (id) => {
-    const draft = await storageService.getDraft(id);
-    if (draft && draft.data) {
-      setCurrentDraftId(id);
-      setResumeData(draft.data);
-    }
+  // Reset entire wizard
+  const resetWizard = async () => {
+    await storageService.clearWizardState();
+    setWizardState(INITIAL_WIZARD_STATE);
   };
 
-  // Create new blank or template draft
-  const createNewDraft = async (templateId = 'ats-01') => {
-    const newId = `draft_${Date.now()}`;
-    const fresh = {
-      ...INITIAL_RESUME_DATA,
-      templateId,
-      personalInfo: {
-        fullName: "",
-        email: "",
-        phone: "",
-        location: "",
-        professionalTitle: "",
-        website: "",
-        linkedin: "",
-        github: "",
-        portfolio: ""
-      },
-      professionalSummary: "",
-      education: [],
-      experience: [],
-      internships: [],
-      projects: [],
-      skills: [
-        { category: "Technical Skills", items: [] },
-        { category: "Soft Skills", items: [] }
-      ],
-      certifications: [],
-      achievements: [],
-      languages: []
-    };
-    setCurrentDraftId(newId);
-    setResumeData(fresh);
-    await storageService.saveDraft(newId, 'New Resume', fresh);
-    refreshDraftsList();
-  };
-
-  // Reset to initial sample data
+  // Load sample data
   const loadSampleData = () => {
     setResumeData(INITIAL_RESUME_DATA);
   };
 
   return (
     <ResumeContext.Provider value={{
+      wizardState,
+      currentStep: wizardState.currentStep,
+      selectedTemplateId: wizardState.selectedTemplateId,
+      selectedJob: wizardState.selectedJob,
+      jobAnalysis: wizardState.jobAnalysis,
+      creationMethod: wizardState.creationMethod,
+      optimizationResults: wizardState.optimizationResults,
+      atsResults: wizardState.atsResults,
       resumeData,
-      setResumeData,
-      currentDraftId,
       draftsList,
       saveStatus,
       isAiLoading,
       setIsAiLoading,
+      setWizardStep,
+      nextStep,
+      prevStep,
+      selectTemplate,
+      setTargetJob,
+      setJobAnalysis,
+      setCreationMethod,
+      setOptimizationResults,
+      setAtsResults,
+      setResumeData,
       updatePersonalInfo,
       updateSummary,
       setTemplateId,
@@ -191,8 +251,7 @@ export function ResumeProvider({ children }) {
       addItemToSection,
       removeItemFromSection,
       updateItemInSection,
-      loadDraft,
-      createNewDraft,
+      resetWizard,
       loadSampleData,
       refreshDraftsList
     }}>
