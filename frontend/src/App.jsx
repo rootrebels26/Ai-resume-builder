@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
 import { Home } from './pages/Home';
 import { ResumeWizard } from './pages/ResumeWizard';
+import { Onboarding } from './pages/Onboarding';
 import { Templates } from './pages/Templates';
 import { Builder } from './pages/Builder';
 import { UploadResume } from './pages/UploadResume';
@@ -17,6 +18,7 @@ export default function App() {
     <AppLayout>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/wizard" element={<ResumeWizard />} />
         <Route path="/templates" element={<Templates />} />
         <Route path="/builder" element={<ResumeWizard />} />

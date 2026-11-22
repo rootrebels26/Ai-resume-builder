@@ -1,20 +1,29 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   FileText, Sparkles, CheckCircle2, ShieldCheck, Zap, Download,
   ArrowRight, Star, Target, Lock, RefreshCw, Briefcase, Eye
 } from 'lucide-react';
-import { TEMPLATES } from '../constants/templatesList';
+import { TEMPLATES, TOTAL_TEMPLATES_COUNT } from '../constants/templatesList';
 import { useResume } from '../context/ResumeContext';
+import { TemplateDraftCard } from '../components/templates/TemplateDraftCard';
+import { TemplateQuickPreviewModal } from '../components/templates/TemplateQuickPreviewModal';
 
 export function Home() {
   const navigate = useNavigate();
-  const { setWizardStep, selectTemplate } = useResume();
-  const featuredTemplates = TEMPLATES.slice(0, 6);
+  const { setWizardStep, selectTemplate, selectedTemplateId } = useResume();
+  const [previewTemplate, setPreviewTemplate] = useState(null);
+  
+  // Pick 4 diverse, stunning featured templates across ATS, Modern, Developer, and Data
+  const featuredTemplates = [
+    TEMPLATES.find(t => t.id === 'ats-01') || TEMPLATES[0],
+    TEMPLATES.find(t => t.id === 'modern-01') || TEMPLATES[1],
+    TEMPLATES.find(t => t.id === 'developer-01') || TEMPLATES[2],
+    TEMPLATES.find(t => t.id === 'data-01') || TEMPLATES[3],
+  ];
 
   const handleStartCreation = () => {
-    setWizardStep(1);
-    navigate('/wizard');
+    navigate('/onboarding#1');
   };
 
   const handleSelectTemplateCard = (templateId) => {
@@ -29,9 +38,9 @@ export function Home() {
       <section className="relative overflow-hidden bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-white pt-20 pb-28 px-4 sm:px-6 lg:px-8">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(12,135,235,0.18),transparent_50%)]" />
         <div className="relative max-w-5xl mx-auto text-center space-y-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-400 text-xs font-semibold">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-400 text-xs font-semibold">
             <Sparkles className="w-4 h-4" />
-            <span>Template-First • Job-Targeted • Privacy-First</span>
+            <span>Next-Generation AI Resume Platform</span>
           </div>
 
           <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight leading-tight">
@@ -59,34 +68,38 @@ export function Home() {
               to="/templates"
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold text-sm transition"
             >
-              <span>Explore Templates</span>
+              <span>Explore {TOTAL_TEMPLATES_COUNT}+ Templates</span>
             </Link>
           </div>
 
-          {/* Value props */}
-          <div className="pt-8 flex flex-wrap justify-center items-center gap-6 text-xs text-slate-400">
-            <span className="flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              100% Privacy (IndexedDB Browser Storage)
-            </span>
-            <span className="flex items-center gap-1.5">
+          {/* Value Badges */}
+          <div className="pt-8 flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-xs text-slate-400">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <span>100% Free Core Features</span>
+            </div>
+            <div className="flex items-center gap-2">
               <Lock className="w-4 h-4 text-emerald-400" />
-              Zero Sign-Up Required
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Target className="w-4 h-4 text-emerald-400" />
-              50+ ATS-Optimized Templates
-            </span>
+              <span>Privacy-First & No Registration</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <span>Direct Browser IndexedDB Storage</span>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* How It Works Sequential Workflow */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+      {/* How It Works — 4 Clear Steps */}
+      <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
-          <h2 className="text-xs uppercase font-bold tracking-widest text-brand-600">The Template-First Workflow</h2>
-          <p className="text-3xl font-bold text-slate-900 tracking-tight">How AI Resume Builder Works</p>
-          <p className="text-slate-600 text-sm">
+          <span className="text-xs font-bold tracking-widest text-brand-600 uppercase">
+            The Intelligent Workflow
+          </span>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900">
+            How The Resume Platform Works
+          </h2>
+          <p className="text-slate-600 text-sm leading-relaxed">
             No filling out generic forms blindly. Every step is tied directly to your selected design and target career.
           </p>
         </div>
@@ -96,7 +109,7 @@ export function Home() {
             <span className="w-7 h-7 rounded-full bg-brand-50 text-brand-700 font-bold flex items-center justify-center mb-3">1</span>
             <h3 className="font-bold text-sm text-slate-900 mb-1">Select Template First</h3>
             <p className="text-slate-600 leading-relaxed">
-              Browse 50+ templates across ATS, Modern, Tech, Data, Executive, and Student categories. Choose your visual style upfront.
+              Browse {TOTAL_TEMPLATES_COUNT} templates across ATS, Modern, Tech, Data, Executive, and Student categories. Choose your visual style upfront.
             </p>
           </div>
 
@@ -126,13 +139,13 @@ export function Home() {
         </div>
       </section>
 
-      {/* Featured Templates Showcase */}
+      {/* Featured Templates Showcase with Real Visual Drafts */}
       <section className="py-16 bg-slate-100 border-y border-slate-200 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-10 gap-4">
             <div>
-              <h2 className="text-xs uppercase font-bold tracking-widest text-brand-600 mb-1">Step 1 Preview</h2>
-              <p className="text-2xl sm:text-3xl font-bold text-slate-900">Featured Templates (65+ Designs)</p>
+              <h2 className="text-xs uppercase font-bold tracking-widest text-brand-600 mb-1">Authentic Designs</h2>
+              <p className="text-2xl sm:text-3xl font-bold text-slate-900">Featured Templates ({TOTAL_TEMPLATES_COUNT} Designs)</p>
             </div>
             <Link
               to="/templates"
@@ -143,78 +156,30 @@ export function Home() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {featuredTemplates.map((template) => (
-              <div
+              <TemplateDraftCard
                 key={template.id}
-                className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition group flex flex-col justify-between"
-              >
-                <div className="h-44 bg-slate-50 border-b border-slate-100 p-4 flex flex-col justify-between relative">
-                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-white text-slate-700 border border-slate-200 shadow-2xs">
-                      {template.badge}
-                    </span>
-                    <span className="text-xs font-semibold text-slate-600 flex items-center gap-1">
-                      <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                      {template.rating}
-                    </span>
-                  </div>
-
-                  <div className="space-y-1.5 p-2 bg-white rounded border border-slate-200/80 shadow-2xs">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-3.5 h-3.5 rounded-full" style={{ backgroundColor: template.accentColor }} />
-                      <div className="w-20 h-2 bg-slate-800 rounded" />
-                    </div>
-                    <div className="w-full h-1 bg-slate-200 rounded" />
-                    <div className="w-4/5 h-1 bg-slate-200 rounded" />
-                  </div>
-
-                  <div className="flex justify-between items-center text-[11px] font-mono text-slate-400">
-                    <span>{template.id}</span>
-                    <span className="capitalize">{template.category}</span>
-                  </div>
-                </div>
-
-                <div className="p-4 flex justify-between items-center">
-                  <div>
-                    <h3 className="font-bold text-sm text-slate-900 group-hover:text-brand-600 transition">
-                      {template.name}
-                    </h3>
-                    <p className="text-xs text-slate-500">{template.layout}</p>
-                  </div>
-                  <button
-                    onClick={() => handleSelectTemplateCard(template.id)}
-                    className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-brand-50 text-brand-700 hover:bg-brand-600 hover:text-white transition cursor-pointer"
-                  >
-                    Select & Continue
-                  </button>
-                </div>
-              </div>
+                template={template}
+                isSelected={selectedTemplateId === template.id}
+                onSelect={handleSelectTemplateCard}
+                onOpenPreview={(tpl) => setPreviewTemplate(tpl)}
+              />
             ))}
           </div>
         </div>
       </section>
 
-      {/* Privacy Guarantee Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto text-center space-y-6">
-        <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
-          <ShieldCheck className="w-6 h-6" />
-        </div>
-        <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Privacy-First Architecture</h2>
-        <p className="text-slate-600 text-sm leading-relaxed">
-          Your career data belongs to you. We maintain zero database servers. All drafts, job comparisons, and customized templates are stored exclusively in your browser's IndexedDB sandbox.
-        </p>
-        <div>
-          <button
-            onClick={handleStartCreation}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs transition cursor-pointer"
-          >
-            <Sparkles className="w-4 h-4 text-brand-400" />
-            <span>Launch Resume Builder</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-      </section>
+      {/* High-Resolution Quick Preview Modal */}
+      <TemplateQuickPreviewModal
+        template={previewTemplate}
+        isOpen={Boolean(previewTemplate)}
+        onClose={() => setPreviewTemplate(null)}
+        onSelect={(templateId) => {
+          handleSelectTemplateCard(templateId);
+          setPreviewTemplate(null);
+        }}
+      />
     </div>
   );
 }

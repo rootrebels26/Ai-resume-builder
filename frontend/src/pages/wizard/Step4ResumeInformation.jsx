@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import {
   User, Sparkles, GraduationCap, Briefcase, FolderGit2, Wrench, Award,
-  CheckCircle2, ArrowRight, ArrowLeft, Plus, Trash2, Loader2, Eye
+  CheckCircle2, ArrowRight, ArrowLeft, Plus, Trash2, Loader2, Eye,
+  Columns, PenTool
 } from 'lucide-react';
 import { useResume } from '../../context/ResumeContext';
 import { aiService } from '../../services/aiService';
+import { LiveResumeCanvas } from '../../components/wizard/LiveResumeCanvas';
 
 const SUB_STEPS = [
   { id: 1, title: "Personal Details" },
@@ -32,6 +34,7 @@ export function Step4ResumeInformation({ onNext, onPrev }) {
   } = useResume();
 
   const [currentSubStep, setCurrentSubStep] = useState(1);
+  const [viewMode, setViewMode] = useState('split'); // 'split' | 'editor' | 'preview'
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [summaryOptions, setSummaryOptions] = useState([]);
   const [activeBulletModal, setActiveBulletModal] = useState(null); // { expId, bulletIdx, options }
@@ -107,23 +110,73 @@ export function Step4ResumeInformation({ onNext, onPrev }) {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* Step Header */}
-      <div className="text-center space-y-2">
-        <span className="text-[11px] font-bold uppercase tracking-widest text-brand-600">
-          Step 4 of 7 • Guided Information Form
-        </span>
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-          Enter Your Real Qualifications
-        </h2>
-        <p className="text-slate-600 text-xs sm:text-sm max-w-xl mx-auto">
-          {selectedJob?.role ? `Calibrating for ${selectedJob.role}. ` : ''}
-          Add your factual background. Our AI will highlight and format your achievements without manufacturing unverified claims.
-        </p>
+    <div className="space-y-6">
+      {/* Step Header with Enhancv View Mode Selector */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-2 border-b border-slate-200">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-bold uppercase tracking-widest text-brand-600">
+              Step 4 of 7 • Enhancv Live Builder
+            </span>
+            <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
+              Live Synchronized
+            </span>
+          </div>
+          <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+            Enter Your Real Qualifications
+          </h2>
+        </div>
+
+        {/* Enhancv View Mode Selector */}
+        <div className="flex items-center gap-1 p-1 bg-slate-200/80 rounded-xl text-xs">
+          <button
+            type="button"
+            onClick={() => setViewMode('split')}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${
+              viewMode === 'split'
+                ? 'bg-slate-900 text-white shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Columns className="w-3.5 h-3.5" />
+            <span>Split Canvas</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('editor')}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${
+              viewMode === 'editor'
+                ? 'bg-slate-900 text-white shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <PenTool className="w-3.5 h-3.5" />
+            <span>Editor Only</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('preview')}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${
+              viewMode === 'preview'
+                ? 'bg-slate-900 text-white shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Eye className="w-3.5 h-3.5" />
+            <span>A4 Document</span>
+          </button>
+        </div>
       </div>
 
-      {/* 10-Sub-Step Horizontal Progress Tracker */}
-      <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs overflow-x-auto">
+      {/* Main Workspace Grid (Split Canvas or Full Width) */}
+      <div className={`grid gap-6 items-start ${
+        viewMode === 'split' ? 'grid-cols-1 lg:grid-cols-12' : 'grid-cols-1'
+      }`}>
+        {/* Left Column: Editor Form */}
+        {(viewMode === 'split' || viewMode === 'editor') && (
+          <div className={`space-y-6 ${viewMode === 'split' ? 'lg:col-span-7' : 'max-w-4xl mx-auto w-full'}`}>
+            {/* 10-Sub-Step Horizontal Progress Tracker */}
+            <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs overflow-x-auto">
         <div className="flex items-center gap-1.5 min-w-[700px]">
           {SUB_STEPS.map((s) => {
             const isCompleted = currentSubStep > s.id;
@@ -777,5 +830,19 @@ export function Step4ResumeInformation({ onNext, onPrev }) {
         </button>
       </div>
     </div>
-  );
+  )}
+
+  {/* Right Column: Enhancv Live Synchronized A4 Canvas */}
+  {(viewMode === 'split' || viewMode === 'preview') && (
+    <div className={`${
+      viewMode === 'split'
+        ? 'lg:col-span-5 sticky top-20 h-[calc(100vh-100px)] min-h-[640px]'
+        : 'max-w-4xl mx-auto w-full h-[85vh]'
+    }`}>
+      <LiveResumeCanvas className="h-full" />
+    </div>
+  )}
+</div>
+</div>
+);
 }
