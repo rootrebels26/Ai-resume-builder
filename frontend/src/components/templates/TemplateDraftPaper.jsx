@@ -93,9 +93,14 @@ export function TemplateDraftPaper({ template }) {
         {/* Left Accent Sidebar */}
         <div className="w-[34%] p-2 text-white flex flex-col justify-between shrink-0" style={{ backgroundColor: accentColor }}>
           <div className="space-y-2">
-            {/* Avatar circle */}
-            <div className="w-7 h-7 mx-auto rounded-full bg-white/20 border border-white/40 flex items-center justify-center font-bold text-[8px] tracking-wider text-white">
-              AR
+            {/* Clean Typographic Header (100% Picture-Free) */}
+            <div className="space-y-0.5 pb-1.5 border-b border-white/20">
+              <div className="font-extrabold text-[8.5px] tracking-wider uppercase text-white leading-tight">
+                Alex Rivera
+              </div>
+              <div className="text-[5.5px] font-semibold text-white/80">
+                Senior Engineer
+              </div>
             </div>
 
             {/* Contact */}
