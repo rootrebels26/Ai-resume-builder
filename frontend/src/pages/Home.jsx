@@ -66,15 +66,6 @@ export function Home() {
       {/* ======================================================== */}
       <section id="editor" className="relative mx-auto grid max-w-[1440px] items-center gap-12 px-5 pb-20 pt-10 md:px-10 lg:min-h-[750px] lg:grid-cols-[0.9fr_1.1fr] lg:gap-8 lg:px-14 lg:pb-24 lg:pt-14 overflow-hidden lg:overflow-visible">
         <div className="relative z-10 max-w-[650px]">
-          {/* Eyebrow with pulsating red dot */}
-          <div className="eyebrow">
-            <span className="relative flex size-2">
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-[#ef5b45] opacity-70"></span>
-              <span className="relative inline-flex size-2 rounded-full bg-[#ef5b45]"></span>
-            </span>
-            OPEN BETA — CLIENT-SIDE PRIVACY
-          </div>
-
           {/* Figma Display Headline */}
           <h1 className="font-display mt-7 text-[clamp(3.7rem,7.2vw,7.4rem)] font-bold leading-[0.87] tracking-[-0.075em]">
             Only 2% of
