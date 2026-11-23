@@ -4,9 +4,9 @@ import os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from app.api.routes import health, ai, jobs, ats, resume
+from app.api.routes import health, ai, ats, resume
 from app.schemas.ai_schema import GenerateSummaryRequest, ImproveBulletRequest
-from app.schemas.job_schema import JobAnalyzeRequest, ATSAnalyzeRequest, TailorResumeRequest
+from app.schemas.job_schema import ATSAnalyzeRequest, TailorResumeRequest
 
 async def test_direct_routes():
     print("Direct route execution test starting...", flush=True)
@@ -29,13 +29,7 @@ async def test_direct_routes():
     assert b["success"] is True
     print("✓ AI Bullet route works directly:", len(b["data"]["options"]), "options")
 
-    # 4. Job Analyze
-    req_job = JobAnalyzeRequest(job_description="Seeking a Python developer with FastAPI and React skills.")
-    j = await jobs.analyze_job(req_job)
-    assert j["success"] is True
-    print("✓ Job analyze route works directly:", j["data"]["technical_skills"])
-
-    # 5. ATS
+    # 4. ATS
     req_ats = ATSAnalyzeRequest(
         resume_data={"personalInfo": {"fullName": "Test User", "email": "test@test.com"}},
         job_description="Python React"

@@ -41,3 +41,7 @@ class BaseAIProvider(ABC):
     @abstractmethod
     async def tailor_resume(self, request: TailorResumeRequest) -> TailorResumeResponse:
         pass
+
+    @abstractmethod
+    async def parse_resume_document(self, text: str, layout_metadata: Dict[str, Any] = None) -> Dict[str, Any]:
+        pass

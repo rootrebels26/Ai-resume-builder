@@ -51,10 +51,9 @@ export function Home() {
   const handleCreateResume = async (templateId = 'ats-01') => {
     requireAuth(async () => {
       try {
-        await createNewResume(templateId, 'My Resume');
-        navigate('/builder');
+        navigate('/onboarding#1');
       } catch (e) {
-        navigate('/builder');
+        navigate('/onboarding#1');
       }
     }, 'Enter your unique company access code to build and customize your resume.');
   };
@@ -148,10 +147,10 @@ export function Home() {
             </button>
 
             <Link
-              to="/templates"
+              to="/onboarding#1"
               className="flex items-center justify-center gap-2 rounded-full px-5 py-3 font-bold underline decoration-1 underline-offset-4 transition hover:text-[#5e48d7]"
             >
-              Browse 50+ templates
+              Have a resume? Import &amp; Auto-Fill →
             </Link>
           </div>
 

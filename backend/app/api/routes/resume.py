@@ -3,7 +3,7 @@ from fastapi import APIRouter, UploadFile, File
 from app.core.security import validate_uploaded_file, sanitize_filename
 from app.utils.file_utils import temporary_upload_file
 from app.services.resume_parser import (
-    extract_text_from_pdf, extract_text_from_docx, parse_resume_text
+    extract_text_from_pdf, extract_text_from_docx, parse_resume_document_pipeline
 )
 from app.services.resume_optimizer import tailor_resume_to_job
 from app.schemas.job_schema import TailorResumeRequest
@@ -20,19 +20,25 @@ async def parse_resume(file: UploadFile = File(...)):
 
     with temporary_upload_file(content, suffix=suffix) as temp_path:
         if suffix == ".pdf":
-            raw_text, warnings = extract_text_from_pdf(temp_path)
+            raw_text, warnings, layout = extract_text_from_pdf(temp_path)
         else:
-            raw_text, warnings = extract_text_from_docx(temp_path)
+            raw_text, warnings, layout = extract_text_from_docx(temp_path)
 
-    resume_data, parse_warnings = parse_resume_text(raw_text)
-    all_warnings = warnings + parse_warnings
+    resume_data, validation = await parse_resume_document_pipeline(raw_text, layout)
+    all_warnings = warnings + validation.get("warnings", [])
 
     return {
         "success": True,
         "data": {
             "filename": clean_name,
             "raw_text_length": len(raw_text),
+            "layout": {
+                "page_count": layout.get("page_count", 1),
+                "is_scanned": layout.get("is_scanned", False)
+            },
             "resume_data": resume_data.model_dump(),
+            "validation": validation,
+            "confidence_score": validation.get("overallConfidence", 85),
             "warnings": all_warnings
         },
         "message": "Resume extracted and parsed successfully." if not all_warnings else "Resume parsed with notices.",

@@ -28,6 +28,7 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/dashboard" element={<Navigate to="/" replace />} />
             <Route path="/builder" element={<ProtectedRoute><Builder /></ProtectedRoute>} />
+            <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
             <Route path="/wizard" element={<ProtectedRoute><ResumeWizard /></ProtectedRoute>} />
             <Route path="/templates" element={<Templates />} />
             <Route path="/upload" element={<ProtectedRoute><UploadResume /></ProtectedRoute>} />

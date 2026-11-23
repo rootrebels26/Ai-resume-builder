@@ -43,4 +43,7 @@ class AIServiceProxy(BaseAIProvider):
     async def tailor_resume(self, request):
         return await self.provider.tailor_resume(request)
 
+    async def parse_resume_document(self, text: str, layout_metadata: dict = None):
+        return await self.provider.parse_resume_document(text, layout_metadata)
+
 ai_service = AIServiceProxy()

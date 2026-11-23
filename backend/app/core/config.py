@@ -1,5 +1,10 @@
+import os
+from pathlib import Path
 from pydantic_settings import BaseSettings
 from typing import List, Optional
+
+_BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
+_ENV_FILE = _BACKEND_DIR / ".env"
 
 class Settings(BaseSettings):
     APP_NAME: str = "AI Resume Builder API"
@@ -55,7 +60,7 @@ class Settings(BaseSettings):
         return "*" in self.cors_origins
 
     class Config:
-        env_file = ".env"
+        env_file = str(_ENV_FILE) if _ENV_FILE.exists() else ".env"
         env_file_encoding = "utf-8"
         extra = "ignore"
 

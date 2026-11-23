@@ -1,56 +1,42 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  Sparkles, FileText, Upload, Target, ArrowRight, ArrowLeft,
-  Check, Star, Briefcase, GraduationCap, Award, Compass, ShieldCheck
+  Sparkles, FileText, UploadCloud, Target, ArrowRight, ArrowLeft,
+  Check, Star, Briefcase, GraduationCap, Award, ShieldCheck,
+  CheckCircle2, AlertTriangle, Loader2, RefreshCw, Palette, Layers, User
 } from 'lucide-react';
 import { useResume } from '../context/ResumeContext';
 import { TEMPLATES } from '../constants/templatesList';
 import { TemplateDraftPaper } from '../components/templates/TemplateDraftPaper';
+import { resumeService } from '../services/resumeService';
+import { ExtractionReviewModal } from '../components/resume/ExtractionReviewModal';
 
-const GOALS = [
-  {
-    id: 'scratch',
-    title: 'Create a brand new resume',
-    desc: 'Start with our guided AI writer and select from 65+ modern and ATS-proven templates.',
-    icon: Sparkles,
-    badge: 'Most Popular',
-    method: 'scratch'
-  },
-  {
-    id: 'upload',
-    title: 'Upload & improve my existing resume',
-    desc: 'Upload your current PDF or DOCX. Our engine extracts all fields and enhances your bullet points.',
-    icon: Upload,
-    badge: 'Fastest (2 min)',
-    method: 'upload'
-  },
-  {
-    id: 'target',
-    title: 'Target a specific job description',
-    desc: 'Paste a job posting to match keywords, pass ATS filters, and tailor your real experience.',
-    icon: Target,
-    badge: 'High Conversion',
-    method: 'target'
-  }
+const COLOR_SWATCHES = [
+  { name: 'Classic Slate', color: '#1e293b' },
+  { name: 'Resume Blue', color: '#0284c7' },
+  { name: 'Royal Navy', color: '#1d4ed8' },
+  { name: 'Emerald Green', color: '#059669' },
+  { name: 'Executive Violet', color: '#7c3aed' },
+  { name: 'Crimson Burgundy', color: '#dc2626' },
+  { name: 'Cyan Modern', color: '#0891b2' },
+  { name: 'Warm Amber', color: '#d97706' },
 ];
 
 const POPULAR_ROLES = [
-  'Software Engineer',
-  'Full Stack Developer',
-  'Data Scientist',
+  'Senior Full Stack Engineer',
+  'Frontend Developer (React/TS)',
+  'Backend Engineer (Python/Node)',
+  'Data Scientist / AI Engineer',
+  'DevOps & Cloud Architect',
   'Product Manager',
-  'AI / ML Engineer',
-  'Financial Analyst',
-  'Marketing Specialist',
-  'Business Analyst'
+  'Software Engineering Lead'
 ];
 
 const SENIORITY_LEVELS = [
-  { id: 'student', label: 'Student / Fresher', desc: '0 years • Highlighting education, projects, and internships' },
-  { id: 'entry', label: 'Entry-Level', desc: '1–2 years • Early career professional' },
-  { id: 'mid', label: 'Mid-Level', desc: '3–5 years • Proven contributor with measurable achievements' },
-  { id: 'senior', label: 'Senior Professional', desc: '6–9 years • Deep technical expertise and leadership' },
+  { id: 'student', label: 'Student / Fresher', desc: '0 years • Highlight education, projects, and coursework' },
+  { id: 'entry', label: 'Entry-Level', desc: '1–2 years • Foundational career experience' },
+  { id: 'mid', label: 'Mid-Level', desc: '3–5 years • Proven contributor with measurable project achievements' },
+  { id: 'senior', label: 'Senior Professional', desc: '6–9 years • Technical leadership and architecture ownership' },
   { id: 'executive', label: 'Lead / Executive', desc: '10+ years • Strategic vision, P&L, and team management' }
 ];
 
@@ -58,351 +44,710 @@ export function Onboarding() {
   const navigate = useNavigate();
   const location = useLocation();
   const {
+    resumeData,
+    setResumeData,
     selectTemplate,
     selectedTemplateId,
-    setSelectedJob,
-    setCreationMethod,
-    setWizardStep
+    updatePreferences
   } = useResume();
 
-  // Determine current screen from hash (#1, #2, #3) or state
-  const getInitialStep = () => {
+  // Step hash sync (#1, #2, #3) matching Enhancv
+  const parseStepFromHash = () => {
     const hash = window.location.hash;
     if (hash === '#2') return 2;
     if (hash === '#3') return 3;
     return 1;
   };
 
-  const [step, setStep] = useState(getInitialStep);
-  const [selectedGoal, setSelectedGoal] = useState('scratch');
-  const [targetRole, setTargetRole] = useState('Software Engineer');
-  const [seniority, setSeniority] = useState('mid');
-  const [localTemplateId, setLocalTemplateId] = useState(selectedTemplateId || 'ats-01');
+  const [step, setStep] = useState(parseStepFromHash);
 
-  // Sync hash with step
+  // Creation approach: 'upload' (Enhancv auto-extract) or 'scratch'
+  const [method, setMethod] = useState('upload');
+
+  // File Upload & Parser State
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [isParsing, setIsParsing] = useState(false);
+  const [parseError, setParseError] = useState(null);
+  const [extractedData, setExtractedData] = useState(null);
+  const [rawParseResult, setRawParseResult] = useState(null);
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
+
+  // Scratch Mode inputs
+  const [targetRole, setTargetRole] = useState(resumeData?.personalInfo?.professionalTitle || 'Senior Full Stack Engineer');
+  const [seniority, setSeniority] = useState('mid');
+
+  // Step 2: Template & Style Selection
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [chosenTemplateId, setChosenTemplateId] = useState(selectedTemplateId || 'modern-01');
+  const [chosenColor, setChosenColor] = useState('#0284c7');
+
+  const fileInputRef = useRef(null);
+
+  // Keep window.location.hash synchronized with step
   useEffect(() => {
     window.location.hash = `#${step}`;
   }, [step]);
 
-  // Recommended templates based on seniority
-  const recommendedTemplates = React.useMemo(() => {
-    if (seniority === 'student') {
-      return TEMPLATES.filter(t => t.category === 'student' || t.category === 'ats').slice(0, 4);
+  // Handle file drop & selection
+  const handleFileDrop = (e) => {
+    e.preventDefault();
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleProcessFile(e.dataTransfer.files[0]);
     }
-    if (seniority === 'executive') {
-      return TEMPLATES.filter(t => t.category === 'executive' || t.category === 'modern').slice(0, 4);
+  };
+
+  const handleFileSelect = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      handleProcessFile(e.target.files[0]);
     }
-    if (targetRole.toLowerCase().includes('data')) {
-      return TEMPLATES.filter(t => t.category === 'data' || t.category === 'modern').slice(0, 4);
+  };
+
+  const handleProcessFile = async (file) => {
+    setUploadedFile(file);
+    setParseError(null);
+    setIsParsing(true);
+
+    try {
+      const res = await resumeService.parseResumeFile(file);
+      if (res.success && res.data?.resume_data) {
+        const parsed = res.data.resume_data;
+        setExtractedData(parsed);
+        setRawParseResult(res.data);
+
+        // Pre-fill target role if detected in resume
+        if (parsed.personalInfo?.professionalTitle) {
+          setTargetRole(parsed.personalInfo.professionalTitle);
+        }
+      } else {
+        setParseError(res.message || "Failed to extract text from document. Please upload a standard PDF or Word file.");
+      }
+    } catch (err) {
+      console.error("Resume file extraction error:", err);
+      setParseError(err.message || "Failed to process document. Please ensure it is a valid PDF or DOCX file.");
+    } finally {
+      setIsParsing(false);
     }
-    if (targetRole.toLowerCase().includes('ai') || targetRole.toLowerCase().includes('ml')) {
-      return TEMPLATES.filter(t => t.category === 'aiml' || t.category === 'developer').slice(0, 4);
+  };
+
+  // Filter templates for Step 2
+  const filteredTemplates = useMemo(() => {
+    if (selectedCategory === 'all') return TEMPLATES;
+    return TEMPLATES.filter(t => t.category === selectedCategory);
+  }, [selectedCategory]);
+
+  const activeTemplateObj = useMemo(() => {
+    return TEMPLATES.find(t => t.id === chosenTemplateId) || TEMPLATES[0];
+  }, [chosenTemplateId]);
+
+  // Handle template selection
+  const handleSelectTemplate = (id) => {
+    setChosenTemplateId(id);
+    const tpl = TEMPLATES.find(t => t.id === id);
+    if (tpl?.accentColor) {
+      setChosenColor(tpl.accentColor);
     }
-    return [
-      TEMPLATES.find(t => t.id === 'ats-01') || TEMPLATES[0],
-      TEMPLATES.find(t => t.id === 'modern-01') || TEMPLATES[1],
-      TEMPLATES.find(t => t.id === 'developer-01') || TEMPLATES[2],
-      TEMPLATES.find(t => t.id === 'minimalist-01') || TEMPLATES[3]
-    ];
-  }, [seniority, targetRole]);
+  };
 
-  const handleFinishOnboarding = () => {
-    // 1. Commit template
-    selectTemplate(localTemplateId);
+  // Commit all data and enter the Builder
+  const handleLaunchBuilder = () => {
+    let finalResume;
 
-    // 2. Commit target job
-    setSelectedJob({
-      role: targetRole,
-      company: '',
-      jobDescription: '',
-      experienceLevel: seniority
-    });
-
-    // 3. Commit creation method
-    setCreationMethod(selectedGoal === 'upload' ? 'upload' : 'scratch');
-
-    // 4. Navigate into wizard at appropriate step
-    if (selectedGoal === 'upload') {
-      setWizardStep(3); // Upload screen
+    if (method === 'upload' && extractedData) {
+      finalResume = {
+        ...extractedData,
+        templateId: chosenTemplateId,
+        preferences: {
+          ...(extractedData.preferences || {}),
+          themeColor: chosenColor,
+          accentColor: chosenColor
+        }
+      };
+      if (targetRole && (!finalResume.personalInfo || !finalResume.personalInfo.professionalTitle)) {
+        finalResume.personalInfo = {
+          ...(finalResume.personalInfo || {}),
+          professionalTitle: targetRole
+        };
+      }
     } else {
-      setWizardStep(4); // Direct into Split-Screen Live Builder!
+      // Create from scratch with chosen role & target seniority
+      finalResume = {
+        ...resumeData,
+        templateId: chosenTemplateId,
+        personalInfo: {
+          ...(resumeData.personalInfo || {}),
+          professionalTitle: targetRole
+        },
+        preferences: {
+          ...(resumeData.preferences || {}),
+          themeColor: chosenColor,
+          accentColor: chosenColor
+        }
+      };
     }
-    navigate('/wizard');
+
+    // Update global context
+    setResumeData(finalResume);
+    selectTemplate(chosenTemplateId);
+    if (updatePreferences) {
+      updatePreferences('themeColor', chosenColor);
+      updatePreferences('accentColor', chosenColor);
+    }
+
+    navigate('/builder');
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col justify-between py-10 px-4 sm:px-6 lg:px-8">
-      {/* Top Bar with Enhancv Progress Bar */}
-      <div className="max-w-3xl mx-auto w-full space-y-4">
-        <div className="flex items-center justify-between text-xs text-slate-400">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-brand-500 animate-pulse" />
-            <span className="font-semibold text-white">Resume Studio Onboarding</span>
-          </div>
-          <span className="font-mono text-slate-400">Step {step} of 3</span>
-        </div>
-
-        {/* Multi-segment Progress Bar */}
-        <div className="grid grid-cols-3 gap-2">
-          <div className={`h-1.5 rounded-full transition-colors duration-300 ${step >= 1 ? 'bg-brand-500' : 'bg-slate-800'}`} />
-          <div className={`h-1.5 rounded-full transition-colors duration-300 ${step >= 2 ? 'bg-brand-500' : 'bg-slate-800'}`} />
-          <div className={`h-1.5 rounded-full transition-colors duration-300 ${step >= 3 ? 'bg-brand-500' : 'bg-slate-800'}`} />
-        </div>
-      </div>
-
-      {/* Main Step Content Container */}
-      <div className="max-w-3xl mx-auto w-full my-8">
-        {/* ================= STEP 1: GOAL / INTENT ================= */}
-        {step === 1 && (
-          <div className="space-y-8 animate-fadeIn">
-            <div className="text-center space-y-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-brand-400">
-                Enhancv Guided Experience • Step 1
+    <div className="flex-1 bg-canvas min-h-screen py-8 sm:py-12 flex flex-col justify-between text-ink">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 w-full">
+        {/* Top Enhancv-Style Multi-Segment Step Progress Bar */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-xs font-bold text-ink-muted">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-volt border border-ink animate-pulse" />
+              <span className="font-extrabold text-ink uppercase tracking-wider text-[11px]">
+                Resume Studio Onboarding
               </span>
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-                What brings you to Resume Studio today?
+            </div>
+            <span className="font-mono text-ink-muted text-[11px] font-bold">
+              Step {step} of 3 • {step === 1 ? 'Data Source' : step === 2 ? 'Choose Design' : 'Launch Resume'}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            <div className={`h-2 rounded-full border border-ink transition-colors duration-300 ${step >= 1 ? 'bg-ink' : 'bg-canvas-dark'}`} />
+            <div className={`h-2 rounded-full border border-ink transition-colors duration-300 ${step >= 2 ? 'bg-ink' : 'bg-canvas-dark'}`} />
+            <div className={`h-2 rounded-full border border-ink transition-colors duration-300 ${step >= 3 ? 'bg-ink' : 'bg-canvas-dark'}`} />
+          </div>
+        </div>
+
+        {/* ======================================================== */}
+        {/* SCREEN 1: HOW WOULD YOU LIKE TO START? (#1)              */}
+        {/* ======================================================== */}
+        {step === 1 && (
+          <div className="space-y-6">
+            <div className="text-center max-w-2xl mx-auto space-y-2">
+              <div className="eyebrow-tag justify-center">
+                <span className="w-2 h-2 rounded-full bg-volt border border-ink" />
+                <span>ONBOARDING • STEP 1</span>
+              </div>
+              <h1 className="text-3xl sm:text-4xl font-extrabold text-ink tracking-tight">
+                How would you like to build your resume?
               </h1>
-              <p className="text-slate-400 text-sm max-w-lg mx-auto">
-                Select your primary goal to help us personalize your workspace, AI assistant, and templates.
+              <p className="text-xs sm:text-sm text-ink-secondary leading-relaxed">
+                Import an existing resume to automatically extract all sections, or start fresh with our role-targeted writer.
               </p>
             </div>
 
-            {/* Interactive Goal Cards */}
-            <div className="grid grid-cols-1 gap-4">
-              {GOALS.map((goal) => {
-                const Icon = goal.icon;
-                const isSelected = selectedGoal === goal.id;
-
-                return (
-                  <button
-                    key={goal.id}
-                    type="button"
-                    onClick={() => setSelectedGoal(goal.id)}
-                    className={`text-left p-5 rounded-2xl border transition-all duration-200 cursor-pointer flex items-start gap-4 group ${
-                      isSelected
-                        ? 'bg-slate-800/90 border-brand-500 ring-2 ring-brand-500/30 shadow-lg'
-                        : 'bg-slate-800/40 border-slate-700/80 hover:bg-slate-800/70 hover:border-slate-600'
-                    }`}
-                  >
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
-                      isSelected ? 'bg-brand-600 text-white' : 'bg-slate-700 text-slate-300 group-hover:text-white'
+            {/* Two Primary Method Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Option A: Upload Existing Resume */}
+              <div
+                onClick={() => setMethod('upload')}
+                className={`card-surface p-5 sm:p-6 cursor-pointer transition-all flex flex-col justify-between ${
+                  method === 'upload'
+                    ? 'ring-2 ring-volt bg-white shadow-brutal-lg'
+                    : 'bg-white/70 hover:bg-white hover:shadow-brutal-sm'
+                }`}
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-volt text-ink border border-ink">
+                      Fastest (2 min)
+                    </span>
+                    <div className={`w-5 h-5 rounded-full border border-ink flex items-center justify-center ${
+                      method === 'upload' ? 'bg-ink text-white' : 'bg-canvas'
                     }`}>
-                      <Icon className="w-6 h-6" />
+                      {method === 'upload' && <Check className="w-3 h-3" />}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <h3 className="font-extrabold text-base text-ink flex items-center gap-2">
+                      <UploadCloud className="w-5 h-5 text-editorial-violet" />
+                      <span>Upload &amp; Extract Existing Resume</span>
+                    </h3>
+                    <p className="text-xs text-ink-secondary leading-relaxed">
+                      Upload your current PDF or Word resume. Our engine extracts your work experience, education, skills, and summary automatically into the builder.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Integrated Upload Dropzone when upload method is active */}
+                {method === 'upload' && (
+                  <div className="mt-4 pt-3 border-t border-ink/10 space-y-3" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                    />
+
+                    <div
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={handleFileDrop}
+                      onClick={() => fileInputRef.current?.click()}
+                      className={`border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-all ${
+                        uploadedFile
+                          ? 'border-emerald-500 bg-emerald-50/60'
+                          : 'border-ink/25 hover:border-ink hover:bg-canvas'
+                      }`}
+                    >
+                      {isParsing ? (
+                        <div className="py-2 flex flex-col items-center gap-2">
+                          <Loader2 className="w-6 h-6 text-editorial-violet animate-spin" />
+                          <p className="text-xs font-bold text-ink">Extracting resume data with AI parser...</p>
+                        </div>
+                      ) : uploadedFile ? (
+                        <div className="flex items-center justify-between text-left">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-full bg-emerald-100 border border-emerald-600 text-emerald-700 flex items-center justify-center font-bold">
+                              <Check className="w-4 h-4" />
+                            </div>
+                            <div className="space-y-0.5">
+                              <p className="text-xs font-extrabold text-ink truncate max-w-[200px]">{uploadedFile.name}</p>
+                              <p className="text-[10px] text-ink-muted font-mono">
+                                {(uploadedFile.size / 1024).toFixed(1)} KB • Extracted Successfully
+                              </p>
+                            </div>
+                          </div>
+                          <span className="text-[11px] font-bold text-editorial-violet underline">
+                            Replace
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="py-1 flex flex-col items-center gap-1.5">
+                          <UploadCloud className="w-7 h-7 text-ink" />
+                          <p className="text-xs font-bold text-ink">
+                            Drop PDF or DOCX here, or <span className="text-editorial-violet underline">Browse</span>
+                          </p>
+                          <p className="text-[10px] text-ink-muted">Accepts PDF, DOCX up to 10MB</p>
+                        </div>
+                      )}
                     </div>
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <h3 className="font-bold text-base text-white group-hover:text-brand-300 transition">
-                          {goal.title}
-                        </h3>
-                        <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-slate-700 text-slate-300 border border-slate-600">
-                          {goal.badge}
-                        </span>
+                    {parseError && (
+                      <div className="p-2.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4 shrink-0" />
+                        <span>{parseError}</span>
                       </div>
-                      <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                        {goal.desc}
-                      </p>
+                    )}
+
+                    {/* Extracted Sections Checklist */}
+                    {extractedData && (
+                      <div className="p-3.5 bg-canvas rounded-xl border border-ink/15 space-y-3 text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-[11px] uppercase tracking-wider text-ink-muted block">
+                            Extracted Sections Ready to Populate:
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setIsReviewOpen(true)}
+                            className="btn-secondary py-1 px-2.5 text-[11px] font-mono font-bold flex items-center gap-1 shadow-brutal-sm"
+                          >
+                            <Sparkles className="w-3 h-3 text-editorial-violet" />
+                            <span>Review Details</span>
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px]">
+                          <div className="flex items-center gap-1.5 text-emerald-700 font-semibold">
+                            <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                            <span className="truncate">{extractedData.personalInfo?.fullName || "Personal Info"}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-emerald-700 font-semibold">
+                            <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                            <span>{extractedData.experience?.length || 0} Work Roles</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-emerald-700 font-semibold">
+                            <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                            <span>{extractedData.projects?.length || 0} Projects</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-emerald-700 font-semibold">
+                            <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                            <span>{extractedData.education?.length || 0} Degrees</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-emerald-700 font-semibold">
+                            <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                            <span>{extractedData.skills?.length || 0} Skill Groups</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Option B: Create from Scratch */}
+              <div
+                onClick={() => setMethod('scratch')}
+                className={`card-surface p-5 sm:p-6 cursor-pointer transition-all flex flex-col justify-between ${
+                  method === 'scratch'
+                    ? 'ring-2 ring-volt bg-white shadow-brutal-lg'
+                    : 'bg-white/70 hover:bg-white hover:shadow-brutal-sm'
+                }`}
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-canvas text-ink border border-ink">
+                      Guided Writer
+                    </span>
+                    <div className={`w-5 h-5 rounded-full border border-ink flex items-center justify-center ${
+                      method === 'scratch' ? 'bg-ink text-white' : 'bg-canvas'
+                    }`}>
+                      {method === 'scratch' && <Check className="w-3 h-3" />}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <h3 className="font-extrabold text-base text-ink flex items-center gap-2">
+                      <Sparkles className="w-5 h-5 text-ink" />
+                      <span>Create New Resume from Scratch</span>
+                    </h3>
+                    <p className="text-xs text-ink-secondary leading-relaxed">
+                      Start fresh with our calibrated layout engine. Select your target role and seniority, and our AI assistant will recommend power bullet points.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Target Role & Seniority Selector when scratch is active */}
+                {method === 'scratch' && (
+                  <div className="mt-4 pt-3 border-t border-ink/10 space-y-3" onClick={(e) => e.stopPropagation()}>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-ink">Target Job Title</label>
+                      <input
+                        type="text"
+                        value={targetRole}
+                        onChange={(e) => setTargetRole(e.target.value)}
+                        placeholder="e.g. Senior Full Stack Engineer"
+                        className="input-base text-xs"
+                      />
                     </div>
 
-                    <div className={`w-6 h-6 rounded-full border flex items-center justify-center shrink-0 mt-1 transition ${
-                      isSelected ? 'border-brand-500 bg-brand-500 text-white' : 'border-slate-600'
-                    }`}>
-                      {isSelected && <Check className="w-3.5 h-3.5" />}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-ink">Experience Level</label>
+                      <select
+                        value={seniority}
+                        onChange={(e) => setSeniority(e.target.value)}
+                        className="input-base text-xs font-medium cursor-pointer"
+                      >
+                        {SENIORITY_LEVELS.map((lvl) => (
+                          <option key={lvl.id} value={lvl.id}>
+                            {lvl.label} ({lvl.desc.split('•')[0].trim()})
+                          </option>
+                        ))}
+                      </select>
                     </div>
-                  </button>
-                );
-              })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Bottom Step 1 Action */}
+            <div className="flex items-center justify-between pt-4 border-t border-ink/10">
+              <div className="flex items-center gap-2 text-xs text-ink-muted font-medium">
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                <span>Privacy First • No Credit Card Required</span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setStep(2)}
+                disabled={method === 'upload' && !extractedData && !uploadedFile}
+                className="btn-volt py-3 px-8 text-xs sm:text-sm font-extrabold shadow-brutal flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                <span>Continue to Step 2: Choose Template</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
             </div>
           </div>
         )}
 
-        {/* ================= STEP 2: TARGET ROLE & SENIORITY ================= */}
+        {/* ======================================================== */}
+        {/* SCREEN 2: CHOOSE TEMPLATE & STYLE (#2)                   */}
+        {/* ======================================================== */}
         {step === 2 && (
-          <div className="space-y-8 animate-fadeIn">
-            <div className="text-center space-y-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-brand-400">
-                Enhancv Guided Experience • Step 2
-              </span>
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-                What role and experience level are you targeting?
+          <div className="space-y-6">
+            <div className="text-center max-w-2xl mx-auto space-y-2">
+              <div className="eyebrow-tag justify-center">
+                <span className="w-2 h-2 rounded-full bg-volt border border-ink" />
+                <span>ONBOARDING • STEP 2</span>
+              </div>
+              <h1 className="text-3xl sm:text-4xl font-extrabold text-ink tracking-tight">
+                Choose your foundation template
               </h1>
-              <p className="text-slate-400 text-sm max-w-lg mx-auto">
-                This enables our AI engine to tailor bullet points and suggest industry keywords matching your seniority.
+              <p className="text-xs sm:text-sm text-ink-secondary leading-relaxed">
+                {method === 'upload' && extractedData
+                  ? `Your extracted data for ${extractedData.personalInfo?.fullName || "Candidate"} will be rendered inside your chosen template.`
+                  : `Tailored for ${targetRole}. You can switch templates anytime inside the live editor.`}
               </p>
             </div>
 
-            {/* Target Role Input & Chips */}
-            <div className="bg-slate-800/40 p-5 rounded-2xl border border-slate-700/80 space-y-4">
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
-                Target Job Title
-              </label>
-              <input
-                type="text"
-                value={targetRole}
-                onChange={(e) => setTargetRole(e.target.value)}
-                placeholder="e.g. Senior Full Stack Engineer"
-                className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-              />
-
-              {/* Popular Role Chips */}
-              <div className="space-y-2">
-                <span className="text-[11px] text-slate-400">Popular roles:</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {POPULAR_ROLES.map((role) => (
+            {/* Category Filter Pills & Swatches */}
+            <div className="card-surface p-4 sm:p-5 bg-white space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                {/* Category Filter */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+                  {[
+                    { id: 'all', label: 'All Designs' },
+                    { id: 'modern', label: 'Modern Sidebar' },
+                    { id: 'ats', label: 'ATS-Friendly' },
+                    { id: 'minimalist', label: 'Minimalist' },
+                    { id: 'developer', label: 'Developer' },
+                    { id: 'executive', label: 'Executive' }
+                  ].map((cat) => (
                     <button
-                      key={role}
+                      key={cat.id}
                       type="button"
-                      onClick={() => setTargetRole(role)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
-                        targetRole === role
-                          ? 'bg-brand-600 text-white font-semibold'
-                          : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                      onClick={() => setSelectedCategory(cat.id)}
+                      className={`px-3 py-1 rounded-full text-xs font-bold transition cursor-pointer border ${
+                        selectedCategory === cat.id
+                          ? 'bg-ink text-white border-ink shadow-brutal-sm'
+                          : 'bg-canvas text-ink border-ink/20 hover:bg-canvas-dark'
                       }`}
                     >
-                      {role}
+                      {cat.label}
                     </button>
                   ))}
                 </div>
-              </div>
-            </div>
 
-            {/* Seniority Selector */}
-            <div className="space-y-3">
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
-                Experience Seniority Level
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {SENIORITY_LEVELS.map((lvl) => {
-                  const isSelected = seniority === lvl.id;
+                {/* Color Swatch Picker */}
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-mono font-bold text-ink-muted uppercase">Accent:</span>
+                  <div className="flex items-center gap-1.5">
+                    {COLOR_SWATCHES.map((swatch) => (
+                      <button
+                        key={swatch.color}
+                        type="button"
+                        onClick={() => setChosenColor(swatch.color)}
+                        title={swatch.name}
+                        className={`w-5 h-5 rounded-full border border-ink transition-transform cursor-pointer ${
+                          chosenColor === swatch.color ? 'scale-125 ring-2 ring-ink shadow-sm' : 'hover:scale-110'
+                        }`}
+                        style={{ backgroundColor: swatch.color }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Templates Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[520px] overflow-y-auto pr-1">
+                {filteredTemplates.slice(0, 9).map((tpl) => {
+                  const isSelected = chosenTemplateId === tpl.id;
+
                   return (
-                    <button
-                      key={lvl.id}
-                      type="button"
-                      onClick={() => setSeniority(lvl.id)}
-                      className={`text-left p-3.5 rounded-xl border transition cursor-pointer ${
+                    <div
+                      key={tpl.id}
+                      onClick={() => handleSelectTemplate(tpl.id)}
+                      className={`card-surface p-3.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between group ${
                         isSelected
-                          ? 'bg-slate-800 border-brand-500 ring-1 ring-brand-500/40 text-white'
-                          : 'bg-slate-800/40 border-slate-700 text-slate-300 hover:bg-slate-800/70'
+                          ? 'ring-2 ring-volt border-ink shadow-brutal-lg bg-white'
+                          : 'border-ink/20 bg-white/70 hover:bg-white hover:border-ink'
                       }`}
                     >
-                      <div className="font-bold text-xs text-white flex items-center justify-between">
-                        <span>{lvl.label}</span>
-                        {isSelected && <Check className="w-3.5 h-3.5 text-brand-400" />}
+                      {/* Top Bar */}
+                      <div className="flex items-center justify-between pb-2 text-xs">
+                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-volt text-ink border border-ink">
+                          {tpl.badge || tpl.category}
+                        </span>
+                        <div className="flex items-center gap-1 text-[11px] font-bold text-ink">
+                          <Star className="w-3 h-3 text-amber-500 fill-amber-400" />
+                          <span>{tpl.rating}</span>
+                        </div>
                       </div>
-                      <p className="text-[11px] text-slate-400 mt-1">{lvl.desc}</p>
-                    </button>
+
+                      {/* Miniature Paper Sheet Preview */}
+                      <div className="bg-canvas p-2.5 rounded-lg border border-ink/10 flex items-center justify-center overflow-hidden aspect-[210/297] my-1">
+                        <div className="w-full h-full rounded shadow-sm overflow-hidden transform transition-transform group-hover:scale-[1.02]">
+                          <TemplateDraftPaper template={{ ...tpl, accentColor: chosenColor }} />
+                        </div>
+                      </div>
+
+                      {/* Card Info */}
+                      <div className="pt-2 flex items-center justify-between gap-2">
+                        <div className="truncate">
+                          <h4 className="font-extrabold text-xs text-ink truncate">{tpl.name}</h4>
+                          <span className="text-[10px] text-ink-muted capitalize">{tpl.layout}</span>
+                        </div>
+                        <button
+                          type="button"
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-bold shrink-0 transition ${
+                            isSelected ? 'bg-ink text-white' : 'bg-canvas text-ink border border-ink/20'
+                          }`}
+                        >
+                          {isSelected ? '✓ Selected' : 'Choose'}
+                        </button>
+                      </div>
+                    </div>
                   );
                 })}
               </div>
             </div>
+
+            {/* Bottom Step 2 Navigation */}
+            <div className="flex items-center justify-between pt-4 border-t border-ink/10">
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                className="btn-secondary py-2.5 px-5 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back to Step 1</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setStep(3)}
+                className="btn-volt py-3 px-8 text-xs sm:text-sm font-extrabold shadow-brutal flex items-center gap-2 cursor-pointer"
+              >
+                <span>Continue to Step 3: Review &amp; Launch</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         )}
 
-        {/* ================= STEP 3: TEMPLATE SELECTION ================= */}
+        {/* ======================================================== */}
+        {/* SCREEN 3: REVIEW & LAUNCH RESUME (#3)                    */}
+        {/* ======================================================== */}
         {step === 3 && (
-          <div className="space-y-8 animate-fadeIn">
-            <div className="text-center space-y-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-brand-400">
-                Enhancv Guided Experience • Step 3
-              </span>
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-                Pick your foundation template
+          <div className="space-y-6">
+            <div className="text-center max-w-2xl mx-auto space-y-2">
+              <div className="eyebrow-tag justify-center">
+                <span className="w-2 h-2 rounded-full bg-volt border border-ink" />
+                <span>ONBOARDING • STEP 3 (FINAL)</span>
+              </div>
+              <h1 className="text-3xl sm:text-4xl font-extrabold text-ink tracking-tight">
+                Your resume is ready to populate
               </h1>
-              <p className="text-slate-400 text-sm max-w-lg mx-auto">
-                Recommended based on your target role ({targetRole}) and seniority ({seniority}). You can switch templates anytime in the live builder without retyping.
+              <p className="text-xs sm:text-sm text-ink-secondary leading-relaxed">
+                We're ready to launch the editor with your extracted sections mapped directly into your chosen design.
               </p>
             </div>
 
-            {/* 4 Recommended Authentic Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {recommendedTemplates.map((tpl) => {
-                const isSelected = localTemplateId === tpl.id;
+            {/* Enhancv Summary Review Card */}
+            <div className="card-surface p-6 sm:p-8 bg-white space-y-6 shadow-brutal-lg">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+                {/* Left: Chosen Template Miniature */}
+                <div className="md:col-span-1 flex flex-col items-center">
+                  <div className="w-full max-w-[190px] aspect-[210/297] rounded-xl bg-white shadow-paper border border-ink overflow-hidden p-1">
+                    <TemplateDraftPaper template={{ ...activeTemplateObj, accentColor: chosenColor }} />
+                  </div>
+                  <span className="mt-2 text-xs font-extrabold text-ink">{activeTemplateObj.name}</span>
+                  <span className="text-[10px] font-mono text-ink-muted uppercase">{activeTemplateObj.layout}</span>
+                </div>
 
-                return (
-                  <div
-                    key={tpl.id}
-                    onClick={() => setLocalTemplateId(tpl.id)}
-                    className={`rounded-2xl border transition-all duration-200 overflow-hidden cursor-pointer flex flex-col justify-between group ${
-                      isSelected
-                        ? 'bg-slate-800 border-brand-500 ring-2 ring-brand-500/30 shadow-xl'
-                        : 'bg-slate-800/50 border-slate-700 hover:border-slate-500'
-                    }`}
-                  >
-                    {/* Top Bar */}
-                    <div className="px-3 py-2 flex items-center justify-between border-b border-slate-700 text-[10px]">
-                      <span className="font-bold uppercase tracking-wider text-brand-400 truncate">
-                        {tpl.badge}
-                      </span>
-                      <div className="flex items-center gap-1 text-amber-400">
-                        <Star className="w-3 h-3 fill-amber-400" />
-                        <span>{tpl.rating}</span>
-                      </div>
-                    </div>
-
-                    {/* Miniature Paper Sheet */}
-                    <div className="p-3 bg-slate-900/80 flex items-center justify-center">
-                      <div className="w-full max-w-[160px] aspect-[210/297] rounded-sm bg-white shadow-md overflow-hidden transform transition-transform group-hover:scale-105">
-                        <TemplateDraftPaper template={tpl} />
-                      </div>
-                    </div>
-
-                    {/* Footer Info */}
-                    <div className="p-3 bg-slate-800 space-y-1">
-                      <div className="font-bold text-xs text-white truncate">{tpl.name}</div>
-                      <div className="text-[10px] text-slate-400 capitalize">{tpl.layout}</div>
-                      <div className="pt-2">
-                        <span className={`w-full py-1 rounded-lg text-center block text-[11px] font-semibold transition ${
-                          isSelected ? 'bg-brand-600 text-white' : 'bg-slate-700 text-slate-300'
-                        }`}>
-                          {isSelected ? '✓ Selected' : 'Choose Design'}
+                {/* Right: Extracted Sections Summary */}
+                <div className="md:col-span-2 space-y-4">
+                  <div className="p-4 bg-canvas rounded-2xl border border-ink/15 space-y-3">
+                    <div className="flex items-center justify-between border-b border-ink/10 pb-2.5">
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-editorial-violet" />
+                        <span className="font-extrabold text-sm text-ink">
+                          {method === 'upload' && extractedData?.personalInfo?.fullName
+                            ? extractedData.personalInfo.fullName
+                            : (resumeData?.personalInfo?.fullName || "Candidate Resume")}
                         </span>
+                      </div>
+                      <span className="text-[10px] font-mono font-bold bg-volt px-2 py-0.5 rounded border border-ink">
+                        {method === 'upload' ? 'Auto-Extracted' : 'Clean Slate'}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 text-xs">
+                      <div>
+                        <span className="text-[10px] text-ink-muted uppercase font-bold block">Target Role</span>
+                        <span className="font-bold text-ink">
+                          {targetRole || extractedData?.personalInfo?.professionalTitle || "Professional"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-ink-muted uppercase font-bold block">Selected Color</span>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="w-3.5 h-3.5 rounded-full border border-ink" style={{ backgroundColor: chosenColor }} />
+                          <span className="font-mono text-[11px] font-bold">{chosenColor}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                );
-              })}
+
+                  {/* Sections Breakdown */}
+                  <div className="space-y-2">
+                    <span className="text-xs font-bold text-ink block uppercase tracking-wide">
+                      Populated Sections Breakdown:
+                    </span>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+                      <div className="p-3 bg-canvas rounded-xl border border-ink/10">
+                        <span className="text-lg font-black text-ink">
+                          {method === 'upload' && extractedData ? (extractedData.experience?.length || 0) : 2}
+                        </span>
+                        <span className="text-[10px] font-bold text-ink-muted uppercase block">Experience</span>
+                      </div>
+                      <div className="p-3 bg-canvas rounded-xl border border-ink/10">
+                        <span className="text-lg font-black text-ink">
+                          {method === 'upload' && extractedData ? (extractedData.education?.length || 0) : 1}
+                        </span>
+                        <span className="text-[10px] font-bold text-ink-muted uppercase block">Education</span>
+                      </div>
+                      <div className="p-3 bg-canvas rounded-xl border border-ink/10">
+                        <span className="text-lg font-black text-ink">
+                          {method === 'upload' && extractedData ? (extractedData.skills?.length || 0) : 3}
+                        </span>
+                        <span className="text-[10px] font-bold text-ink-muted uppercase block">Skill Groups</span>
+                      </div>
+                      <div className="p-3 bg-canvas rounded-xl border border-ink/10">
+                        <span className="text-lg font-black text-ink">
+                          {method === 'upload' && extractedData ? (extractedData.projects?.length || 0) : 2}
+                        </span>
+                        <span className="text-[10px] font-bold text-ink-muted uppercase block">Projects</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ATS Compatibility Preview */}
+                  <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-300 text-emerald-800 text-xs flex items-center gap-2 font-medium">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>Formatted with ATS-safe semantic tags, linear hierarchy, and high-DPI PDF compatibility.</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Big Launch Action Button */}
+              <div className="pt-2 border-t border-ink/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <button
+                  type="button"
+                  onClick={() => setStep(2)}
+                  className="btn-secondary py-2.5 px-5 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Back to Templates</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleLaunchBuilder}
+                  className="w-full sm:w-auto btn-volt py-3.5 px-10 text-sm font-extrabold shadow-brutal flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Sparkles className="w-4 h-4 text-ink" />
+                  <span>Open in Live Resume Editor</span>
+                  <ArrowRight className="w-4 h-4 text-ink" />
+                </button>
+              </div>
             </div>
           </div>
         )}
-      </div>
 
-      {/* Bottom Navigation Toolbar */}
-      <div className="max-w-3xl mx-auto w-full pt-6 border-t border-slate-800 flex items-center justify-between text-xs">
-        {step > 1 ? (
-          <button
-            type="button"
-            onClick={() => setStep(step - 1)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Previous Step</span>
-          </button>
-        ) : (
-          <div className="text-[11px] text-slate-500 flex items-center gap-1">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Privacy-First • No Account Required</span>
-          </div>
-        )}
-
-        {step < 3 ? (
-          <button
-            type="button"
-            onClick={() => setStep(step + 1)}
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold transition shadow-sm active:scale-95 cursor-pointer"
-          >
-            <span>Continue</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={handleFinishOnboarding}
-            className="inline-flex items-center gap-2 px-7 py-3 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white font-extrabold text-sm shadow-lg shadow-brand-500/25 transition active:scale-95 cursor-pointer"
-          >
-            <Sparkles className="w-4 h-4" />
-            <span>Launch Live Split-Screen Builder</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
+        {/* Modal for In-depth Extraction Review */}
+        {rawParseResult && (
+          <ExtractionReviewModal
+            isOpen={isReviewOpen}
+            onClose={() => setIsReviewOpen(false)}
+            onConfirm={(editedData) => {
+              setExtractedData(editedData);
+              setIsReviewOpen(false);
+            }}
+            parseResult={rawParseResult}
+          />
         )}
       </div>
     </div>

@@ -14,10 +14,9 @@ export function Navbar() {
   const handleBuildYours = async () => {
     requireAuth(async () => {
       try {
-        await createNewResume('ats-01', 'My Resume');
-        navigate('/builder');
+        navigate('/onboarding#1');
       } catch (e) {
-        navigate('/builder');
+        navigate('/onboarding#1');
       }
     }, 'Enter your company access code to open the resume editor.');
   };

@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { resumeService } from '../services/resumeService';
 import { useResume } from '../context/ResumeContext';
+import { ExtractionReviewModal } from '../components/resume/ExtractionReviewModal';
 
 export function UploadResume() {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ export function UploadResume() {
   const [file, setFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [parseResult, setParseResult] = useState(null);
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [error, setError] = useState(null);
 
   const handleFileChange = (e) => {
@@ -20,6 +22,7 @@ export function UploadResume() {
       setFile(e.target.files[0]);
       setError(null);
       setParseResult(null);
+      setIsReviewOpen(false);
     }
   };
 
@@ -32,6 +35,7 @@ export function UploadResume() {
       const response = await resumeService.parseResumeFile(file);
       if (response.success && response.data) {
         setParseResult(response.data);
+        setIsReviewOpen(true);
       } else {
         setError(response.message || 'Failed to parse resume document.');
       }
@@ -43,9 +47,10 @@ export function UploadResume() {
     }
   };
 
-  const handleApplyToBuilder = () => {
-    if (parseResult?.resume_data) {
-      setResumeData(parseResult.resume_data);
+  const handleApplyToBuilder = (dataToApply) => {
+    const finalData = dataToApply || parseResult?.resume_data;
+    if (finalData) {
+      setResumeData(finalData);
       navigate('/builder');
     }
   };
@@ -140,25 +145,34 @@ export function UploadResume() {
             <div className="flex items-center justify-between pb-4 border-b border-ink/10">
               <div className="space-y-1">
                 <span className="badge-volt">
-                  Parsing Completed
+                  Parsing Completed • {parseResult.confidence_score || 85}% Confidence
                 </span>
                 <h3 className="text-lg font-extrabold text-ink mt-1">
                   Extracted {parseResult.resume_data?.personalInfo?.fullName || 'Candidate'} Qualifications
                 </h3>
               </div>
-              <button
-                onClick={handleApplyToBuilder}
-                className="btn-volt py-2.5 px-5 text-xs shadow-brutal-sm"
-              >
-                <span>Open in Resume Editor</span>
-                <ArrowRight className="w-3.5 h-3.5 ml-1" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsReviewOpen(true)}
+                  className="btn-secondary py-2 px-3 text-xs shadow-brutal-sm flex items-center gap-1.5"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-editorial-violet" />
+                  <span>Review Details</span>
+                </button>
+                <button
+                  onClick={() => handleApplyToBuilder(parseResult.resume_data)}
+                  className="btn-volt py-2.5 px-5 text-xs shadow-brutal-sm"
+                >
+                  <span>Open in Resume Editor</span>
+                  <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                </button>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
               <div className="p-4 rounded-2xl bg-canvas border border-ink/20 space-y-1">
                 <div className="text-ink-muted font-mono font-bold uppercase text-[10px]">Contact Info</div>
-                <div className="font-extrabold text-ink">
+                <div className="font-extrabold text-ink truncate">
                   {parseResult.resume_data?.personalInfo?.fullName || 'Extracted'}
                 </div>
                 <div className="text-ink-muted truncate">{parseResult.resume_data?.personalInfo?.email}</div>
@@ -173,6 +187,15 @@ export function UploadResume() {
                 </div>
               </div>
               <div className="p-4 rounded-2xl bg-canvas border border-ink/20 space-y-1">
+                <div className="text-ink-muted font-mono font-bold uppercase text-[10px]">Projects</div>
+                <div className="font-extrabold text-ink">
+                  {(parseResult.resume_data?.projects || []).length} Projects Found
+                </div>
+                <div className="text-ink-muted truncate">
+                  {parseResult.resume_data?.projects?.[0]?.name || 'Extracted'}
+                </div>
+              </div>
+              <div className="p-4 rounded-2xl bg-canvas border border-ink/20 space-y-1">
                 <div className="text-ink-muted font-mono font-bold uppercase text-[10px]">Skills & Tech</div>
                 <div className="font-extrabold text-ink">
                   {(parseResult.resume_data?.skills || []).reduce((acc, c) => acc + (c.items?.length || 0), 0)} Keywords
@@ -182,6 +205,17 @@ export function UploadResume() {
             </div>
           </div>
         )}
+
+        {/* Extraction Review & Verification Modal */}
+        <ExtractionReviewModal
+          isOpen={isReviewOpen}
+          onClose={() => setIsReviewOpen(false)}
+          onConfirm={(editedData) => {
+            setIsReviewOpen(false);
+            handleApplyToBuilder(editedData);
+          }}
+          parseResult={parseResult}
+        />
       </div>
     </div>
   );

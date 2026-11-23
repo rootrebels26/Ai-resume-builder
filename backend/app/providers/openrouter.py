@@ -89,3 +89,6 @@ class OpenRouterProvider(BaseAIProvider):
 
     async def tailor_resume(self, request: TailorResumeRequest) -> TailorResumeResponse:
         return await self.fallback.tailor_resume(request)
+
+    async def parse_resume_document(self, text: str, layout_metadata: dict = None) -> dict:
+        return await self.fallback.parse_resume_document(text, layout_metadata)
