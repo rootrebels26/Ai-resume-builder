@@ -43,6 +43,19 @@ function normaliseError(error) {
   };
 }
 
+apiClient.interceptors.request.use((config) => {
+  try {
+    const token = localStorage.getItem('resume_studio_access_token');
+    if (token) {
+      config.headers = config.headers || {};
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  } catch (e) {
+    // Ignore localStorage access failures
+  }
+  return config;
+});
+
 apiClient.interceptors.response.use(
   (response) => response.data,
   (error) => {

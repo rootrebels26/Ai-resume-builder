@@ -49,6 +49,26 @@ export function ContactList({ personalInfo = {}, className = "", iconClass = "w-
   );
 }
 
+export function ContinuationHeader({ personalInfo = {}, color = "#1e293b", pageNumber = 2, totalPages = 2, className = "" }) {
+  return (
+    <div className={`pb-2 mb-3.5 border-b-2 flex justify-between items-baseline select-none ${className}`} style={{ borderColor: color }}>
+      <div>
+        <span className="text-base sm:text-lg font-bold tracking-tight uppercase text-slate-900">
+          {personalInfo.fullName || "Resume"}
+        </span>
+        {personalInfo.professionalTitle && (
+          <span className="text-xs font-medium text-slate-600 ml-2">
+            — {personalInfo.professionalTitle}
+          </span>
+        )}
+      </div>
+      <span className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">
+        Page {pageNumber} of {totalPages}
+      </span>
+    </div>
+  );
+}
+
 export function SectionHeading({ title, variant = "underline", color = "#0284c7", className = "" }) {
   if (!title) return null;
 
@@ -227,7 +247,7 @@ export function SkillsSection({ categories = [], pillVariant = false, accentColo
     return (
       <div className="space-y-1.5">
         {categories.map((cat, idx) => (
-          <div key={idx} className="text-xs">
+          <div key={idx} className="text-xs break-inside-avoid">
             <span className="font-semibold text-slate-800 mr-2">{cat.category}:</span>
             <div className="inline-flex flex-wrap gap-1 mt-0.5">
               {cat.items.map((item, iIdx) => (
@@ -248,7 +268,7 @@ export function SkillsSection({ categories = [], pillVariant = false, accentColo
   return (
     <div className="space-y-1 text-xs">
       {categories.map((cat, idx) => (
-        <div key={idx} className="leading-relaxed">
+        <div key={idx} className="leading-relaxed break-inside-avoid">
           <span className="font-semibold text-slate-800">{cat.category}: </span>
           <span className="text-slate-700">{cat.items.join(', ')}</span>
         </div>

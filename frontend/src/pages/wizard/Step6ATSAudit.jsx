@@ -72,52 +72,52 @@ export function Step6ATSAudit({ onNext, onPrev }) {
       </div>
 
       {isAuditing && !atsData ? (
-        <div className="py-20 text-center space-y-3 bg-white rounded-2xl border border-slate-200">
-          <Loader2 className="w-8 h-8 animate-spin text-brand-600 mx-auto" />
+        <div className="py-20 text-center space-y-3 card-surface">
+          <Loader2 className="w-8 h-8 animate-spin text-brand-500 mx-auto" />
           <p className="text-xs font-semibold text-slate-700">Evaluating 27 algorithmic checks across resume sections...</p>
         </div>
       ) : atsData ? (
         <div className="space-y-6">
           {/* Main Score Hero Card */}
-          <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="card-surface p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="space-y-2 text-center sm:text-left">
-              <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                 {atsData.is_ats_friendly ? "ATS Certified Architecture" : "Requires Minor Optimizations"}
               </span>
-              <h3 className="text-2xl font-bold text-slate-900">Overall ATS Score: {atsData.compatibility_score}/100</h3>
-              <p className="text-xs text-slate-500 max-w-md">
+              <h3 className="text-2xl font-extrabold text-slate-900">Overall ATS Score: {atsData.compatibility_score}/100</h3>
+              <p className="text-xs text-slate-500 max-w-md leading-relaxed">
                 Targeting <strong>{selectedJob?.role || 'Selected Role'}</strong>. Verified {passedChecks} passed, {warningChecks} optimizations, and {failChecks} critical items out of 27 checks.
               </p>
             </div>
 
-            <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-slate-50 border border-slate-200 w-32 h-32 shrink-0">
+            <div className="flex flex-col items-center justify-center p-4 rounded-3xl bg-slate-50 border border-slate-200/90 w-32 h-32 shrink-0 shadow-2xs">
               <span className={`text-4xl font-black ${
                 atsData.compatibility_score >= 80 ? "text-emerald-600" : (atsData.compatibility_score >= 60 ? "text-amber-500" : "text-rose-600")
               }`}>
                 {atsData.compatibility_score}%
               </span>
-              <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mt-1">Audit Score</span>
+              <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-1">Audit Score</span>
             </div>
           </div>
 
           {/* Submetrics Breakdown */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
-              <div className="text-2xl font-bold text-slate-900">{atsData.readability_score}%</div>
-              <div className="text-xs text-slate-500 mt-0.5">Readability & Action Verbs</div>
+            <div className="card-surface p-4.5 space-y-1">
+              <div className="text-2xl font-extrabold text-slate-900">{atsData.readability_score}%</div>
+              <div className="text-xs text-slate-500 font-medium">Readability & Action Verbs</div>
             </div>
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
-              <div className="text-2xl font-bold text-slate-900">{atsData.formatting_score}%</div>
-              <div className="text-xs text-slate-500 mt-0.5">Structure & Layout Precision</div>
+            <div className="card-surface p-4.5 space-y-1">
+              <div className="text-2xl font-extrabold text-slate-900">{atsData.formatting_score}%</div>
+              <div className="text-xs text-slate-500 font-medium">Structure & Layout Precision</div>
             </div>
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
-              <div className="text-2xl font-bold text-slate-900">{atsData.keyword_score}%</div>
-              <div className="text-xs text-slate-500 mt-0.5">Job Keyword Coverage</div>
+            <div className="card-surface p-4.5 space-y-1">
+              <div className="text-2xl font-extrabold text-slate-900">{atsData.keyword_score}%</div>
+              <div className="text-xs text-slate-500 font-medium">Job Keyword Coverage</div>
             </div>
           </div>
 
           {/* 27-Check Inspector with Filter Pills */}
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-2xs space-y-4 text-xs">
+          <div className="card-surface p-6 sm:p-7 space-y-4 text-xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
               <div>
                 <h4 className="font-bold text-slate-900 text-sm">27-Check Transparent ATS Breakdown</h4>
@@ -139,9 +139,9 @@ export function Step6ATSAudit({ onNext, onPrev }) {
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`whitespace-nowrap px-3 py-1.5 rounded-lg font-medium transition cursor-pointer text-xs ${
+                  className={`whitespace-nowrap px-3 py-1.5 rounded-xl font-semibold transition cursor-pointer text-xs ${
                     selectedCategory === cat
-                      ? 'bg-slate-900 text-white font-semibold'
+                      ? 'bg-slate-900 text-white font-bold shadow-2xs'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
@@ -158,7 +158,7 @@ export function Step6ATSAudit({ onNext, onPrev }) {
                 return (
                   <div
                     key={check.id}
-                    className="border border-slate-200 rounded-xl overflow-hidden bg-slate-50/60 transition"
+                    className="border border-slate-200/80 rounded-2xl overflow-hidden bg-slate-50/60 transition"
                   >
                     <button
                       type="button"
@@ -211,7 +211,7 @@ export function Step6ATSAudit({ onNext, onPrev }) {
                           </span>
                         </div>
                         {check.recommended_fix && (
-                          <div className="pt-1 text-brand-700 font-medium">
+                          <div className="pt-1 text-brand-600 font-medium">
                             <span className="font-bold">Recommended Action: </span>
                             {check.recommended_fix}
                           </div>
@@ -248,7 +248,7 @@ export function Step6ATSAudit({ onNext, onPrev }) {
       <div className="flex justify-between items-center pt-2">
         <button
           onClick={onPrev}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer"
+          className="btn-secondary py-2 px-4 text-xs"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Back to AI Optimization</span>
@@ -256,7 +256,7 @@ export function Step6ATSAudit({ onNext, onPrev }) {
 
         <button
           onClick={onNext}
-          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs shadow transition active:scale-95 cursor-pointer"
+          className="btn-primary py-2 px-5 text-xs shadow-sm"
         >
           <span>Generate Final Resume</span>
           <ArrowRight className="w-4 h-4" />

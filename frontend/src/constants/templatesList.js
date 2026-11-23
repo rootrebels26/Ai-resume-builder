@@ -1,3 +1,7 @@
+export const isFullBleedTemplate = (templateId) => {
+  return typeof templateId === 'string' && templateId.startsWith('modern-');
+};
+
 export const TEMPLATE_CATEGORIES = [
   { id: "all", name: "All Templates" },
   { id: "ats", name: "ATS-Friendly (10)" },

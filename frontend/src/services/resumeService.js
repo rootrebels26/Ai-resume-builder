@@ -13,20 +13,6 @@ export const resumeService = {
     });
   },
 
-  // Analyze job description
-  async analyzeJobDescription(jobData) {
-    return await apiClient.post('/jobs/analyze', jobData);
-  },
-
-  // Match resume with job description
-  async matchResumeWithJob(resumeData, jobDescription, jobTitle = '') {
-    return await apiClient.post('/jobs/match-resume', {
-      resume_data: resumeData,
-      job_description: jobDescription,
-      job_title: jobTitle,
-    });
-  },
-
   // Analyze ATS compatibility
   async analyzeATS(resumeData, jobDescription = '') {
     return await apiClient.post('/ats/analyze', {

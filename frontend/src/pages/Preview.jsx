@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, Download, Printer, Edit } from 'lucide-react';
 import { useResume } from '../context/ResumeContext';
 import { ResumeTemplate } from '../components/templates/ResumeTemplate';
+import { isFullBleedTemplate } from '../constants/templatesList';
 import { pdfService } from '../services/pdfService';
 
 export function Preview() {
@@ -17,12 +18,12 @@ export function Preview() {
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-slate-200/80">
+    <div className="flex-1 flex flex-col bg-slate-200/70 min-h-screen">
       {/* Action Header */}
-      <div className="bg-white border-b border-slate-200 px-6 py-3 flex justify-between items-center no-print sticky top-16 z-30 shadow-2xs">
+      <div className="bg-white border-b border-slate-200/90 px-6 py-3 flex justify-between items-center no-print sticky top-16 z-30 shadow-2xs">
         <Link
           to="/builder"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900"
+          className="btn-secondary py-1.5 px-3 text-xs"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to Editor</span>
@@ -31,7 +32,7 @@ export function Preview() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => pdfService.print()}
-            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-semibold"
+            className="btn-secondary py-1.5 px-3 text-xs"
           >
             <Printer className="w-3.5 h-3.5" />
             <span>Print</span>
@@ -39,7 +40,7 @@ export function Preview() {
 
           <button
             onClick={handleDownloadPDF}
-            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold shadow"
+            className="btn-primary py-1.5 px-4 text-xs shadow-sm"
           >
             <Download className="w-3.5 h-3.5" />
             <span>Download PDF</span>
@@ -51,12 +52,13 @@ export function Preview() {
       <div className="flex-1 p-8 overflow-auto flex justify-center items-start">
         <div
           ref={printRef}
-          className="resume-a4-page bg-white shadow-2xl text-slate-900"
+          className="resume-a4-page bg-white shadow-paper rounded-sm border border-slate-200/90 text-slate-900"
           style={{
             width: '210mm',
-            minHeight: '297mm',
-            padding: '18mm',
-            boxSizing: 'border-box'
+            height: '297mm',
+            padding: isFullBleedTemplate(resumeData?.templateId) ? '0' : '18mm',
+            boxSizing: 'border-box',
+            overflow: 'hidden'
           }}
         >
           <ResumeTemplate

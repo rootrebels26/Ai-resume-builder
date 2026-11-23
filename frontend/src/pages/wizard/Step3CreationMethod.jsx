@@ -32,8 +32,7 @@ export function Step3CreationMethod({ onNext, onPrev }) {
       if (res.success && res.data) {
         setParseResult(res.data);
         if (res.data.resume_data) {
-          // Pre-populate resumeData while preserving selected templateId
-          setResumeData(prev => ({
+          setResumeData((prev) => ({
             ...res.data.resume_data,
             templateId: prev.templateId || 'ats-01'
           }));
@@ -65,34 +64,34 @@ export function Step3CreationMethod({ onNext, onPrev }) {
           How Would You Like To Build Your Resume?
         </h2>
         <p className="text-slate-600 text-xs sm:text-sm max-w-xl mx-auto">
-          Start from scratch using our guided multi-step form, or upload an existing PDF or DOCX file to automatically pre-fill your sections.
+          Start from scratch with our guided multi-step form, or upload an existing PDF/DOCX to pre-fill your qualifications.
         </p>
       </div>
 
       {/* Dual Options Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* OPTION A: FROM SCRATCH */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-2xs hover:border-brand-500 transition flex flex-col justify-between space-y-6">
+        <div className="card-surface p-7 flex flex-col justify-between space-y-6 border-slate-200 hover:border-brand-500 hover:shadow-card-hover transition-all">
           <div className="space-y-4">
-            <div className="w-12 h-12 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center">
               <FileText className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="font-bold text-base text-slate-900">Option A: Create From Scratch</h3>
+              <h3 className="font-bold text-base text-slate-900">Option A: Build From Scratch</h3>
               <p className="text-xs text-slate-600 mt-1 leading-relaxed">
                 Step-by-step guided form with live validation, built-in AI bullet enhancement, and role-calibrated summary generation.
               </p>
             </div>
             <ul className="text-xs text-slate-600 space-y-1.5 list-disc list-inside">
-              <li>10 structured progressive sub-steps</li>
+              <li>Structured progressive sub-steps</li>
               <li>AI STAR methodology bullet generator</li>
-              <li>Auto-saved in browser IndexedDB</li>
+              <li>Auto-saved locally in browser IndexedDB</li>
             </ul>
           </div>
 
           <button
             onClick={handleSelectScratch}
-            className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs shadow transition active:scale-95 cursor-pointer"
+            className="btn-primary py-3 w-full text-xs shadow-sm"
           >
             <span>Start From Scratch</span>
             <ArrowRight className="w-4 h-4" />
@@ -100,9 +99,9 @@ export function Step3CreationMethod({ onNext, onPrev }) {
         </div>
 
         {/* OPTION B: UPLOAD EXISTING */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-2xs hover:border-brand-500 transition flex flex-col justify-between space-y-6">
+        <div className="card-surface p-7 flex flex-col justify-between space-y-6 border-slate-200 hover:border-brand-500 hover:shadow-card-hover transition-all">
           <div className="space-y-4">
-            <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
               <UploadCloud className="w-6 h-6" />
             </div>
             <div>
@@ -113,9 +112,9 @@ export function Step3CreationMethod({ onNext, onPrev }) {
             </div>
 
             {/* Upload Dropzone */}
-            <div className="border border-dashed border-slate-300 rounded-xl p-4 text-center space-y-2">
+            <div className="border border-dashed border-slate-300 rounded-2xl p-4 text-center space-y-2 bg-slate-50/50">
               <label className="cursor-pointer block">
-                <span className="px-3.5 py-1.5 rounded-lg bg-brand-50 text-brand-700 font-semibold text-xs hover:bg-brand-100 transition inline-block">
+                <span className="btn-secondary py-1.5 px-4 text-xs">
                   Select PDF / DOCX
                 </span>
                 <input
@@ -126,7 +125,7 @@ export function Step3CreationMethod({ onNext, onPrev }) {
                 />
               </label>
               {file && (
-                <div className="text-[11px] font-mono text-slate-700 truncate">
+                <div className="text-[11px] font-mono text-slate-700 truncate pt-1">
                   {file.name} ({(file.size / 1024).toFixed(0)} KB)
                 </div>
               )}
@@ -136,7 +135,7 @@ export function Step3CreationMethod({ onNext, onPrev }) {
               <button
                 onClick={handleUploadAndParse}
                 disabled={isUploading}
-                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow transition disabled:opacity-50 cursor-pointer"
+                className="btn-secondary py-2 w-full text-xs"
               >
                 {isUploading ? (
                   <>
@@ -145,7 +144,7 @@ export function Step3CreationMethod({ onNext, onPrev }) {
                   </>
                 ) : (
                   <>
-                    <Sparkles className="w-3.5 h-3.5" />
+                    <Sparkles className="w-3.5 h-3.5 text-brand-600" />
                     <span>Extract & Parse Document</span>
                   </>
                 )}
@@ -153,15 +152,15 @@ export function Step3CreationMethod({ onNext, onPrev }) {
             )}
 
             {uploadError && (
-              <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-[11px]">
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs">
                 {uploadError}
               </div>
             )}
 
             {parseResult && (
-              <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs space-y-1">
-                <div className="font-bold flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs space-y-1">
+                <div className="font-bold flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                   <span>Resume Extracted Successfully</span>
                 </div>
                 <div className="text-[11px] text-emerald-700">
@@ -174,7 +173,7 @@ export function Step3CreationMethod({ onNext, onPrev }) {
           <button
             onClick={handleContinueWithExtracted}
             disabled={!parseResult}
-            className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs shadow transition active:scale-95 disabled:opacity-50 cursor-pointer"
+            className="btn-primary py-3 w-full text-xs shadow-sm disabled:opacity-50"
           >
             <span>Continue with Extracted Data</span>
             <ArrowRight className="w-4 h-4" />
@@ -185,9 +184,9 @@ export function Step3CreationMethod({ onNext, onPrev }) {
       <div className="flex justify-start pt-2">
         <button
           onClick={onPrev}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer"
+          className="btn-secondary py-2 px-4 text-xs"
         >
-          <ArrowLeft className="w-3.5 h-3.5" />
+          <ArrowLeft className="w-4 h-4" />
           <span>Back to Target Job</span>
         </button>
       </div>

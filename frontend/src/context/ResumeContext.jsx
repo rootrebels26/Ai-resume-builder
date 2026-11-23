@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { INITIAL_RESUME_DATA } from '../constants/initialResumeData';
 import { storageService, INITIAL_WIZARD_STATE } from '../services/storageService';
+import { TEMPLATES } from '../constants/templatesList';
 
 const ResumeContext = createContext(null);
 
@@ -22,6 +23,16 @@ export function ResumeProvider({ children }) {
 
   // Resume Data is the core document inside wizardState
   const resumeData = wizardState.resumeData || INITIAL_RESUME_DATA;
+  const activeDraftId = wizardState.activeDraftId || 'active_resume_draft';
+
+  const refreshDraftsList = useCallback(async () => {
+    try {
+      const list = await storageService.getAllDrafts();
+      setDraftsList(list);
+    } catch (e) {
+      console.error('Failed to refresh drafts list:', e);
+    }
+  }, []);
 
   // Restore saved wizard state from Dexie IndexedDB on mount
   useEffect(() => {
@@ -33,12 +44,7 @@ export function ResumeProvider({ children }) {
     }
     restoreFromIndexedDB();
     refreshDraftsList();
-  }, []);
-
-  const refreshDraftsList = useCallback(async () => {
-    const list = await storageService.getAllDrafts();
-    setDraftsList(list);
-  }, []);
+  }, [refreshDraftsList]);
 
   // Debounced auto-save of entire WizardState to IndexedDB and localStorage
   useEffect(() => {
@@ -51,12 +57,13 @@ export function ResumeProvider({ children }) {
         localStorage.setItem('active_wizard_state', JSON.stringify(wizardState));
         await storageService.saveWizardState(wizardState);
 
-        // Also save draft record
+        // Also save draft record with current activeDraftId
+        const currentDraftId = wizardState.activeDraftId || 'active_resume_draft';
         const draftTitle = resumeData.personalInfo?.fullName
           ? `${resumeData.personalInfo.fullName}'s Resume`
           : 'My Resume';
-        await storageService.saveDraft('active_resume_draft', draftTitle, resumeData);
-        refreshDraftsList();
+        await storageService.saveDraft(currentDraftId, draftTitle, resumeData);
+        await refreshDraftsList();
         setSaveStatus('saved');
       } catch (e) {
         console.error('Failed to auto-save wizard state:', e);
@@ -84,12 +91,19 @@ export function ResumeProvider({ children }) {
 
   // Step 1: Select Template
   const selectTemplate = (templateId) => {
+    const tpl = TEMPLATES.find(t => t.id === templateId);
+    const newColor = tpl?.accentColor;
     setWizardState(prev => ({
       ...prev,
       selectedTemplateId: templateId,
       resumeData: {
         ...prev.resumeData,
-        templateId: templateId
+        templateId: templateId,
+        preferences: {
+          ...prev.resumeData?.preferences,
+          themeColor: newColor || prev.resumeData?.preferences?.themeColor || '#1e293b',
+          accentColor: newColor || prev.resumeData?.preferences?.accentColor || '#1e293b'
+        }
       }
     }));
   };
@@ -207,6 +221,96 @@ export function ResumeProvider({ children }) {
     }));
   };
 
+  // Multi-Document Draft Operations
+  const loadDraft = useCallback(async (draftId) => {
+    try {
+      const draft = await storageService.getDraft(draftId);
+      if (draft && draft.data) {
+        setWizardState(prev => ({
+          ...prev,
+          activeDraftId: draftId,
+          selectedTemplateId: draft.templateId || draft.data.templateId || prev.selectedTemplateId || 'ats-01',
+          resumeData: draft.data
+        }));
+        return true;
+      }
+    } catch (e) {
+      console.error('Failed to load draft:', e);
+    }
+    return false;
+  }, []);
+
+  const createNewResume = useCallback(async (templateId = 'ats-01', title = 'My Resume') => {
+    const newId = `draft_${Date.now()}`;
+    const newResume = {
+      ...INITIAL_RESUME_DATA,
+      templateId,
+      personalInfo: {
+        ...INITIAL_RESUME_DATA.personalInfo,
+        fullName: title === 'My Resume' ? 'Jane Doe' : title
+      }
+    };
+    await storageService.saveDraft(newId, title, newResume);
+    setWizardState({
+      ...INITIAL_WIZARD_STATE,
+      activeDraftId: newId,
+      selectedTemplateId: templateId,
+      resumeData: newResume
+    });
+    await refreshDraftsList();
+    return newId;
+  }, [refreshDraftsList]);
+
+  const deleteDraft = useCallback(async (draftId) => {
+    try {
+      await storageService.deleteDraft(draftId);
+      await refreshDraftsList();
+      const currentActiveId = wizardState.activeDraftId || 'active_resume_draft';
+      if (currentActiveId === draftId) {
+        const remaining = await storageService.getAllDrafts();
+        if (remaining.length > 0) {
+          await loadDraft(remaining[0].id);
+        } else {
+          setWizardState(INITIAL_WIZARD_STATE);
+        }
+      }
+      return true;
+    } catch (e) {
+      console.error('Failed to delete draft:', e);
+      return false;
+    }
+  }, [wizardState.activeDraftId, loadDraft, refreshDraftsList]);
+
+  const duplicateDraft = useCallback(async (draftId) => {
+    try {
+      const source = await storageService.getDraft(draftId);
+      if (source) {
+        const newId = `draft_${Date.now()}`;
+        const newTitle = `${source.title || 'Resume'} (Copy)`;
+        await storageService.saveDraft(newId, newTitle, source.data);
+        await refreshDraftsList();
+        return newId;
+      }
+    } catch (e) {
+      console.error('Failed to duplicate draft:', e);
+    }
+    return null;
+  }, [refreshDraftsList]);
+
+  const renameDraft = useCallback(async (draftId, newTitle) => {
+    try {
+      const draft = await storageService.getDraft(draftId);
+      if (draft) {
+        await storageService.saveDraft(draftId, newTitle, draft.data);
+        await refreshDraftsList();
+        return true;
+      }
+    } catch (e) {
+      console.error('Failed to rename draft:', e);
+    }
+    return false;
+  }, [refreshDraftsList]);
+
   // Reset entire wizard
   const resetWizard = async () => {
     await storageService.clearWizardState();
@@ -229,6 +333,7 @@ export function ResumeProvider({ children }) {
       optimizationResults: wizardState.optimizationResults,
       atsResults: wizardState.atsResults,
       resumeData,
+      activeDraftId,
       draftsList,
       saveStatus,
       isAiLoading,
@@ -253,7 +358,12 @@ export function ResumeProvider({ children }) {
       updateItemInSection,
       resetWizard,
       loadSampleData,
-      refreshDraftsList
+      refreshDraftsList,
+      loadDraft,
+      createNewResume,
+      deleteDraft,
+      duplicateDraft,
+      renameDraft
     }}>
       {children}
     </ResumeContext.Provider>

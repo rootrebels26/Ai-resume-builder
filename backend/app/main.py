@@ -12,7 +12,7 @@ from app.core.middleware import (
     SecurityHeadersMiddleware,
     RateLimitMiddleware,
 )
-from app.api.routes import health, resume, ai, jobs, ats
+from app.api.routes import health, resume, ai, ats, auth
 
 logging.basicConfig(
     level=getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO),
@@ -69,9 +69,9 @@ setup_exception_handlers(app)
 
 # Include routers under /api/v1
 app.include_router(health.router, prefix=settings.API_V1_PREFIX, tags=["Health"])
+app.include_router(auth.router, prefix=f"{settings.API_V1_PREFIX}/auth", tags=["Auth"])
 app.include_router(resume.router, prefix=f"{settings.API_V1_PREFIX}/resume", tags=["Resume"])
 app.include_router(ai.router, prefix=f"{settings.API_V1_PREFIX}/ai", tags=["AI"])
-app.include_router(jobs.router, prefix=f"{settings.API_V1_PREFIX}/jobs", tags=["Jobs"])
 app.include_router(ats.router, prefix=f"{settings.API_V1_PREFIX}/ats", tags=["ATS"])
 
 

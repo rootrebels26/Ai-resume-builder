@@ -11,8 +11,12 @@ class Settings(BaseSettings):
 
     # CORS — comma-separated list of allowed origins.
     # Never ship "*" to production when credentials or auth are involved.
-    ALLOWED_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000"
+    ALLOWED_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174,http://localhost:5175,http://127.0.0.1:5175,http://localhost:5176,http://127.0.0.1:5176,http://localhost:5177,http://127.0.0.1:5177,http://localhost:5178,http://127.0.0.1:5178,http://localhost:3000"
     CORS_ALLOW_CREDENTIALS: bool = False
+
+    # Company Access Code authentication
+    COMPANY_ACCESS_CODE: str = "nityacloudwithatanu&sagnik"
+    AUTH_SECRET_KEY: str = "resume-studio-access-secret-key-prod-2026"
 
     # Upload limits
     MAX_UPLOAD_SIZE_MB: int = 10
@@ -29,6 +33,12 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: Optional[str] = None
     GROQ_API_KEY: Optional[str] = None
     OPENROUTER_API_KEY: Optional[str] = None
+
+    @property
+    def valid_access_codes(self) -> List[str]:
+        if not self.COMPANY_ACCESS_CODE:
+            return ["nityacloudwithatanu&sagnik"]
+        return [c.strip() for c in self.COMPANY_ACCESS_CODE.split(",") if c.strip()]
 
     @property
     def cors_origins(self) -> List[str]:

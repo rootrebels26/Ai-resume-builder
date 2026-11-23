@@ -9,9 +9,9 @@ const ICONS = {
 };
 
 const STYLES = {
-  error: 'border-rose-200 bg-rose-50 text-rose-800',
-  success: 'border-emerald-200 bg-emerald-50 text-emerald-800',
-  info: 'border-slate-200 bg-white text-slate-800',
+  error: 'border-ink bg-rose-50 text-rose-900',
+  success: 'border-ink bg-volt text-ink',
+  info: 'border-ink bg-white text-ink',
 };
 
 export function Toaster() {
@@ -35,7 +35,7 @@ export function Toaster() {
 
   return (
     <div
-      className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 w-[calc(100vw-2rem)] max-w-sm no-print"
+      className="fixed bottom-4 right-4 z-50 flex flex-col gap-2.5 w-[calc(100vw-2rem)] max-w-sm no-print"
       role="region"
       aria-label="Notifications"
       aria-live="polite"
@@ -46,7 +46,7 @@ export function Toaster() {
           <div
             key={toast.id}
             role="alert"
-            className={`flex items-start gap-3 rounded-xl border px-4 py-3 shadow-lg ${STYLES[toast.type] || STYLES.info}`}
+            className={`flex items-start gap-3 rounded-2xl border-[1.5px] px-4 py-3 shadow-brutal ${STYLES[toast.type] || STYLES.info}`}
           >
             <Icon className="w-4 h-4 mt-0.5 shrink-0" />
             <p className="flex-1 text-xs font-medium leading-relaxed">{toast.message}</p>

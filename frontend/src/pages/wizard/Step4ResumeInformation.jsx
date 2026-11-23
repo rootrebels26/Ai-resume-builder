@@ -111,58 +111,58 @@ export function Step4ResumeInformation({ onNext, onPrev }) {
 
   return (
     <div className="space-y-6">
-      {/* Step Header with Enhancv View Mode Selector */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-2 border-b border-slate-200">
+      {/* Step Header with View Mode Selector */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-3 border-b border-slate-200">
         <div>
           <div className="flex items-center gap-2">
             <span className="text-[11px] font-bold uppercase tracking-widest text-brand-600">
-              Step 4 of 7 • Enhancv Live Builder
+              Step 4 of 7 • Interactive Resume Editor
             </span>
-            <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
+            <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
               Live Synchronized
             </span>
           </div>
-          <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight mt-0.5">
             Enter Your Real Qualifications
           </h2>
         </div>
 
-        {/* Enhancv View Mode Selector */}
-        <div className="flex items-center gap-1 p-1 bg-slate-200/80 rounded-xl text-xs">
+        {/* View Mode Selector */}
+        <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl border border-slate-200 text-xs">
           <button
             type="button"
             onClick={() => setViewMode('split')}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${
               viewMode === 'split'
-                ? 'bg-slate-900 text-white shadow-2xs'
+                ? 'bg-white text-slate-900 shadow-2xs font-bold'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <Columns className="w-3.5 h-3.5" />
-            <span>Split Canvas</span>
+            <Columns className="w-3.5 h-3.5 text-brand-600" />
+            <span>Split Studio</span>
           </button>
           <button
             type="button"
             onClick={() => setViewMode('editor')}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${
               viewMode === 'editor'
-                ? 'bg-slate-900 text-white shadow-2xs'
+                ? 'bg-white text-slate-900 shadow-2xs font-bold'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <PenTool className="w-3.5 h-3.5" />
-            <span>Editor Only</span>
+            <PenTool className="w-3.5 h-3.5 text-brand-600" />
+            <span>Form Only</span>
           </button>
           <button
             type="button"
             onClick={() => setViewMode('preview')}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${
               viewMode === 'preview'
-                ? 'bg-slate-900 text-white shadow-2xs'
+                ? 'bg-white text-slate-900 shadow-2xs font-bold'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <Eye className="w-3.5 h-3.5" />
+            <Eye className="w-3.5 h-3.5 text-brand-600" />
             <span>A4 Document</span>
           </button>
         </div>

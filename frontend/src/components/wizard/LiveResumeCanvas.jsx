@@ -1,18 +1,20 @@
 import React, { useRef, useState } from 'react';
 import {
   Download, Printer, ZoomIn, ZoomOut, RotateCcw, Palette,
-  Sparkles, Check, CheckCircle2, ShieldCheck, ChevronDown
+  Sparkles, Check, CheckCircle2, ShieldCheck, ChevronDown, FileText, Scissors
 } from 'lucide-react';
 import { useResume } from '../../context/ResumeContext';
 import { ResumeTemplate } from '../templates/ResumeTemplate';
-import { TEMPLATES } from '../../constants/templatesList';
+import { TEMPLATES, isFullBleedTemplate } from '../../constants/templatesList';
 import { pdfService } from '../../services/pdfService';
+import { useResumePagination } from '../../utils/resumePaginator';
 
 const COLOR_SWATCHES = [
-  { name: 'Slate Dark', color: '#1e293b' },
-  { name: 'Royal Blue', color: '#2563eb' },
-  { name: 'Emerald', color: '#059669' },
-  { name: 'Indigo / Violet', color: '#6366f1' },
+  { name: 'Classic Slate', color: '#1e293b' },
+  { name: 'Resume Blue', color: '#1a91f0' },
+  { name: 'Royal Navy', color: '#1d4ed8' },
+  { name: 'Emerald Green', color: '#059669' },
+  { name: 'Executive Violet', color: '#6366f1' },
   { name: 'Crimson', color: '#dc2626' },
   { name: 'Cyan Tech', color: '#0891b2' },
   { name: 'Amber Gold', color: '#d97706' },
@@ -27,32 +29,38 @@ export function LiveResumeCanvas({ className = "" }) {
     updatePreferences
   } = useResume();
 
-  const [zoomScale, setZoomScale] = useState(0.65);
+  const [zoomScale, setZoomScale] = useState(0.72);
   const [activeColor, setActiveColor] = useState(
     resumeData?.preferences?.accentColor || '#1e293b'
   );
   const [isExporting, setIsExporting] = useState(false);
   const canvasPrintRef = useRef(null);
 
+  const { pages, pageCount, isMultiPage } = useResumePagination(resumeData);
+
   const activeTemplate =
     TEMPLATES.find((t) => t.id === selectedTemplateId) || TEMPLATES[0];
 
   const handleZoomIn = () =>
-    setZoomScale((z) => Math.min(1.4, Number((z + 0.1).toFixed(2))));
+    setZoomScale((z) => Math.min(1.3, Number((z + 0.08).toFixed(2))));
   const handleZoomOut = () =>
-    setZoomScale((z) => Math.max(0.45, Number((z - 0.1).toFixed(2))));
-  const handleResetZoom = () => setZoomScale(0.85);
+    setZoomScale((z) => Math.max(0.45, Number((z - 0.08).toFixed(2))));
+  const handleResetZoom = () => setZoomScale(0.72);
 
   const handleColorChange = (hex) => {
     setActiveColor(hex);
     if (updatePreferences) {
-      updatePreferences({ accentColor: hex });
+      updatePreferences('accentColor', hex);
+      updatePreferences('themeColor', hex);
     }
   };
 
   const handleDownloadPDF = async () => {
     if (!canvasPrintRef.current) return;
     setIsExporting(true);
+    const prevZoom = zoomScale;
+    setZoomScale(1);
+    await new Promise((r) => setTimeout(r, 100));
     try {
       const name = resumeData?.personalInfo?.fullName || 'Resume';
       const role = selectedJob?.role || 'Professional';
@@ -61,6 +69,7 @@ export function LiveResumeCanvas({ className = "" }) {
     } catch (e) {
       console.error('PDF Export error:', e);
     } finally {
+      setZoomScale(prevZoom);
       setIsExporting(false);
     }
   };
@@ -80,17 +89,17 @@ export function LiveResumeCanvas({ className = "" }) {
   const quickScore = calculateQuickScore();
 
   return (
-    <div className={`flex flex-col h-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl ${className}`}>
-      {/* Enhancv-Style Floating Design & Controls Bar */}
-      <div className="bg-slate-900/95 backdrop-blur-md px-4 py-2.5 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs shrink-0 text-slate-200">
+    <div className={`flex flex-col h-full bg-canvas border-[1.5px] border-ink rounded-3xl overflow-hidden shadow-brutal ${className}`}>
+      {/* Floating Design & Controls Bar */}
+      <div className="bg-[#FAF8F5] px-4 py-2.5 border-b border-ink/10 flex flex-wrap items-center justify-between gap-3 text-xs shrink-0 text-ink">
         {/* Template Selector Dropdown */}
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-semibold text-slate-400">Design:</span>
+          <span className="text-[11px] font-mono font-bold text-ink-muted uppercase">Design:</span>
           <div className="relative">
             <select
               value={selectedTemplateId || 'ats-01'}
               onChange={(e) => selectTemplate(e.target.value)}
-              className="appearance-none pl-3 pr-8 py-1.5 rounded-xl bg-slate-800 border border-slate-700 font-semibold text-xs text-white focus:outline-none focus:ring-1 focus:ring-brand-500 cursor-pointer"
+              className="appearance-none pl-3 pr-8 py-1.5 rounded-full bg-white border border-ink font-bold text-xs text-ink focus:outline-none focus:ring-2 focus:ring-volt cursor-pointer shadow-brutal-sm"
             >
               {TEMPLATES.map((t) => (
                 <option key={t.id} value={t.id}>
@@ -98,22 +107,22 @@ export function LiveResumeCanvas({ className = "" }) {
                 </option>
               ))}
             </select>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <ChevronDown className="w-3.5 h-3.5 text-ink-muted absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
         </div>
 
         {/* Color Palette Circles */}
         <div className="hidden sm:flex items-center gap-1.5">
-          <Palette className="w-3.5 h-3.5 text-slate-400 mr-0.5" />
+          <Palette className="w-3.5 h-3.5 text-ink-muted mr-0.5" />
           {COLOR_SWATCHES.map((swatch) => (
             <button
               key={swatch.color}
               onClick={() => handleColorChange(swatch.color)}
               title={swatch.name}
-              className={`w-4 h-4 rounded-full transition-transform cursor-pointer border ${
+              className={`w-3.5 h-3.5 rounded-full transition-transform cursor-pointer border border-ink/30 ${
                 activeColor === swatch.color
-                  ? 'scale-125 ring-2 ring-white border-transparent'
-                  : 'border-slate-600 hover:scale-110'
+                  ? 'scale-125 ring-2 ring-volt'
+                  : 'hover:scale-110'
               }`}
               style={{ backgroundColor: swatch.color }}
             />
@@ -123,31 +132,30 @@ export function LiveResumeCanvas({ className = "" }) {
         {/* Right Section: Zoom Controls & Quick PDF Download */}
         <div className="flex items-center gap-2">
           {/* Live ATS Pill */}
-          <div className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-[11px]">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="font-semibold text-emerald-400">ATS {quickScore}%</span>
+          <div className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-volt border border-ink text-[11px] font-mono font-bold shadow-brutal-sm">
+            <span>ATS {quickScore}%</span>
           </div>
 
           {/* Zoom controls */}
-          <div className="flex items-center bg-slate-800 rounded-lg p-0.5 border border-slate-700 text-xs">
+          <div className="flex items-center bg-white rounded-full p-0.5 border border-ink text-xs shadow-brutal-sm">
             <button
               onClick={handleZoomOut}
               title="Zoom Out"
-              className="p-1 text-slate-300 hover:text-white rounded"
+              className="p-1 text-ink-muted hover:text-ink rounded-full transition"
             >
               <ZoomOut className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={handleResetZoom}
               title="Reset Zoom"
-              className="px-2 py-0.5 text-slate-300 hover:text-white font-mono text-[10px]"
+              className="px-2 py-0.5 text-ink font-mono text-[11px] font-bold"
             >
               {Math.round(zoomScale * 100)}%
             </button>
             <button
               onClick={handleZoomIn}
               title="Zoom In"
-              className="p-1 text-slate-300 hover:text-white rounded"
+              className="p-1 text-ink-muted hover:text-ink rounded-full transition"
             >
               <ZoomIn className="w-3.5 h-3.5" />
             </button>
@@ -157,7 +165,7 @@ export function LiveResumeCanvas({ className = "" }) {
           <button
             onClick={handleDownloadPDF}
             disabled={isExporting}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs shadow-sm transition active:scale-95 cursor-pointer disabled:opacity-50"
+            className="btn-volt py-1.5 px-3.5 text-xs shadow-brutal-sm"
           >
             <Download className="w-3.5 h-3.5" />
             <span>{isExporting ? 'Exporting...' : 'PDF'}</span>
@@ -166,46 +174,71 @@ export function LiveResumeCanvas({ className = "" }) {
       </div>
 
       {/* Live Canvas Surface with Centered A4 Page */}
-      <div className="flex-1 bg-slate-950 overflow-y-auto overflow-x-auto p-4 sm:p-6 flex justify-center items-start">
+      <div className="flex-1 bg-canvas overflow-y-auto overflow-x-auto p-4 sm:p-6 flex justify-center items-start">
         <div
           style={{
-            width: `${210 * zoomScale}mm`,
-            minHeight: `${297 * zoomScale}mm`,
-            display: 'flex',
-            justifyContent: 'center',
-            marginBottom: '80px'
+            transform: `scale(${zoomScale})`,
+            transformOrigin: 'top center',
+            marginBottom: `${Math.max(60, pageCount * 45)}px`
           }}
         >
           <div
             ref={canvasPrintRef}
-            style={{
-              width: '210mm',
-              minHeight: '297mm',
-              padding: '16mm 18mm',
-              boxSizing: 'border-box',
-              transform: `scale(${zoomScale})`,
-              transformOrigin: 'top center',
-              transition: 'transform 0.12s ease-out'
-            }}
-            className="shadow-2xl rounded-sm bg-white text-slate-900 border border-slate-300 my-2 select-text shrink-0"
+            id="printable-resume"
+            className="flex flex-col items-center gap-8"
+            style={{ width: '210mm' }}
           >
-            {/* Dynamic Real-Time Resume Template */}
-            <ResumeTemplate
-              templateId={selectedTemplateId || 'ats-01'}
-              resumeData={resumeData}
-            />
-          </div>
-        </div>
-      </div>
+            {pages.map((pageData, pageIdx) => (
+              <React.Fragment key={pageIdx}>
+                {/* Visual Page Break Divider between pages */}
+                {pageIdx > 0 && (
+                  <div className="no-print flex items-center justify-center gap-3 w-[210mm] py-2 text-xs font-mono font-bold text-ink-muted select-none">
+                    <div className="flex-1 border-t-2 border-dashed border-ink/30" />
+                    <span className="bg-white px-3.5 py-1 rounded-full border border-ink/20 shadow-brutal-sm text-[11px] flex items-center gap-1.5 text-ink">
+                      <Scissors className="w-3 h-3 text-ink-muted" />
+                      <span>PAGE BREAK • PAGE {pageIdx + 1} OF {pageCount}</span>
+                    </span>
+                    <div className="flex-1 border-t-2 border-dashed border-ink/30" />
+                  </div>
+                )}
 
-      {/* Canvas Sub-footer */}
-      <div className="px-4 py-2 bg-slate-900/90 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400 shrink-0">
-        <div className="flex items-center gap-1.5 truncate">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span>Live Synchronized A4 Canvas • Updates as you type</span>
-        </div>
-        <div className="font-mono text-slate-500 hidden sm:block">
-          {activeTemplate.layout}
+                {/* HTML2PDF page break anchor for PDF export */}
+                {pageIdx > 0 && (
+                  <div className="html2pdf__page-break" style={{ height: 0, margin: 0, padding: 0 }} />
+                )}
+
+                {/* Single Authentic A4 Document Paper Sheet */}
+                <div
+                  className="resume-a4-page bg-white shadow-brutal-lg rounded-sm border-[1.5px] border-ink text-ink relative flex flex-col justify-between"
+                  style={{
+                    width: '210mm',
+                    height: '297mm', // Fixed genuine A4 sheet height!
+                    padding: isFullBleedTemplate(selectedTemplateId || resumeData?.templateId || 'ats-01') ? '0' : '18mm',
+                    boxSizing: 'border-box',
+                    overflow: 'hidden'
+                  }}
+                  data-page-index={pageIdx + 1}
+                >
+                  <div className="flex-1 h-full overflow-hidden flex flex-col">
+                    <ResumeTemplate
+                      templateId={selectedTemplateId || 'ats-01'}
+                      resumeData={pageData}
+                    />
+                  </div>
+
+                  {/* Authentic subtle footer page indicator when multi-page and NOT full bleed */}
+                  {isMultiPage && !isFullBleedTemplate(selectedTemplateId || resumeData?.templateId || 'ats-01') && (
+                    <div className="pt-2 mt-auto text-[10px] font-mono text-slate-400 flex justify-between items-center border-t border-slate-100 select-none">
+                      <span className="truncate max-w-[200px]">
+                        {resumeData.personalInfo?.fullName || 'Resume'}
+                      </span>
+                      <span>Page {pageIdx + 1} of {pageCount}</span>
+                    </div>
+                  )}
+                </div>
+              </React.Fragment>
+            ))}
+          </div>
         </div>
       </div>
     </div>

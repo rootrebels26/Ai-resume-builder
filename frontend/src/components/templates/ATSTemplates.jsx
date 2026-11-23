@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  ContactList, SectionHeading, ExperienceSection, EducationSection, ProjectsSection, SkillsSection
+  ContactList, SectionHeading, ExperienceSection, EducationSection, ProjectsSection, SkillsSection, ContinuationHeader
 } from './shared/SharedComponents';
 
 // ats-01: Classic ATS Standard
@@ -10,13 +10,17 @@ export function ATS01({ resumeData }) {
 
   return (
     <div className="text-slate-900 leading-relaxed font-sans">
-      <div className="text-center pb-3 border-b-2" style={{ borderColor: color }}>
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight uppercase">{personalInfo.fullName || "Your Full Name"}</h1>
-        {personalInfo.professionalTitle && (
-          <p className="text-sm font-medium text-slate-700 mt-0.5">{personalInfo.professionalTitle}</p>
-        )}
-        <ContactList personalInfo={personalInfo} className="justify-center mt-2" showIcons={preferences.showIcons} />
-      </div>
+      {resumeData.isContinuation ? (
+        <ContinuationHeader personalInfo={personalInfo} color={color} pageNumber={resumeData.pageNumber} totalPages={resumeData.totalPages} />
+      ) : (
+        <div className="text-center pb-3 border-b-2" style={{ borderColor: color }}>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight uppercase">{personalInfo.fullName || "Your Full Name"}</h1>
+          {personalInfo.professionalTitle && (
+            <p className="text-sm font-medium text-slate-700 mt-0.5">{personalInfo.professionalTitle}</p>
+          )}
+          <ContactList personalInfo={personalInfo} className="justify-center mt-2" showIcons={preferences.showIcons} />
+        </div>
+      )}
 
       <div className="mt-3.5 space-y-3.5">
         {professionalSummary && (
@@ -65,11 +69,15 @@ export function ATS02({ resumeData }) {
 
   return (
     <div className="text-slate-900 leading-relaxed font-sans border-t-4" style={{ borderColor: color }}>
-      <div className="pt-2 pb-2.5 border-b border-slate-300">
-        <h1 className="text-xl sm:text-2xl font-extrabold uppercase text-slate-900">{personalInfo.fullName}</h1>
-        <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 mt-0.5">{personalInfo.professionalTitle}</p>
-        <ContactList personalInfo={personalInfo} className="mt-1.5" separator="|" showIcons={false} />
-      </div>
+      {resumeData.isContinuation ? (
+        <ContinuationHeader personalInfo={personalInfo} color={color} pageNumber={resumeData.pageNumber} totalPages={resumeData.totalPages} />
+      ) : (
+        <div className="pt-2 pb-2.5 border-b border-slate-300">
+          <h1 className="text-xl sm:text-2xl font-extrabold uppercase text-slate-900">{personalInfo.fullName}</h1>
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 mt-0.5">{personalInfo.professionalTitle}</p>
+          <ContactList personalInfo={personalInfo} className="mt-1.5" separator="|" showIcons={false} />
+        </div>
+      )}
 
       <div className="mt-3 space-y-3">
         {professionalSummary && (
@@ -116,16 +124,20 @@ export function ATS03({ resumeData }) {
   const { personalInfo = {}, professionalSummary, experience = [], education = [], projects = [], skills = [] } = resumeData;
   return (
     <div className="text-slate-900 leading-snug font-sans text-xs">
-      <div className="flex justify-between items-end border-b border-black pb-1.5 mb-2.5">
-        <div>
-          <h1 className="text-lg font-bold tracking-tight uppercase text-black">{personalInfo.fullName}</h1>
-          <p className="font-medium text-slate-700">{personalInfo.professionalTitle}</p>
+      {resumeData.isContinuation ? (
+        <ContinuationHeader personalInfo={personalInfo} color="#000000" pageNumber={resumeData.pageNumber} totalPages={resumeData.totalPages} />
+      ) : (
+        <div className="flex justify-between items-end border-b border-black pb-1.5 mb-2.5">
+          <div>
+            <h1 className="text-lg font-bold tracking-tight uppercase text-black">{personalInfo.fullName}</h1>
+            <p className="font-medium text-slate-700">{personalInfo.professionalTitle}</p>
+          </div>
+          <div className="text-right text-[11px] text-slate-600">
+            <div>{personalInfo.email} | {personalInfo.phone}</div>
+            <div>{personalInfo.location} {personalInfo.linkedin ? `| ${personalInfo.linkedin.replace(/^https?:\/\//, '')}` : ''}</div>
+          </div>
         </div>
-        <div className="text-right text-[11px] text-slate-600">
-          <div>{personalInfo.email} | {personalInfo.phone}</div>
-          <div>{personalInfo.location} {personalInfo.linkedin ? `| ${personalInfo.linkedin.replace(/^https?:\/\//, '')}` : ''}</div>
-        </div>
-      </div>
+      )}
 
       <div className="space-y-2.5">
         {professionalSummary && (
@@ -168,10 +180,14 @@ export function ATS04({ resumeData }) {
   const { personalInfo = {}, professionalSummary, experience = [], education = [], projects = [], skills = [] } = resumeData;
   return (
     <div className="text-black font-serif text-xs leading-relaxed">
-      <div className="text-center pb-2 border-b border-black mb-3">
-        <h1 className="text-2xl font-bold tracking-normal">{personalInfo.fullName}</h1>
-        <ContactList personalInfo={personalInfo} className="justify-center mt-1.5 font-sans" showIcons={false} separator="•" />
-      </div>
+      {resumeData.isContinuation ? (
+        <ContinuationHeader personalInfo={personalInfo} color="#000000" pageNumber={resumeData.pageNumber} totalPages={resumeData.totalPages} />
+      ) : (
+        <div className="text-center pb-2 border-b border-black mb-3">
+          <h1 className="text-2xl font-bold tracking-normal">{personalInfo.fullName}</h1>
+          <ContactList personalInfo={personalInfo} className="justify-center mt-1.5 font-sans" showIcons={false} separator="•" />
+        </div>
+      )}
 
       <div className="space-y-3 font-sans">
         {education.length > 0 && (
@@ -205,15 +221,18 @@ export function ATS04({ resumeData }) {
 
 // ats-05 to ats-10: Additional ATS Formats
 export function ATS05({ resumeData }) {
-  return <ATS01 resumeData={{ ...resumeData, preferences: { ...resumeData.preferences, themeColor: "#0284c7" } }} />;
+  const color = resumeData.preferences?.themeColor || "#0284c7";
+  return <ATS01 resumeData={{ ...resumeData, preferences: { ...resumeData.preferences, themeColor: color } }} />;
 }
 
 export function ATS06({ resumeData }) {
-  return <ATS01 resumeData={{ ...resumeData, preferences: { ...resumeData.preferences, themeColor: "#000000", showIcons: false } }} />;
+  const color = resumeData.preferences?.themeColor || "#000000";
+  return <ATS01 resumeData={{ ...resumeData, preferences: { ...resumeData.preferences, themeColor: color, showIcons: false } }} />;
 }
 
 export function ATS07({ resumeData }) {
-  return <ATS02 resumeData={{ ...resumeData, preferences: { ...resumeData.preferences, themeColor: "#1d4ed8" } }} />;
+  const color = resumeData.preferences?.themeColor || "#1d4ed8";
+  return <ATS02 resumeData={{ ...resumeData, preferences: { ...resumeData.preferences, themeColor: color } }} />;
 }
 
 export function ATS08({ resumeData }) {
@@ -221,9 +240,11 @@ export function ATS08({ resumeData }) {
 }
 
 export function ATS09({ resumeData }) {
-  return <ATS01 resumeData={{ ...resumeData, preferences: { ...resumeData.preferences, themeColor: "#0369a1" } }} />;
+  const color = resumeData.preferences?.themeColor || "#0369a1";
+  return <ATS01 resumeData={{ ...resumeData, preferences: { ...resumeData.preferences, themeColor: color } }} />;
 }
 
 export function ATS10({ resumeData }) {
-  return <ATS02 resumeData={{ ...resumeData, preferences: { ...resumeData.preferences, themeColor: "#0f766e" } }} />;
+  const color = resumeData.preferences?.themeColor || "#0f766e";
+  return <ATS02 resumeData={{ ...resumeData, preferences: { ...resumeData.preferences, themeColor: color } }} />;
 }
