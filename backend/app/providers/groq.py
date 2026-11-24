@@ -133,16 +133,18 @@ CRITICAL RULES:
    - Locate and extract ALL projects from sections titled "Projects", "Featured Projects", "Technical Projects", "Key Projects", "Personal Projects", "Academic Projects", "Selected Projects", or "Notable Projects".
    - Extract each project entry into the "projects" array (NOT into "experience").
    - For each project, extract:
-     * "name": project title
-     * "description": concise summary of what the project does
+     * "name": clean project title WITHOUT [Demo], [GitHub], or raw URLs
+     * "description": clean narrative summary of what the project does. CRITICAL: DO NOT put raw URLs or link tags into this field!
      * "technologies": array of tools, languages, and frameworks used (e.g. ["Python", "FastAPI", "React"])
      * "githubUrl": repository link if mentioned
-     * "liveUrl": live demo link if mentioned
+     * "liveUrl": live deployment or demo link if mentioned (e.g. Render, Vercel, Netlify, custom domain)
      * "startDate": start date if available
      * "endDate": end date or completion date if available
-     * "highlights": array of bullet points, key features, and accomplishments
+     * "highlights": array of bullet points, key features, and accomplishments WITHOUT raw URLs embedded
 4. PRESERVE ORIGINAL WORDING: Retain original bullet points, metrics, and details. Do not summarize or rewrite achievements.
-5. CONTACT DETAILS: Distinguish the candidate's personal contact info from employers' or references' addresses.
+5. CONTACT DETAILS:
+   - Extract candidate's phone number (preserving international country code e.g. +91, +1, +44), email, city/state/country location.
+   - Extract LinkedIn profile URL, GitHub profile URL, and personal portfolio or website URL (into "portfolio" and "website").
 6. CATEGORIZED SKILLS: Group skills logically into categories: "Programming Languages", "Frameworks & Libraries", "Databases & Cloud", "Developer Tools", "Core Competencies".
 7. Return ONLY valid JSON with this exact schema:
 {{

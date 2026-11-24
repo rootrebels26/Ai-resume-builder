@@ -161,9 +161,8 @@ export function ATS03({ resumeData }) {
             <h1 className="text-lg font-bold tracking-tight uppercase text-black">{personalInfo.fullName}</h1>
             <p className="font-medium text-slate-700">{personalInfo.professionalTitle}</p>
           </div>
-          <div className="text-right text-[11px] text-slate-600">
-            <div>{personalInfo.email} | {personalInfo.phone}</div>
-            <div>{personalInfo.location} {personalInfo.linkedin ? `| ${personalInfo.linkedin.replace(/^https?:\/\//, '')}` : ''}</div>
+          <div className="text-right text-[11px] text-slate-600 max-w-[60%]">
+            <ContactList personalInfo={personalInfo} className="justify-end gap-x-2" showIcons={false} separator="|" />
           </div>
         </div>
       )}

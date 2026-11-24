@@ -27,6 +27,10 @@ export function sanitizeResumeData(data) {
       location: sanitizeResumeText(cleaned.personalInfo.location),
       email: sanitizeResumeText(cleaned.personalInfo.email),
       phone: sanitizeResumeText(cleaned.personalInfo.phone),
+      website: sanitizeResumeText(cleaned.personalInfo.website),
+      linkedin: sanitizeResumeText(cleaned.personalInfo.linkedin),
+      github: sanitizeResumeText(cleaned.personalInfo.github),
+      portfolio: sanitizeResumeText(cleaned.personalInfo.portfolio),
     };
   }
 

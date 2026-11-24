@@ -1080,12 +1080,22 @@ export function Builder() {
                     />
                   </div>
                   <div>
-                    <label className="label-base">GitHub / Portfolio URL</label>
+                    <label className="label-base">GitHub Profile URL</label>
                     <input
                       type="text"
                       value={resumeData.personalInfo?.github || ''}
                       onChange={(e) => updatePersonalInfo('github', e.target.value)}
                       placeholder="github.com/alex"
+                      className="input-base"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="label-base">Portfolio / Personal Website (Optional)</label>
+                    <input
+                      type="text"
+                      value={resumeData.personalInfo?.portfolio || ''}
+                      onChange={(e) => updatePersonalInfo('portfolio', e.target.value)}
+                      placeholder="https://alexrivera.dev or myportfolio.com"
                       className="input-base"
                     />
                   </div>

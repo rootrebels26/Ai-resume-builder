@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  ContactList, SectionHeading, ExperienceSection, EducationSection, ProjectsSection, SkillsSection
+  ContactList, SectionHeading, ExperienceSection, EducationSection, ProjectsSection, SkillsSection, ensureUrl
 } from './shared/SharedComponents';
 
 /**
@@ -69,27 +69,46 @@ export function Modern01({ resumeData, defaultColor = "#0284c7" }) {
               <div className="font-bold text-[10px] uppercase tracking-wider text-white/70 border-b border-white/20 pb-0.5">
                 Contact
               </div>
-              {personalInfo.email && <div className="truncate text-[11px]">{personalInfo.email}</div>}
-              {personalInfo.phone && <div className="text-[11px]">{personalInfo.phone}</div>}
+              {personalInfo.email && (
+                <div className="truncate text-[11px]">
+                  <a href={`mailto:${personalInfo.email}`} className="hover:underline text-white">
+                    {personalInfo.email}
+                  </a>
+                </div>
+              )}
+              {personalInfo.phone && (
+                <div className="text-[11px]">
+                  <a href={`tel:${personalInfo.phone}`} className="hover:underline text-white">
+                    {personalInfo.phone}
+                  </a>
+                </div>
+              )}
               {personalInfo.location && <div className="text-[11px]">{personalInfo.location}</div>}
               {personalInfo.website && (
                 <div className="truncate text-[11px]">
-                  <a href={personalInfo.website} target="_blank" rel="noreferrer" className="hover:underline text-white">
+                  <a href={ensureUrl(personalInfo.website)} target="_blank" rel="noreferrer" className="hover:underline text-white">
                     {personalInfo.website.replace(/^https?:\/\//, '')}
                   </a>
                 </div>
               )}
               {personalInfo.linkedin && (
                 <div className="truncate text-[11px]">
-                  <a href={personalInfo.linkedin} target="_blank" rel="noreferrer" className="hover:underline text-white">
+                  <a href={ensureUrl(personalInfo.linkedin)} target="_blank" rel="noreferrer" className="hover:underline text-white">
                     LinkedIn
                   </a>
                 </div>
               )}
               {personalInfo.github && (
                 <div className="truncate text-[11px]">
-                  <a href={personalInfo.github} target="_blank" rel="noreferrer" className="hover:underline text-white">
+                  <a href={ensureUrl(personalInfo.github)} target="_blank" rel="noreferrer" className="hover:underline text-white">
                     GitHub
+                  </a>
+                </div>
+              )}
+              {personalInfo.portfolio && (
+                <div className="truncate text-[11px]">
+                  <a href={ensureUrl(personalInfo.portfolio)} target="_blank" rel="noreferrer" className="hover:underline text-white">
+                    Portfolio
                   </a>
                 </div>
               )}

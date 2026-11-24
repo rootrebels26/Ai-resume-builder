@@ -13,7 +13,11 @@ from app.schemas.job_schema import (
     ATSAnalyzeRequest, ATSAnalyzeResponse, ATSSectionFeedback,
     TailorResumeRequest, TailorResumeResponse, TailorSuggestion
 )
-from app.utils.text_utils import extract_matching_skills, extract_tokens, KNOWN_SKILLS
+from app.utils.text_utils import (
+    extract_matching_skills, extract_tokens, KNOWN_SKILLS,
+    EMAIL_REGEX, PHONE_REGEX, URL_REGEX, LINKEDIN_REGEX, GITHUB_REGEX,
+    clean_raw_url, extract_phone_number, extract_portfolio_url, sanitize_project_data
+)
 
 ACTION_VERBS = [
     "Spearheaded", "Architected", "Engineered", "Orchestrated", "Accelerated",
@@ -313,6 +317,7 @@ class LocalHeuristicProvider(BaseAIProvider):
         import uuid
         from app.utils.text_utils import (
             EMAIL_REGEX, PHONE_REGEX, URL_REGEX, LINKEDIN_REGEX, GITHUB_REGEX,
+            extract_phone_number, extract_portfolio_url, sanitize_project_data,
             extract_matching_skills, KNOWN_SKILLS
         )
 
@@ -375,14 +380,15 @@ class LocalHeuristicProvider(BaseAIProvider):
         emails = EMAIL_REGEX.findall(cleaned_text)
         email = emails[0] if emails else ""
 
-        phone_matches = [m.group(0).strip() for m in PHONE_REGEX.finditer(cleaned_text)]
-        phone = phone_matches[0] if phone_matches else ""
+        phone = extract_phone_number(cleaned_text)
 
         linkedin_match = LINKEDIN_REGEX.findall(cleaned_text)
-        linkedin = f"https://linkedin.com/in/{linkedin_match[0]}" if linkedin_match else ""
+        linkedin = f"https://linkedin.com/in/{linkedin_match[0].rstrip('/')}" if linkedin_match else ""
 
         github_match = GITHUB_REGEX.findall(cleaned_text)
-        github = f"https://github.com/{github_match[0]}" if github_match else ""
+        github = f"https://github.com/{github_match[0].rstrip('/')}" if github_match else ""
+
+        portfolio = extract_portfolio_url(cleaned_text, exclude_linkedin=linkedin, exclude_github=github)
 
         # Location heuristic
         location = ""
@@ -456,7 +462,8 @@ class LocalHeuristicProvider(BaseAIProvider):
         for line in lines:
             matched_sec = None
             clean_l = re.sub(r'^[#*\-•\s]+', '', line).strip()
-            if len(clean_l) < 45:
+            # A line is a section header ONLY if it's brief AND does not contain in-line content after a colon
+            if len(clean_l) < 45 and (":" not in clean_l or clean_l.endswith(":")):
                 for s_key, s_regex in section_patterns.items():
                     if s_regex.match(clean_l):
                         matched_sec = s_key
@@ -465,6 +472,15 @@ class LocalHeuristicProvider(BaseAIProvider):
             if matched_sec:
                 current_sec = matched_sec
             else:
+                # Merge multi-line wrapped items (e.g. line wrapped mid-bullet or mid-category)
+                if sections[current_sec]:
+                    prev = sections[current_sec][-1]
+                    is_bullet = any(line.strip().startswith(sym) for sym in ['-', '*', '•', '–', '+', 'o '])
+                    prev_is_bullet = any(prev.strip().startswith(sym) for sym in ['-', '*', '•', '–', '+', 'o '])
+                    # If this line is not a new bullet and not a new category with ':', merge with previous
+                    if not is_bullet and ":" not in line and (prev_is_bullet or ":" in prev or prev.endswith(('-', '–', '—', ',', '|'))):
+                        sections[current_sec][-1] = f"{prev} {line.strip()}".strip()
+                        continue
                 sections[current_sec].append(line)
 
         # 3. Parse Summary
@@ -650,16 +666,24 @@ class LocalHeuristicProvider(BaseAIProvider):
                         "description": ""
                     }
 
+                start_d, end_d = "", ""
                 if d_match:
                     if hasattr(d_match, "group") and len(d_match.groups()) > 1 and d_match.group(2):
-                        current_edu["startDate"] = d_match.group(1).strip()
-                        current_edu["endDate"] = d_match.group(2).strip()
+                        start_d = d_match.group(1).strip()
+                        end_d = d_match.group(2).strip()
                     else:
-                        current_edu["endDate"] = d_match.group(0).strip()
+                        end_d = d_match.group(0).strip()
+                    current_edu["startDate"] = start_d
+                    current_edu["endDate"] = end_d
+                    # Remove date string from line so it does not pollute degree or institution name
+                    l = l[:d_match.start()] + l[d_match.end():]
+                    l = l.strip()
 
                 gpa_match = re.search(r'\b(?:gpa|cgpa|grade)[\s:]*([0-9.]+(?:\s*/\s*[0-9.]+)?%?)\b', l, re.IGNORECASE)
                 if gpa_match:
                     current_edu["cgpa"] = gpa_match.group(1).strip()
+                    l = l[:gpa_match.start()] + l[gpa_match.end():]
+                    l = l.strip()
 
                 parts = [p.strip() for p in re.split(r'[-–|•,]', l) if p.strip()]
                 for p in parts:
@@ -667,12 +691,12 @@ class LocalHeuristicProvider(BaseAIProvider):
                     if any(ikw in p_low for ikw in ["university", "college", "institute", "school", "academy", "iit", "nit", "bits"]) and not current_edu["institution"]:
                         current_edu["institution"] = p
                     elif any(re.search(r'\b' + re.escape(dkw) + r'\b', p_low) for dkw in edu_keywords) and not current_edu["degree"]:
-                        fos_match = re.search(r'\b(?:in|of)\s+([A-Za-z\s]+)', p, re.IGNORECASE)
+                        fos_match = re.search(r'\b(?:in|of)\s+([A-Za-z\s&]+)', p, re.IGNORECASE)
                         if fos_match:
                             current_edu["fieldOfStudy"] = fos_match.group(1).strip()
-                            current_edu["degree"] = p[:fos_match.start()].strip()
+                            current_edu["degree"] = p.strip()
                         else:
-                            current_edu["degree"] = p
+                            current_edu["degree"] = p.strip()
             elif current_edu:
                 if not current_edu["institution"] and any(ikw in l_lower for ikw in ["university", "college", "institute", "school", "academy", "iit", "nit"]):
                     current_edu["institution"] = l
@@ -686,63 +710,83 @@ class LocalHeuristicProvider(BaseAIProvider):
                 current_edu["institution"] = "Academic Institution"
             education_items.append(current_edu)
 
-        # 6. Parse Skills into Structured Categories
-        extracted_skills = extract_matching_skills(cleaned_text)
-        explicit_skills_tokens = []
+        # 6. Parse Skills into Structured Categories (Preserve explicit resume categories if present)
+        explicit_skill_categories = []
         for sl in sections["skills"]:
-            tokens = re.split(r'[,|•;:]', sl)
-            for tok in tokens:
-                t_clean = tok.strip()
-                if 2 <= len(t_clean) <= 30 and not any(w in t_clean.lower() for w in ["skills", "technologies", "proficient"]):
-                    explicit_skills_tokens.append(t_clean)
+            if ":" in sl:
+                cat_parts = sl.split(":", 1)
+                c_name = cat_parts[0].strip()
+                c_items = [it.strip() for it in re.split(r'[,|•;]', cat_parts[1]) if it.strip()]
+                if c_name and c_items:
+                    # Clean up category names from bullet symbols
+                    c_name_clean = re.sub(r'^[#*\-•–\s]+', '', c_name).strip()
+                    explicit_skill_categories.append({"category": c_name_clean, "items": c_items})
 
-        seen_s = set()
-        unique_skills = []
-        for s in (extracted_skills + explicit_skills_tokens):
-            sl = s.strip()
-            if sl.lower() not in seen_s and len(sl) >= 2:
-                seen_s.add(sl.lower())
-                unique_skills.append(sl)
+        if explicit_skill_categories:
+            skill_categories = explicit_skill_categories
+        else:
+            extracted_skills = extract_matching_skills(cleaned_text)
+            explicit_skills_tokens = []
+            for sl in sections["skills"]:
+                tokens = re.split(r'[,|•;:]', sl)
+                for tok in tokens:
+                    t_clean = tok.strip()
+                    if 2 <= len(t_clean) <= 30 and not any(w in t_clean.lower() for w in ["skills", "technologies", "proficient"]):
+                        explicit_skills_tokens.append(t_clean)
 
-        lang_keywords = {"python", "javascript", "typescript", "java", "c++", "c#", "c", "go", "golang", "rust", "ruby", "php", "swift", "kotlin", "scala", "r", "sql", "html", "css", "bash", "shell"}
-        db_cloud_keywords = {"postgresql", "postgres", "mysql", "mongodb", "redis", "elasticsearch", "sqlite", "dynamodb", "cassandra", "aws", "azure", "gcp", "google cloud", "docker", "kubernetes", "terraform"}
-        soft_keywords = {"leadership", "communication", "teamwork", "problem solving", "agile", "scrum", "mentoring", "critical thinking", "time management", "collaboration"}
+            seen_s = set()
+            unique_skills = []
+            for s in (extracted_skills + explicit_skills_tokens):
+                sl = s.strip()
+                if sl.lower() not in seen_s and len(sl) >= 2:
+                    seen_s.add(sl.lower())
+                    unique_skills.append(sl)
 
-        languages_list = []
-        frameworks_list = []
-        databases_cloud = []
-        tools_list = []
-        soft_skills_list = []
+            lang_keywords = {"python", "javascript", "typescript", "java", "c++", "c#", "c", "go", "golang", "rust", "ruby", "php", "swift", "kotlin", "scala", "r", "sql", "html", "css", "bash", "shell"}
+            db_cloud_keywords = {"postgresql", "postgres", "mysql", "mongodb", "redis", "elasticsearch", "sqlite", "dynamodb", "cassandra", "aws", "azure", "gcp", "google cloud", "docker", "kubernetes", "terraform"}
+            soft_keywords = {"leadership", "communication", "teamwork", "problem solving", "agile", "scrum", "mentoring", "critical thinking", "time management", "collaboration"}
 
-        for s in unique_skills:
-            sl = s.lower()
-            if sl in soft_keywords:
-                soft_skills_list.append(s)
-            elif sl in lang_keywords:
-                languages_list.append(s)
-            elif sl in db_cloud_keywords:
-                databases_cloud.append(s)
-            elif any(tw in sl for tw in ["git", "ci/cd", "jenkins", "jira", "linux", "webpack", "vite"]):
-                tools_list.append(s)
-            else:
-                frameworks_list.append(s)
+            languages_list = []
+            frameworks_list = []
+            databases_cloud = []
+            tools_list = []
+            soft_skills_list = []
 
-        skill_categories = []
-        if languages_list:
-            skill_categories.append({"category": "Programming Languages", "items": languages_list})
-        if frameworks_list:
-            skill_categories.append({"category": "Frameworks & AI/ML", "items": frameworks_list})
-        if databases_cloud:
-            skill_categories.append({"category": "Cloud & Databases", "items": databases_cloud})
-        if tools_list:
-            skill_categories.append({"category": "Developer Tools", "items": tools_list})
-        if soft_skills_list:
-            skill_categories.append({"category": "Core Competencies", "items": soft_skills_list})
+            for s in unique_skills:
+                sl = s.lower()
+                if sl in soft_keywords:
+                    soft_skills_list.append(s)
+                elif sl in lang_keywords:
+                    languages_list.append(s)
+                elif sl in db_cloud_keywords:
+                    databases_cloud.append(s)
+                elif any(tw in sl for tw in ["git", "ci/cd", "jenkins", "jira", "linux", "webpack", "vite"]):
+                    tools_list.append(s)
+                else:
+                    frameworks_list.append(s)
+
+            skill_categories = []
+            if languages_list:
+                skill_categories.append({"category": "Programming Languages", "items": languages_list})
+            if frameworks_list:
+                skill_categories.append({"category": "Frameworks & AI/ML", "items": frameworks_list})
+            if databases_cloud:
+                skill_categories.append({"category": "Cloud & Databases", "items": databases_cloud})
+            if tools_list:
+                skill_categories.append({"category": "Developer Tools", "items": tools_list})
+            if soft_skills_list:
+                skill_categories.append({"category": "Core Competencies", "items": soft_skills_list})
 
         # 7. Parse Projects
         project_items = []
         proj_lines = sections["projects"]
         current_proj = None
+
+        action_verbs = {
+            "built", "designed", "developed", "trained", "helped", "created", "led", "engineered",
+            "implemented", "cleaned", "spearheaded", "integrated", "utilized", "took", "delivered",
+            "deployed", "architected", "automated", "optimized", "managed", "orchestrated", "evaluated"
+        }
 
         for pl in proj_lines:
             pl_strip = pl.strip()
@@ -750,57 +794,63 @@ class LocalHeuristicProvider(BaseAIProvider):
                 continue
 
             clean_line = re.sub(r'^[#*\-•–+o\s]+', '', pl_strip).strip()
-            urls_in_line = URL_REGEX.findall(pl_strip)
-            gh_in_line = GITHUB_REGEX.findall(pl_strip)
-
             is_bullet_indicator = any(pl_strip.startswith(sym) for sym in ['-', '*', '•', '–', '+', 'o '])
-            has_title_sep = any(sep in clean_line for sep in [":", " | ", " - ", " – "])
 
-            # A line is a new project ONLY if it's explicitly titled or started
+            first_word = clean_line.split()[0].lower() if clean_line.split() else ""
             is_new_project = False
             if not current_proj:
                 is_new_project = True
-            elif not is_bullet_indicator and clean_line[0].isupper() and len(clean_line) < 60 and not clean_line.endswith('.'):
-                is_new_project = True
-            elif has_title_sep and len(clean_line.split(":")[0]) < 45 and (urls_in_line or gh_in_line or len(clean_line) < 80):
-                is_new_project = True
+            elif not is_bullet_indicator and first_word not in action_verbs:
+                if "|" in clean_line or ":" in clean_line:
+                    is_new_project = True
+                elif clean_line[0].isupper() and len(clean_line) < 80 and not clean_line.endswith('.'):
+                    is_new_project = True
 
             if is_new_project:
                 if current_proj and current_proj.get("name"):
+                    sanitized_p = sanitize_project_data(
+                        name=current_proj.get("name", ""),
+                        desc=current_proj.get("description", ""),
+                        technologies=current_proj.get("technologies", []),
+                        github_url=current_proj.get("githubUrl", ""),
+                        live_url=current_proj.get("liveUrl", ""),
+                        highlights=current_proj.get("highlights", [])
+                    )
+                    current_proj.update(sanitized_p)
                     project_items.append(current_proj)
+
+                urls_in_line = [clean_raw_url(u) for u in URL_REGEX.findall(pl_strip)]
+                gh_in_line = [clean_raw_url(u) for u in GITHUB_REGEX.findall(pl_strip)]
 
                 gh_url = f"https://github.com/{gh_in_line[0]}" if gh_in_line else ""
                 live_url = ""
                 for u in urls_in_line:
-                    if "github.com" not in u.lower():
-                        live_url = u
-                        break
+                    if "github.com" in u.lower():
+                        if not gh_url:
+                            gh_url = u
+                    else:
+                        if not live_url:
+                            live_url = u
 
-                clean_name = clean_line
-                for u in urls_in_line:
-                    clean_name = clean_name.replace(u, "")
-                clean_name = re.sub(r'https?://\S+', '', clean_name)
-                clean_name = re.sub(r'github\.com/\S+', '', clean_name)
-                clean_name = re.sub(r'\(?\b(?:20\d{2}|19\d{2}|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*[-–—to]*\s*(?:Present|Current|20\d{2})?\b\)?', '', clean_name, flags=re.IGNORECASE)
-                clean_name = re.sub(r'[|•–-]+$', '', clean_name).strip()
-
-                proj_desc = ""
-                if ":" in clean_name and len(clean_name.split(":")[0]) < 45:
-                    parts = clean_name.split(":", 1)
-                    proj_name = parts[0].strip()
-                    proj_desc = parts[1].strip()
-                elif " - " in clean_name:
-                    parts = [p.strip() for p in clean_name.split(" - ") if p.strip()]
+                proj_name = clean_line
+                extracted_techs = []
+                if "|" in clean_line:
+                    parts = [p.strip() for p in clean_line.split("|") if p.strip()]
                     proj_name = parts[0]
-                    proj_desc = parts[1] if len(parts) > 1 else ""
-                else:
-                    proj_name = clean_name[:50]
+                    for p in parts[1:]:
+                        if any(kw in p.lower() for kw in ["live", "demo", "github", "repo", "http"]):
+                            continue
+                        tokens = [t.strip() for t in re.split(r'[,/]', p) if t.strip()]
+                        extracted_techs.extend(tokens)
+                elif ":" in clean_line:
+                    parts = clean_line.split(":", 1)
+                    proj_name = parts[0].strip()
 
                 current_proj = {
                     "id": str(uuid.uuid4())[:8],
                     "name": proj_name,
-                    "description": proj_desc,
-                    "technologies": extract_matching_skills(pl_strip),
+                    "description": "",
+                    "technologies": extracted_techs or extract_matching_skills(pl_strip),
                     "githubUrl": gh_url,
                     "liveUrl": live_url,
                     "startDate": "",
@@ -820,21 +870,55 @@ class LocalHeuristicProvider(BaseAIProvider):
                         current_proj["technologies"].append(t)
 
         if current_proj and current_proj.get("name"):
+            sanitized_p = sanitize_project_data(
+                name=current_proj.get("name", ""),
+                desc=current_proj.get("description", ""),
+                technologies=current_proj.get("technologies", []),
+                github_url=current_proj.get("githubUrl", ""),
+                live_url=current_proj.get("liveUrl", ""),
+                highlights=current_proj.get("highlights", [])
+            )
+            current_proj.update(sanitized_p)
             project_items.append(current_proj)
 
         # 8. Parse Certifications
         certifications = []
         for cl in sections["certifications"]:
             cl_clean = re.sub(r'^[#*\-•–\s]+', '', cl).strip()
-            if 4 < len(cl_clean) < 100:
-                certifications.append({
-                    "id": str(uuid.uuid4())[:8],
-                    "name": cl_clean,
-                    "issuer": "",
-                    "issueDate": "",
-                    "expiryDate": "",
-                    "credentialUrl": ""
-                })
+            # Split by pipe '|' to support multiple certifications on a single bullet line
+            segments = [s.strip() for s in cl_clean.split('|') if s.strip()]
+            for seg in segments:
+                # Extract date in parentheses e.g. (Jul 2026) or (Aug 2026) or (2026)
+                issue_date = ""
+                date_match = re.search(r'\(((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{4}|\d{4})\)', seg, re.IGNORECASE)
+                if date_match:
+                    issue_date = date_match.group(1).strip()
+                    seg = seg[:date_match.start()] + seg[date_match.end():]
+                    seg = seg.strip()
+
+                issuer = ""
+                name = seg
+                if any(sep in seg for sep in ['–', '—', '-']):
+                    parts = re.split(r'\s*[-–—]\s*', seg, 1)
+                    name = parts[0].strip()
+                    issuer = parts[1].strip() if len(parts) > 1 else ""
+                elif " by " in seg.lower():
+                    parts = re.split(r'\s+by\s+', seg, 1, flags=re.IGNORECASE)
+                    name = parts[0].strip()
+                    issuer = parts[1].strip()
+
+                name = re.sub(r'[:|•–—\s]+$', '', name).strip()
+                issuer = re.sub(r'[:|•–—\s]+$', '', issuer).strip()
+
+                if len(name) >= 3:
+                    certifications.append({
+                        "id": str(uuid.uuid4())[:8],
+                        "name": name,
+                        "issuer": issuer,
+                        "issueDate": issue_date,
+                        "expiryDate": "",
+                        "credentialUrl": ""
+                    })
 
         # Check for workshops / certifications mentioned inside experience or summary
         if not certifications:
@@ -874,10 +958,10 @@ class LocalHeuristicProvider(BaseAIProvider):
                 "phone": phone,
                 "location": location,
                 "professionalTitle": prof_title,
-                "website": "",
+                "website": portfolio,
                 "linkedin": linkedin,
                 "github": github,
-                "portfolio": ""
+                "portfolio": portfolio
             },
             "professionalSummary": summary_text,
             "education": education_items,

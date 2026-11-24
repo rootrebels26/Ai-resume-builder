@@ -14,6 +14,7 @@ from app.services.extraction_validator import ExtractionValidator
 
 from app.utils.text_utils import (
     EMAIL_REGEX, PHONE_REGEX, LINKEDIN_REGEX, GITHUB_REGEX,
+    extract_phone_number, extract_portfolio_url, sanitize_project_data,
     extract_matching_skills, KNOWN_SKILLS
 )
 
@@ -53,15 +54,15 @@ def sanitize_and_hydrate_resume(data: Dict[str, Any], raw_text: str = "") -> Res
     if not isinstance(pinfo, dict):
         pinfo = {}
 
-    full_name = str(pinfo.get("fullName", "") or "").strip()
-    email = str(pinfo.get("email", "") or "").strip()
-    phone = str(pinfo.get("phone", "") or "").strip()
-    location = str(pinfo.get("location", "") or "").strip()
-    prof_title = str(pinfo.get("professionalTitle", "") or "").strip()
-    website = str(pinfo.get("website", "") or "").strip()
-    linkedin = str(pinfo.get("linkedin", "") or "").strip()
-    github = str(pinfo.get("github", "") or "").strip()
-    portfolio = str(pinfo.get("portfolio", "") or "").strip()
+    full_name = str(pinfo.get("fullName") or pinfo.get("name") or "").strip()
+    email = str(pinfo.get("email") or pinfo.get("mail") or "").strip()
+    phone = str(pinfo.get("phone") or pinfo.get("contactNo") or pinfo.get("contact_number") or pinfo.get("contact") or pinfo.get("mobile") or pinfo.get("cell") or pinfo.get("phoneNumber") or "").strip()
+    location = str(pinfo.get("location") or pinfo.get("address") or pinfo.get("city") or "").strip()
+    prof_title = str(pinfo.get("professionalTitle") or pinfo.get("title") or pinfo.get("role") or "").strip()
+    website = str(pinfo.get("website") or pinfo.get("site") or "").strip()
+    linkedin = str(pinfo.get("linkedin") or pinfo.get("linkedinUrl") or pinfo.get("linkedIn") or "").strip()
+    github = str(pinfo.get("github") or pinfo.get("githubUrl") or pinfo.get("git") or "").strip()
+    portfolio = str(pinfo.get("portfolio") or pinfo.get("portfolioUrl") or pinfo.get("portfolioLink") or pinfo.get("personalWebsite") or "").strip()
 
     # Safety net: Recover contact items and professional title from raw_text or experience if LLM missed them
     if not prof_title:
@@ -98,22 +99,38 @@ def sanitize_and_hydrate_resume(data: Dict[str, Any], raw_text: str = "") -> Res
                     if 1 < len(clean_name.split()) <= 4:
                         full_name = clean_name
                         break
-        if not email:
+        if not email or "@" not in email:
             emails = EMAIL_REGEX.findall(raw_text)
             if emails:
                 email = emails[0]
-        if not phone:
-            phones = [m.group(0).strip() for m in PHONE_REGEX.finditer(raw_text)]
-            if phones:
-                phone = phones[0]
+        if not phone or len(re.sub(r'\D', '', phone)) < 10:
+            rec_phone = extract_phone_number(raw_text)
+            if rec_phone:
+                phone = rec_phone
+        if not location:
+            for line in raw_text.splitlines()[:10]:
+                if any(c in line for c in ["India", "USA", "United States", "UK", "Canada", "Germany", "Bengal", "CA", "NY", "Bengaluru", "Bangalore", "Delhi", "Mumbai", "Hyderabad", "Pune", "Kolkata", "Chennai"]):
+                    parts = [p.strip() for p in line.split("|") if p.strip()]
+                    for p in parts:
+                        if any(c in p for c in ["India", "USA", "United States", "UK", "Canada", "Germany", "Bengal", "CA", "NY", "Bengaluru", "Bangalore", "Delhi", "Mumbai", "Hyderabad", "Pune", "Kolkata", "Chennai"]) and not any(kw in p.lower() for kw in ["engineer", "developer", "http", "@", "+"]):
+                            location = p
+                            break
+                    if location:
+                        break
         if not linkedin:
             li = LINKEDIN_REGEX.findall(raw_text)
             if li:
-                linkedin = f"https://linkedin.com/in/{li[0]}"
+                linkedin = f"https://linkedin.com/in/{li[0].rstrip('/')}"
         if not github:
             gh = GITHUB_REGEX.findall(raw_text)
             if gh:
-                github = f"https://github.com/{gh[0]}"
+                github = f"https://github.com/{gh[0].rstrip('/')}"
+        if not portfolio:
+            portfolio = extract_portfolio_url(raw_text, exclude_linkedin=linkedin, exclude_github=github)
+        if not website and portfolio:
+            website = portfolio
+        if not portfolio and website:
+            portfolio = website
 
     personal = PersonalInfo(
         fullName=full_name,
@@ -136,11 +153,19 @@ def sanitize_and_hydrate_resume(data: Dict[str, Any], raw_text: str = "") -> Res
             except Exception:
                 pass
         if isinstance(item, dict):
+            deg = str(item.get("degree", "") or "").strip()
+            fos = str(item.get("fieldOfStudy", "") or "").strip()
+            # If degree is brief e.g. "BS" or "B.Tech" and fieldOfStudy is known, create complete degree representation
+            if deg and fos and fos.lower() not in deg.lower() and len(deg.split()) <= 2:
+                final_deg = f"{deg} in {fos}"
+            else:
+                final_deg = deg or fos
+
             education_items.append(Education(
                 id=item.get("id") or str(uuid.uuid4())[:8],
                 institution=str(item.get("institution", "") or "").strip(),
-                degree=str(item.get("degree", "") or "").strip(),
-                fieldOfStudy=str(item.get("fieldOfStudy", "") or "").strip(),
+                degree=final_deg,
+                fieldOfStudy=fos,
                 startDate=str(item.get("startDate", "") or "").strip(),
                 endDate=str(item.get("endDate", "") or "").strip(),
                 cgpa=str(item.get("cgpa", "") or "").strip(),
@@ -239,17 +264,26 @@ def sanitize_and_hydrate_resume(data: Dict[str, Any], raw_text: str = "") -> Res
                 p_github = str(item.get("githubUrl") or item.get("github") or item.get("repo") or item.get("repository") or "").strip()
                 p_live = str(item.get("liveUrl") or item.get("live") or item.get("demo") or item.get("url") or item.get("link") or "").strip()
 
-                if p_name:
+                sanitized = sanitize_project_data(
+                    name=p_name,
+                    desc=p_desc,
+                    technologies=clean_techs,
+                    github_url=p_github,
+                    live_url=p_live,
+                    highlights=clean_highlights
+                )
+
+                if sanitized["name"]:
                     project_items.append(Project(
                         id=item.get("id") or str(uuid.uuid4())[:8],
-                        name=p_name,
-                        description=p_desc,
-                        technologies=clean_techs,
-                        githubUrl=p_github,
-                        liveUrl=p_live,
+                        name=sanitized["name"],
+                        description=sanitized["description"],
+                        technologies=sanitized["technologies"],
+                        githubUrl=sanitized["githubUrl"],
+                        liveUrl=sanitized["liveUrl"],
                         startDate=str(item.get("startDate", "") or "").strip(),
                         endDate=str(item.get("endDate", "") or "").strip(),
-                        highlights=clean_highlights
+                        highlights=sanitized["highlights"]
                     ))
 
     # Recovery 1: Check if projects were categorized under customSections
@@ -260,12 +294,20 @@ def sanitize_and_hydrate_resume(data: Dict[str, Any], raw_text: str = "") -> Res
                 if "project" in c_title:
                     for ci in csec.get("items", []) or []:
                         if isinstance(ci, dict):
-                            project_items.append(Project(
-                                id=str(uuid.uuid4())[:8],
+                            ci_sanitized = sanitize_project_data(
                                 name=ci.get("title", "Project"),
-                                description=ci.get("description", ""),
+                                desc=ci.get("description", ""),
                                 technologies=extract_matching_skills(ci.get("description", "")),
                                 highlights=[ci.get("subtitle", "")] if ci.get("subtitle") else []
+                            )
+                            project_items.append(Project(
+                                id=str(uuid.uuid4())[:8],
+                                name=ci_sanitized["name"],
+                                description=ci_sanitized["description"],
+                                technologies=ci_sanitized["technologies"],
+                                githubUrl=ci_sanitized["githubUrl"],
+                                liveUrl=ci_sanitized["liveUrl"],
+                                highlights=ci_sanitized["highlights"]
                             ))
 
     # Recovery 2: Check if experience has entries that are clearly projects (e.g. titled "Featured Projects" or "PulseQueue")
@@ -276,14 +318,24 @@ def sanitize_and_hydrate_resume(data: Dict[str, Any], raw_text: str = "") -> Res
                       any(kw in exp.position.lower() for kw in ["project"]) or \
                       (exp.company.lower() in {"personal", "academic", "independent", "open source"} and not exp.location)
             if is_proj:
+                exp_desc = exp.responsibilities[0] if exp.responsibilities else ""
+                exp_bullets = exp.responsibilities[1:] if len(exp.responsibilities) > 1 else exp.responsibilities
+                san = sanitize_project_data(
+                    name=exp.company if "project" not in exp.company.lower() else exp.position,
+                    desc=exp_desc,
+                    technologies=extract_matching_skills(" ".join(exp.responsibilities)),
+                    highlights=exp_bullets
+                )
                 project_items.append(Project(
                     id=exp.id or str(uuid.uuid4())[:8],
-                    name=exp.company if "project" not in exp.company.lower() else exp.position,
-                    description=exp.responsibilities[0] if exp.responsibilities else "",
-                    technologies=extract_matching_skills(" ".join(exp.responsibilities)),
+                    name=san["name"],
+                    description=san["description"],
+                    technologies=san["technologies"],
+                    githubUrl=san["githubUrl"],
+                    liveUrl=san["liveUrl"],
                     startDate=exp.startDate,
                     endDate=exp.endDate,
-                    highlights=exp.responsibilities[1:] if len(exp.responsibilities) > 1 else exp.responsibilities
+                    highlights=san["highlights"]
                 ))
             else:
                 filtered_exp.append(exp)
@@ -333,18 +385,65 @@ def sanitize_and_hydrate_resume(data: Dict[str, Any], raw_text: str = "") -> Res
                     skills_categories.append(SkillCategory(category="Technical Skills", items=[]))
                 skills_categories[0].items.append(item.strip())
 
-    # 7. Certifications
+    # 7. Certifications (with pipe-splitting and recovery)
     certification_items = []
     for item in data.get("certifications", []) or []:
         if isinstance(item, dict):
-            certification_items.append(Certification(
-                id=item.get("id") or str(uuid.uuid4())[:8],
-                name=str(item.get("name", "") or "").strip(),
-                issuer=str(item.get("issuer", "") or "").strip(),
-                issueDate=str(item.get("issueDate", "") or "").strip(),
-                expiryDate=str(item.get("expiryDate", "") or "").strip(),
-                credentialUrl=str(item.get("credentialUrl", "") or "").strip()
-            ))
+            c_name = str(item.get("name", "") or "").strip()
+            c_issuer = str(item.get("issuer", "") or "").strip()
+            c_date = str(item.get("issueDate", "") or "").strip()
+            # If model lumped multiple certifications on one pipe-separated line, expand them
+            if "|" in c_name:
+                for seg in [s.strip() for s in c_name.split("|") if s.strip()]:
+                    seg_name = seg
+                    seg_issuer = c_issuer
+                    seg_date = c_date
+                    d_m = re.search(r'\(((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{4}|\d{4})\)', seg, re.IGNORECASE)
+                    if d_m:
+                        seg_date = d_m.group(1).strip()
+                        seg = seg[:d_m.start()] + seg[d_m.end():]
+                    if any(sep in seg for sep in ['–', '—', '-']):
+                        parts = re.split(r'\s*[-–—]\s*', seg, 1)
+                        seg_name = parts[0].strip()
+                        seg_issuer = parts[1].strip() if len(parts) > 1 else c_issuer
+                    certification_items.append(Certification(
+                        id=str(uuid.uuid4())[:8],
+                        name=seg_name,
+                        issuer=seg_issuer,
+                        issueDate=seg_date,
+                        expiryDate=str(item.get("expiryDate", "") or "").strip(),
+                        credentialUrl=str(item.get("credentialUrl", "") or "").strip()
+                    ))
+            else:
+                certification_items.append(Certification(
+                    id=item.get("id") or str(uuid.uuid4())[:8],
+                    name=c_name,
+                    issuer=c_issuer,
+                    issueDate=c_date,
+                    expiryDate=str(item.get("expiryDate", "") or "").strip(),
+                    credentialUrl=str(item.get("credentialUrl", "") or "").strip()
+                ))
+
+    # Recovery: Direct regex extraction from raw_text if certifications missing
+    if not certification_items and raw_text:
+        cert_match = re.search(r'\b(?:certifications|certificates|licenses|credentials|courses|workshops)\b', raw_text, re.IGNORECASE)
+        if cert_match:
+            from app.providers.local_heuristic import LocalHeuristicProvider
+            heuristic = LocalHeuristicProvider()
+            try:
+                rec_parsed = heuristic.parse_resume_document_sync(raw_text[cert_match.start():])
+                for rc in rec_parsed.get("certifications", []) or []:
+                    if rc.get("name"):
+                        certification_items.append(Certification(
+                            id=str(uuid.uuid4())[:8],
+                            name=rc.get("name", ""),
+                            issuer=rc.get("issuer", ""),
+                            issueDate=rc.get("issueDate", ""),
+                            expiryDate=rc.get("expiryDate", ""),
+                            credentialUrl=rc.get("credentialUrl", "")
+                        ))
+            except Exception as e:
+                logger.warning("Certification recovery from raw_text failed: %s", e)
 
     # 8. Languages
     languages_items = []

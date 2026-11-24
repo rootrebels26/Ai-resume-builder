@@ -209,20 +209,31 @@ Extract all information from the provided raw resume text into a strictly format
 
 CRITICAL EXTRACTION RULES:
 1. ZERO HALLUCINATION: Extract only facts explicitly present in the text.
-2. CANDIDATE NAME:
+2. CANDIDATE NAME & CONTACT DETAILS:
    - Identify the candidate's actual full name at the top of the resume.
+   - Extract phone number (preserving international country code e.g. +91, +1, +44), email, city/state/country location.
+   - Extract LinkedIn profile URL, GitHub profile URL, and personal portfolio or website URL (into "portfolio" and "website").
 3. PROFESSIONAL TITLE & TARGET ROLE (CRITICAL):
    - Accurately determine the candidate's real professional title (e.g. "Full Stack Developer", "Backend Engineer", "Data Scientist", "Software Engineer", "DevOps Engineer").
    - If a title is explicitly in the header, use it.
    - If not in the header, inspect the most recent job title in their experience or primary technologies and set an accurate title. DO NOT default to a generic placeholder.
 4. EXPERIENCE & BULLETS:
    - Extract EVERY position with exact company name, job title, start/end dates, location, and bullet point responsibilities.
-5. PROJECTS:
-   - Locate and extract all technical and personal projects with name, description, tech stack array, and links.
+5. PROJECTS (CRITICAL FOR ACCURATE URL DECOUPLING):
+   - Locate and extract all technical and personal projects.
+   - CRITICAL: DO NOT dump live demo URLs, GitHub links, or labels like "[Demo]", "[GitHub]", "Live: https://..." into the "description" text or "highlights" bullets!
+   - Put live deployment URLs strictly in "liveUrl" (e.g. Render, Vercel, Netlify, AWS, custom domain).
+   - Put repository URLs strictly in "githubUrl".
+   - Keep "name" as the clean project title, and "description" as clean, professional narrative text describing the architecture, purpose, and impact.
+   - Extract "technologies" as an array of individual technology strings.
 6. SKILLS:
-   - Group skills into structured categories: "Programming Languages", "Frameworks & Libraries", "Cloud & DevOps", "Databases & Tools", "Core Competencies".
+   - If the resume explicitly organizes skills into named categories (e.g. "AI & Agents", "Data", "Languages", "ML / Frameworks", "Tools & Cloud", "Core CS"), PRESERVE those exact category names and items!
+   - Otherwise, group skills into clean categories: "Programming Languages", "Frameworks & AI/ML", "Cloud & DevOps", "Databases & Tools", "Core Competencies".
 7. EDUCATION:
-   - Extract institution, degree, field of study, dates, and GPA/honors if available.
+   - Extract institution, full degree (including field of study, e.g. "BS in Data Science and Applications"), start/end dates, CGPA, and coursework in description.
+8. CERTIFICATIONS:
+   - Extract EVERY certification. If multiple certifications are listed on the same bullet line separated by '|', split them into separate certification objects!
+   - Extract name, issuer (organization/platform e.g. Anthropic, Learn Depth, Simplilearn, HackerRank), and issue date.
 
 Return ONLY valid JSON matching this exact structure:
 {{

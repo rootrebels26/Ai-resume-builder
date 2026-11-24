@@ -11,20 +11,25 @@ export function ensureUrl(url) {
 export function ContactList({ personalInfo = {}, className = "", iconClass = "w-3.5 h-3.5 text-slate-500", showIcons = true, separator = "•" }) {
   const { email, phone, location, website, linkedin, github, portfolio } = personalInfo;
 
+  // Deduplicate website and portfolio if pointing to same URL or destination
+  const cleanUrlStr = (u) => String(u || '').trim().replace(/^https?:\/\//i, '').replace(/\/$/, '').toLowerCase();
+  const effectivePortfolio = portfolio || website;
+  const showWebsite = website && cleanUrlStr(website) !== cleanUrlStr(portfolio);
+
   const items = [
     phone && { icon: Phone, text: phone, href: `tel:${phone}` },
     email && { icon: Mail, text: email, href: `mailto:${email}` },
     location && { icon: MapPin, text: location },
-    website && { icon: Globe, text: website.replace(/^https?:\/\//, ''), href: ensureUrl(website) },
+    showWebsite && { icon: Globe, text: website.replace(/^https?:\/\//i, '').replace(/\/$/, ''), href: ensureUrl(website) },
     linkedin && { icon: Linkedin, text: 'LinkedIn', href: ensureUrl(linkedin) },
     github && { icon: Github, text: 'GitHub', href: ensureUrl(github) },
-    portfolio && { icon: ExternalLink, text: 'Portfolio', href: ensureUrl(portfolio) },
+    effectivePortfolio && { icon: ExternalLink, text: 'Portfolio', href: ensureUrl(effectivePortfolio) },
   ].filter(Boolean);
 
   if (items.length === 0) return null;
 
   return (
-    <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600 ${className}`}>
+    <div className={`flex flex-wrap items-center gap-y-1 text-xs text-slate-600 ${className}`}>
       {items.map((item, idx) => {
         const Icon = item.icon;
         const content = (
@@ -35,8 +40,8 @@ export function ContactList({ personalInfo = {}, className = "", iconClass = "w-
         );
 
         return (
-          <React.Fragment key={idx}>
-            {idx > 0 && <span className="text-slate-300 select-none">{separator}</span>}
+          <span key={idx} className="inline-flex items-center whitespace-nowrap">
+            {idx > 0 && <span className="mx-2 text-slate-300 select-none">{separator}</span>}
             {item.href ? (
               <a
                 href={item.href}
@@ -49,7 +54,7 @@ export function ContactList({ personalInfo = {}, className = "", iconClass = "w-
             ) : (
               content
             )}
-          </React.Fragment>
+          </span>
         );
       })}
     </div>
@@ -202,13 +207,13 @@ export function ProjectsSection({ items = [] }) {
           <div className="flex justify-between items-baseline flex-wrap gap-1">
             <h3 className="font-semibold text-slate-900 text-xs">
               {proj.name}
-              {proj.liveUrl && (
-                <a href={ensureUrl(proj.liveUrl)} target="_blank" rel="noopener noreferrer" className="ml-1.5 text-blue-600 hover:underline font-normal text-[11px]">
+              {(proj.liveUrl || proj.link || proj.url) && (
+                <a href={ensureUrl(proj.liveUrl || proj.link || proj.url)} target="_blank" rel="noopener noreferrer" className="ml-1.5 text-blue-600 hover:underline font-normal text-[11px]">
                   [Demo]
                 </a>
               )}
-              {proj.githubUrl && (
-                <a href={ensureUrl(proj.githubUrl)} target="_blank" rel="noopener noreferrer" className="ml-1 text-slate-500 hover:underline font-normal text-[11px]">
+              {(proj.githubUrl || proj.github) && (
+                <a href={ensureUrl(proj.githubUrl || proj.github)} target="_blank" rel="noopener noreferrer" className="ml-1 text-slate-500 hover:underline font-normal text-[11px]">
                   [GitHub]
                 </a>
               )}
