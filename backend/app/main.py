@@ -67,6 +67,9 @@ app.add_middleware(RequestContextMiddleware)
 # Custom exception handling
 setup_exception_handlers(app)
 
+# Include health routes at root level for cloud runtime booters / health checkers (/health, /health/live, /health/ready)
+app.include_router(health.router, tags=["Health"])
+
 # Include routers under /api/v1
 app.include_router(health.router, prefix=settings.API_V1_PREFIX, tags=["Health"])
 app.include_router(auth.router, prefix=f"{settings.API_V1_PREFIX}/auth", tags=["Auth"])
