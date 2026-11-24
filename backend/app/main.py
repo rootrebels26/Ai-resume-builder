@@ -1,4 +1,5 @@
 import logging
+import re
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -36,6 +37,17 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down %s", settings.APP_NAME)
 
 
+class NormalizePathASGIMiddleware:
+    """Collapses consecutive duplicate slashes (e.g. //api/v1 -> /api/v1) before routing or CORS."""
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] in ("http", "websocket") and "//" in scope.get("path", ""):
+            scope["path"] = re.sub(r"/+", "/", scope["path"])
+        await self.app(scope, receive, send)
+
+
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
@@ -46,7 +58,7 @@ app = FastAPI(
 )
 
 # Middleware is applied outermost-last; the order below yields the runtime
-# execution order: RequestContext -> CORS -> SecurityHeaders -> RateLimit -> GZip.
+# execution order: NormalizePath -> RequestContext -> CORS -> SecurityHeaders -> RateLimit -> GZip.
 app.add_middleware(GZipMiddleware, minimum_size=settings.GZIP_MINIMUM_SIZE)
 app.add_middleware(
     RateLimitMiddleware,
@@ -56,13 +68,15 @@ app.add_middleware(
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    allow_origins=settings.cors_origins if settings.cors_origins else ["*"],
+    allow_origin_regex=r"^https?:\/\/(localhost(:\d+)?|127\.0\.0\.1(:\d+)?|.*\.vercel\.app|.*\.nityacloudtech\.com)$",
     allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["X-Request-ID"],
 )
 app.add_middleware(RequestContextMiddleware)
+app.add_middleware(NormalizePathASGIMiddleware)
 
 # Custom exception handling
 setup_exception_handlers(app)
