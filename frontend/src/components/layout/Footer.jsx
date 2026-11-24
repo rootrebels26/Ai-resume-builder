@@ -25,13 +25,13 @@ export function Footer() {
           <div className="flex flex-col items-start justify-between gap-6 border-b border-white/10 pb-10 md:flex-row md:items-center">
             <div>
               <Link to="/" className="inline-block font-display text-2xl font-bold tracking-[-0.04em] text-white">
-                Resume<span className="text-[#cfff58]">Studio</span>
+                Nitya<span className="text-[#cfff58]">CloudTech</span>
               </Link>
               <p className="mt-1 text-xs font-mono font-medium text-[#cfff58]">
-                Developed by Sagnik Sen &amp; Atanu Das
+                Developed by Nitya CloudTech Team
               </p>
               <p className="mt-2 text-sm text-[#88867e] max-w-md">
-                Privacy-first, recruiter-approved resume builder. Helping 1028+ job seekers win.
+                Enterprise AI Resume Engineering &amp; ATS Optimization. Official product of Nitya CloudTech.
               </p>
             </div>
 
@@ -59,12 +59,12 @@ export function Footer() {
 
             <div>
               <p className="font-mono text-[11px] font-bold uppercase tracking-[0.15em] text-white">
-                Philosophy
+                Organization
               </p>
               <ul className="mt-4 space-y-2.5 font-medium">
-                <li><span className="text-white">No account required</span></li>
-                <li><span>Zero server storage</span></li>
-                <li><span>Client-side IndexedDB</span></li>
+                <li><a href="https://www.nityacloudtech.com/" target="_blank" rel="noreferrer" className="transition hover:text-white">Nitya CloudTech Portal ↗</a></li>
+                <li><span className="text-white">Zero Cloud Database</span></li>
+                <li><span>Client-Side IndexedDB</span></li>
                 <li><Link to="/privacy" className="transition hover:text-white">Privacy Policy</Link></li>
               </ul>
             </div>
@@ -74,19 +74,22 @@ export function Footer() {
                 Built for High-Stakes Hires
               </p>
               <p className="mt-4 text-xs leading-relaxed text-[#88867e]">
-                Every template passes text extraction and section parsing on Workday, Greenhouse, and Lever ATS platforms without messy layout shifts.
+                Every template passes text extraction and section parsing on Workday, Greenhouse, and Lever ATS platforms without layout shifts.
+              </p>
+              <p className="mt-3 text-[11px] text-[#706e66] font-mono">
+                Sector-46, Gurgaon, Haryana, India • info@nityacloudtech.com
               </p>
             </div>
           </div>
 
           {/* Giant Figma Background Hollow Wordmark */}
           <div className="relative pt-6 border-t border-white/5 flex flex-col items-center">
-            <div className="footer-wordmark font-display text-[55px] font-bold tracking-[-0.04em] sm:text-[105px] lg:text-[150px] leading-none select-none pointer-events-none text-center">
-              ResumeStudio
+            <div className="footer-wordmark font-display text-[45px] font-bold tracking-[-0.04em] sm:text-[90px] lg:text-[135px] leading-none select-none pointer-events-none text-center">
+              Nitya CloudTech
             </div>
             <div className="mt-6 flex w-full flex-col items-center justify-between gap-3 text-xs text-[#706e66] sm:flex-row">
-              <p>© {new Date().getFullYear()} ResumeStudio • Developed by Sagnik Sen &amp; Atanu Das</p>
-              <p>Crafted with low-anxiety design.</p>
+              <p>© {new Date().getFullYear()} Nitya CloudTech • Developed by Nitya CloudTech Team</p>
+              <a href="https://www.nityacloudtech.com/" target="_blank" rel="noreferrer" className="hover:text-white transition">www.nityacloudtech.com</a>
             </div>
           </div>
         </div>

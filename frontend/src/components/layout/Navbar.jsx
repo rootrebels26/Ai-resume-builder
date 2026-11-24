@@ -12,14 +12,14 @@ export function Navbar() {
     <header className="sticky top-0 z-50 bg-[#f4f0e8]/95 backdrop-blur-md border-b border-black/10 no-print">
       <div className="mx-auto flex max-w-[1440px] items-center justify-between px-5 py-4 md:px-10 lg:px-14">
         {/* Brand Logo matching Figma Make */}
-        <Link to="/" className="flex items-center gap-2.5 group" aria-label="ResumeStudio home">
-          <span className="logo-mark"><span>D</span></span>
+        <Link to="/" className="flex items-center gap-2.5 group" aria-label="Nitya CloudTech home">
+          <span className="logo-mark"><span>N</span></span>
           <div className="flex flex-col leading-tight">
             <span className="font-display text-[20px] font-bold tracking-[-0.04em] text-[#171713]">
-              Resume<span className="text-[#5e48d7]">Studio</span>
+              Nitya<span className="text-[#5e48d7]">CloudTech</span>
             </span>
             <span className="text-[9.5px] font-mono font-medium tracking-tight text-[#706e66] -mt-0.5">
-              by Sagnik Sen &amp; Atanu Das
+              AI Resume Builder • Developed by Nitya CloudTech Team
             </span>
           </div>
         </Link>

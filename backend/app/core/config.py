@@ -7,7 +7,7 @@ _BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
 _ENV_FILE = _BACKEND_DIR / ".env"
 
 class Settings(BaseSettings):
-    APP_NAME: str = "AI Resume Builder API"
+    APP_NAME: str = "Nitya CloudTech AI Resume Builder API"
     APP_VERSION: str = "1.0.0"
     APP_ENV: str = "development"
     API_V1_PREFIX: str = "/api/v1"
@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     CORS_ALLOW_CREDENTIALS: bool = False
 
     # Company Access Code authentication
-    COMPANY_ACCESS_CODE: str = "nityacloudwithatanu&sagnik"
+    COMPANY_ACCESS_CODE: str = "NityaCloudtech#resume"
     AUTH_SECRET_KEY: str = "resume-studio-access-secret-key-prod-2026"
 
     # Upload limits

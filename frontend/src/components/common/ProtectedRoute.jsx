@@ -24,7 +24,7 @@ export function ProtectedRoute({ children }) {
             Restricted Workspace
           </h2>
           <p className="text-sm text-[#646158] leading-relaxed">
-            The ResumeStudio Builder and AI tools are restricted to authorized team members. Please enter your unique company access code to continue.
+            The Nitya CloudTech Resume Builder and AI tools are restricted to authorized team members. Please enter your unique company access code to continue.
           </p>
           <div className="pt-2">
             <button

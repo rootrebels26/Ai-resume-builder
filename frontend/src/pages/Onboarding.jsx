@@ -236,7 +236,7 @@ export function Onboarding() {
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-volt border border-ink animate-pulse" />
               <span className="font-extrabold text-ink uppercase tracking-wider text-[11px]">
-                Resume Studio Onboarding
+                Nitya CloudTech Resume Builder
               </span>
             </div>
             <span className="font-mono text-ink-muted text-[11px] font-bold">

@@ -1,4 +1,6 @@
-# AI RESUME BUILDER — PRODUCTION-READY APPLICATION
+# NITYA CLOUDTECH — AI RESUME BUILDER
+
+Official enterprise AI-powered Resume Builder by **Nitya CloudTech** ([nityacloudtech.com](https://www.nityacloudtech.com/)). Developed by the Nitya CloudTech team.
 
 A modern, privacy-first, database-free, AI-powered Resume Builder web platform with 50+ templates across 7 categories, real-time ATS compatibility scoring, job description gap analysis, dual-engine PDF/DOCX ingestion, and high-fidelity A4 export.
 
