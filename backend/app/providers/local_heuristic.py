@@ -194,9 +194,24 @@ class LocalHeuristicProvider(BaseAIProvider):
                 missing.append(skill)
 
         total = max(1, len(jd_skills))
-        pct = int((len(matched) / total) * 100)
+        skill_ratio = len(matched) / total
 
-        strengths = [f"Directly matches {len(matched)} key technologies required by the role."]
+        # Real ATS structural readiness weighting (Contact, Summary, Experience, Education)
+        resume_dict = request.resume_data if isinstance(request.resume_data, dict) else {}
+        has_summary = bool(resume_dict.get("professionalSummary"))
+        has_exp = bool(resume_dict.get("experience"))
+        has_edu = bool(resume_dict.get("education"))
+        has_contact = bool(resume_dict.get("personalInfo", {}).get("email"))
+        structure_score = (has_summary * 0.25 + has_exp * 0.35 + has_edu * 0.20 + has_contact * 0.20)
+
+        # Blended ATS compatibility score (70% skill coverage + 30% structural & metric readiness)
+        pct = int(min(98, max(50, (skill_ratio * 70) + (structure_score * 28))))
+
+        strengths = [
+            f"Directly matches {len(matched)} key technologies and competencies required by the target role."
+        ]
+        if pct >= 85:
+            strengths.append("High ATS keyword density and strong alignment with core job responsibilities.")
         gaps = [f"Lacks explicit mentions of: {', '.join(missing[:4])}"] if missing else []
         recommendations = [
             "Incorporate missing core skills into your project descriptions or experience bullets.",
