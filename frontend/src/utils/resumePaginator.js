@@ -21,7 +21,7 @@ export function paginateResume(rawResumeData, options = {}) {
   const forceSinglePage = options.forceSinglePage === true;
 
   // Realistic thresholds calibrated for 18mm padding + footer
-  const PAGE_1_MAX = forceTwoPages ? (options.page1Max || 550) : (options.page1Max || 890);
+  const NATURAL_PAGE_1_MAX = options.page1Max || 890;
   const PAGE_CONT_MAX = options.pageContMax || 880;
 
   const personalInfo = resumeData.personalInfo || {};
@@ -105,12 +105,23 @@ export function paginateResume(rawResumeData, options = {}) {
 
   const totalCalculatedHeight = headerH + summaryH + expH + eduH + projH + skillsH + certsH + langsH;
 
+  // When forceTwoPages is requested:
+  // If the resume has ample content (>= NATURAL_PAGE_1_MAX), Page 1 MUST use its full natural capacity (890px).
+  // This guarantees Page 1 is filled completely and professionally without premature pagination or awkward blank voids.
+  // Only if total content is shorter than a single page do we balance the split.
+  const PAGE_1_MAX = (forceTwoPages && totalCalculatedHeight < NATURAL_PAGE_1_MAX)
+    ? Math.max(420, Math.round(totalCalculatedHeight * 0.55))
+    : NATURAL_PAGE_1_MAX;
+
   const templateId = resumeData.templateId || options.templateId || '';
   const isTwoColumn = typeof templateId === 'string' && templateId.startsWith('modern-');
 
   // Handle Two-Column Modern templates specifically
   if (isTwoColumn) {
-    const RIGHT_PAGE_1_MAX = forceTwoPages ? 520 : (options.rightPage1Max || 860);
+    const NATURAL_RIGHT_PAGE_1_MAX = options.rightPage1Max || 860;
+    const RIGHT_PAGE_1_MAX = (forceTwoPages && rightContentH < NATURAL_RIGHT_PAGE_1_MAX)
+      ? Math.max(400, Math.round(rightContentH * 0.55))
+      : NATURAL_RIGHT_PAGE_1_MAX;
     const RIGHT_PAGE_CONT_MAX = options.rightPageContMax || 840;
     const rightHeaderH = 80;
     const rightContentH = rightHeaderH + summaryH + expH + projH;
@@ -252,13 +263,19 @@ export function paginateResume(rawResumeData, options = {}) {
   };
 
   // Check template rendering order:
-  // MAANG templates and Developer templates render: Summary -> Skills -> Experience/Projects -> Education -> Certs
-  // ATS templates render: Summary -> Experience -> Education/Projects -> Skills -> Certs
+  // Only templates intentionally designed with skills before experience should paginate skills first:
   const skillsFirst = typeof templateId === 'string' && (
+    templateId === 'maang-google' ||
+    templateId.startsWith('student-')
+  );
+
+  // MAANG & developer templates (such as maang-meta, maang-amazon, developer-*) render:
+  // Summary -> Experience -> Skills -> Projects -> Education
+  const skillsBeforeProjects = typeof templateId === 'string' && (
     templateId.startsWith('maang-') ||
     templateId.startsWith('developer-') ||
     templateId.startsWith('data-') ||
-    templateId.startsWith('student-')
+    templateId.startsWith('executive-')
   );
 
   // 1. Summary
@@ -340,6 +357,11 @@ export function paginateResume(rawResumeData, options = {}) {
   if (skillsFirst) {
     addSkillsSection();
     addExperienceSection();
+    addProjectsSection();
+    addEducationSection();
+  } else if (skillsBeforeProjects) {
+    addExperienceSection();
+    addSkillsSection();
     addProjectsSection();
     addEducationSection();
   } else {
