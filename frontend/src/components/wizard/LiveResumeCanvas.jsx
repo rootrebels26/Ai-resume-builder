@@ -1,10 +1,12 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 import {
   Download, Printer, ZoomIn, ZoomOut, RotateCcw, Palette,
-  Sparkles, Check, CheckCircle2, ShieldCheck, ChevronDown, FileText, Scissors
+  Sparkles, Check, CheckCircle2, ShieldCheck, ChevronDown, FileText, Scissors,
+  Plus, Minimize2
 } from 'lucide-react';
 import { useResume } from '../../context/ResumeContext';
 import { ResumeTemplate } from '../templates/ResumeTemplate';
+import { A4PageSheet } from '../templates/A4PageSheet';
 import { TEMPLATES, isFullBleedTemplate } from '../../constants/templatesList';
 import { pdfService } from '../../services/pdfService';
 import { useResumePagination } from '../../utils/resumePaginator';
@@ -36,7 +38,15 @@ export function LiveResumeCanvas({ className = "" }) {
   const [isExporting, setIsExporting] = useState(false);
   const canvasPrintRef = useRef(null);
 
-  const { pages, pageCount, isMultiPage } = useResumePagination(resumeData);
+  const [pageLayoutMode, setPageLayoutMode] = useState('auto'); // 'auto' | '1_page' | '2_pages'
+
+  const paginationOptions = useMemo(() => ({
+    forceTwoPages: pageLayoutMode === '2_pages',
+    forceSinglePage: pageLayoutMode === '1_page',
+    templateId: selectedTemplateId || resumeData?.templateId || 'ats-01'
+  }), [pageLayoutMode, selectedTemplateId, resumeData?.templateId]);
+
+  const { pages, pageCount, isMultiPage } = useResumePagination(resumeData, paginationOptions);
 
   const activeTemplate =
     TEMPLATES.find((t) => t.id === selectedTemplateId) || TEMPLATES[0];
@@ -129,11 +139,60 @@ export function LiveResumeCanvas({ className = "" }) {
           ))}
         </div>
 
-        {/* Right Section: Zoom Controls & Quick PDF Download */}
+        {/* Right Section: Layout controls, Zoom & Quick PDF Download */}
         <div className="flex items-center gap-2">
           {/* Live ATS Pill */}
           <div className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-volt border border-ink text-[11px] font-mono font-bold shadow-brutal-sm">
             <span>ATS {quickScore}%</span>
+          </div>
+
+          {/* Layout Controls: Fit 1 Page & + Add 1 More Page */}
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setPageLayoutMode(prev => prev === '1_page' ? 'auto' : '1_page')}
+              title={pageLayoutMode === '1_page' ? "1 Page Fit is active (Click to reset to Auto)" : "Fit all content onto 1 Page with zero cut-off"}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-full border text-[11px] font-bold font-mono transition cursor-pointer shadow-brutal-sm ${
+                pageLayoutMode === '1_page'
+                  ? 'bg-ink text-volt border-ink ring-2 ring-volt/40'
+                  : 'bg-white text-ink border-ink/20 hover:border-ink hover:text-ink'
+              }`}
+            >
+              {pageLayoutMode === '1_page' ? (
+                <>
+                  <Check className="w-3 h-3 text-volt" />
+                  <span>1 Page Fit</span>
+                </>
+              ) : (
+                <>
+                  <Minimize2 className="w-3 h-3 text-ink-muted" />
+                  <span>Fit 1 Page</span>
+                </>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setPageLayoutMode(prev => prev === '2_pages' ? 'auto' : '2_pages')}
+              title={pageLayoutMode === '2_pages' ? "Switch back to Auto Fit" : "Add 1 more page (Split content across 2 pages)"}
+              className={`hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full border text-[11px] font-bold font-mono transition cursor-pointer shadow-brutal-sm ${
+                pageLayoutMode === '2_pages'
+                  ? 'bg-ink text-volt border-ink ring-2 ring-volt/40'
+                  : 'bg-white text-ink border-ink/20 hover:border-ink'
+              }`}
+            >
+              {pageLayoutMode === '2_pages' ? (
+                <>
+                  <Check className="w-3 h-3 text-volt" />
+                  <span>2 Pages</span>
+                </>
+              ) : (
+                <>
+                  <Plus className="w-3 h-3" />
+                  <span>+ Add Page</span>
+                </>
+              )}
+            </button>
           </div>
 
           {/* Zoom controls */}
@@ -207,35 +266,16 @@ export function LiveResumeCanvas({ className = "" }) {
                   <div className="html2pdf__page-break" style={{ height: 0, margin: 0, padding: 0 }} />
                 )}
 
-                {/* Single Authentic A4 Document Paper Sheet */}
-                <div
-                  className="resume-a4-page bg-white shadow-brutal-lg rounded-sm border-[1.5px] border-ink text-ink relative flex flex-col justify-between"
-                  style={{
-                    width: '210mm',
-                    height: '297mm', // Fixed genuine A4 sheet height!
-                    padding: isFullBleedTemplate(selectedTemplateId || resumeData?.templateId || 'ats-01') ? '0' : '18mm',
-                    boxSizing: 'border-box',
-                    overflow: 'hidden'
-                  }}
-                  data-page-index={pageIdx + 1}
-                >
-                  <div className="flex-1 h-full overflow-hidden flex flex-col">
-                    <ResumeTemplate
-                      templateId={selectedTemplateId || 'ats-01'}
-                      resumeData={pageData}
-                    />
-                  </div>
-
-                  {/* Authentic subtle footer page indicator when multi-page and NOT full bleed */}
-                  {isMultiPage && !isFullBleedTemplate(selectedTemplateId || resumeData?.templateId || 'ats-01') && (
-                    <div className="pt-2 mt-auto text-[10px] font-mono text-slate-400 flex justify-between items-center border-t border-slate-100 select-none">
-                      <span className="truncate max-w-[200px]">
-                        {resumeData.personalInfo?.fullName || 'Resume'}
-                      </span>
-                      <span>Page {pageIdx + 1} of {pageCount}</span>
-                    </div>
-                  )}
-                </div>
+                {/* Single Authentic A4 Document Paper Sheet with Smart Auto-Fit */}
+                <A4PageSheet
+                  pageData={pageData}
+                  pageIdx={pageIdx}
+                  pageCount={pageCount}
+                  isMultiPage={isMultiPage}
+                  pageLayoutMode={pageLayoutMode}
+                  resumeData={resumeData}
+                  templateId={selectedTemplateId || resumeData?.templateId || 'ats-01'}
+                />
               </React.Fragment>
             ))}
           </div>

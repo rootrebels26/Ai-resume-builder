@@ -5,10 +5,11 @@ import {
   Sparkles, Download, Printer, FileJson, Upload, RefreshCw, ZoomIn, ZoomOut,
   Plus, Trash2, ChevronLeft, ChevronRight, ChevronDown, Check, Eye, Loader2, ArrowRight,
   ArrowLeft, Languages, Layers, MoveUp, MoveDown, CheckCircle2, Sliders,
-  HelpCircle, AlertCircle, Edit3, FileText, Scissors
+  HelpCircle, AlertCircle, Edit3, FileText, Scissors, Minimize2
 } from 'lucide-react';
 import { useResume } from '../context/ResumeContext';
 import { ResumeTemplate } from '../components/templates/ResumeTemplate';
+import { A4PageSheet } from '../components/templates/A4PageSheet';
 import { TEMPLATES, isFullBleedTemplate } from '../constants/templatesList';
 import { pdfService } from '../services/pdfService';
 import { storageService } from '../services/storageService';
@@ -2669,44 +2670,56 @@ export function Builder() {
                 )}
               </div>
 
-              {/* Explicit User Control: Add 1 More Page / Auto Toggle */}
-              <button
-                type="button"
-                onClick={() => setPageLayoutMode(prev => prev === '2_pages' ? 'auto' : '2_pages')}
-                title={pageLayoutMode === '2_pages' ? "Switch back to Auto Fit" : "Add 1 more page (Split content across 2 pages)"}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[11px] font-bold font-mono transition cursor-pointer shadow-brutal-sm ${
-                  pageLayoutMode === '2_pages'
-                    ? 'bg-ink text-volt border-ink'
-                    : 'bg-white text-ink border-ink/20 hover:border-ink hover:bg-canvas'
-                }`}
-              >
-                {pageLayoutMode === '2_pages' ? (
-                  <>
-                    <Check className="w-3 h-3 text-volt" />
-                    <span>2 Pages Mode</span>
-                  </>
-                ) : (
-                  <>
-                    <Plus className="w-3 h-3" />
-                    <span>+ Add 1 More Page</span>
-                  </>
-                )}
-              </button>
-
-              {pageCount > 1 && (
+              {/* Layout Mode Control: 1 Page Fit & + Add 1 More Page */}
+              <div className="flex items-center gap-1.5">
+                {/* 1 Page Fit button - Always visible and toggleable */}
                 <button
                   type="button"
                   onClick={() => setPageLayoutMode(prev => prev === '1_page' ? 'auto' : '1_page')}
-                  title="Try compacting all content onto 1 Page"
-                  className={`hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full border text-[11px] font-bold font-mono transition cursor-pointer shadow-brutal-sm ${
+                  title={pageLayoutMode === '1_page' ? "1 Page Fit is active (Click to reset to Auto)" : "Fit all content onto 1 Page with zero cut-off"}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[11px] font-bold font-mono transition cursor-pointer shadow-brutal-sm ${
                     pageLayoutMode === '1_page'
-                      ? 'bg-ink text-volt border-ink'
-                      : 'bg-white text-ink-muted border-ink/20 hover:border-ink hover:text-ink'
+                      ? 'bg-ink text-volt border-ink ring-2 ring-volt/40'
+                      : 'bg-white text-ink border-ink/20 hover:border-ink hover:text-ink hover:bg-canvas'
                   }`}
                 >
-                  <span>1 Page Fit</span>
+                  {pageLayoutMode === '1_page' ? (
+                    <>
+                      <Check className="w-3 h-3 text-volt" />
+                      <span>1 Page Fit (Active)</span>
+                    </>
+                  ) : (
+                    <>
+                      <Minimize2 className="w-3 h-3 text-ink-muted" />
+                      <span>1 Page Fit</span>
+                    </>
+                  )}
                 </button>
-              )}
+
+                {/* Explicit User Control: Add 1 More Page / Auto Toggle */}
+                <button
+                  type="button"
+                  onClick={() => setPageLayoutMode(prev => prev === '2_pages' ? 'auto' : '2_pages')}
+                  title={pageLayoutMode === '2_pages' ? "Switch back to Auto Fit" : "Add 1 more page (Split content across 2 pages)"}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[11px] font-bold font-mono transition cursor-pointer shadow-brutal-sm ${
+                    pageLayoutMode === '2_pages'
+                      ? 'bg-ink text-volt border-ink ring-2 ring-volt/40'
+                      : 'bg-white text-ink border-ink/20 hover:border-ink hover:bg-canvas'
+                  }`}
+                >
+                  {pageLayoutMode === '2_pages' ? (
+                    <>
+                      <Check className="w-3 h-3 text-volt" />
+                      <span>2 Pages Mode</span>
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-3 h-3" />
+                      <span>+ Add 1 More Page</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -2743,35 +2756,16 @@ export function Builder() {
                     <div className="html2pdf__page-break" style={{ height: 0, margin: 0, padding: 0 }} />
                   )}
 
-                  {/* Single Authentic A4 Document Paper Sheet */}
-                  <div
-                    className="resume-a4-page bg-white shadow-brutal-lg rounded-sm border-[1.5px] border-ink text-ink relative flex flex-col justify-between"
-                    style={{
-                      width: '210mm',
-                      height: '297mm', // Fixed genuine A4 sheet height!
-                      padding: isFullBleedTemplate(resumeData.templateId || 'ats-01') ? '0' : '18mm',
-                      boxSizing: 'border-box',
-                      overflow: 'hidden'
-                    }}
-                    data-page-index={pageIdx + 1}
-                  >
-                    <div className="flex-1 h-full overflow-hidden flex flex-col">
-                      <ResumeTemplate
-                        templateId={resumeData.templateId || 'ats-01'}
-                        resumeData={pageData}
-                      />
-                    </div>
-
-                    {/* Authentic subtle footer page indicator when multi-page and NOT full bleed */}
-                    {isMultiPage && !isFullBleedTemplate(resumeData.templateId || 'ats-01') && (
-                      <div className="pt-2 mt-auto text-[10px] font-mono text-slate-400 flex justify-between items-center border-t border-slate-100 select-none">
-                        <span className="truncate max-w-[200px]">
-                          {resumeData.personalInfo?.fullName || 'Resume'}
-                        </span>
-                        <span>Page {pageIdx + 1} of {pageCount}</span>
-                      </div>
-                    )}
-                  </div>
+                  {/* Single Authentic A4 Document Paper Sheet with Smart Auto-Fit */}
+                  <A4PageSheet
+                    pageData={pageData}
+                    pageIdx={pageIdx}
+                    pageCount={pageCount}
+                    isMultiPage={isMultiPage}
+                    pageLayoutMode={pageLayoutMode}
+                    resumeData={resumeData}
+                    templateId={resumeData.templateId || 'ats-01'}
+                  />
                 </React.Fragment>
               ))}
             </div>

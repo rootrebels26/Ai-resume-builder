@@ -716,8 +716,91 @@
     break-after: page;
   }
 
+  .resume-a4-page.one-page-fit-active {
+    padding: 10mm 12mm !important;
+  }
+
   .resume-a4-page:last-child {
     page-break-after: auto;
     break-after: auto;
   }
+}
+
+/* -------------------------------------------------------------
+ * 1-Page Fit Optimization Engine
+ * When 1-Page Fit is active, automatically compact whitespace, 
+ * reduce margins, and ensure zero text cut-off on a single A4 page.
+ * ------------------------------------------------------------- */
+.one-page-fit-active {
+  padding: 10mm 12mm !important;
+}
+
+.one-page-fit-active h1 {
+  font-size: 1.35rem !important;
+  line-height: 1.15 !important;
+}
+
+.one-page-fit-active h2 {
+  font-size: 0.85rem !important;
+  margin-top: 0.35rem !important;
+  margin-bottom: 0.2rem !important;
+}
+
+.one-page-fit-active h3 {
+  font-size: 0.8rem !important;
+  margin-bottom: 0.1rem !important;
+}
+
+.one-page-fit-active p,
+.one-page-fit-active li,
+.one-page-fit-active span {
+  line-height: 1.25 !important;
+}
+
+.one-page-fit-active ul {
+  margin-top: 0.15rem !important;
+  margin-bottom: 0.15rem !important;
+}
+
+.one-page-fit-active li {
+  margin-bottom: 0.15rem !important;
+}
+
+.one-page-fit-active .mb-4,
+.one-page-fit-active .mb-5,
+.one-page-fit-active .mb-6 {
+  margin-bottom: 0.35rem !important;
+}
+
+.one-page-fit-active .mt-3,
+.one-page-fit-active .mt-4 {
+  margin-top: 0.25rem !important;
+}
+
+.one-page-fit-active .space-y-4 > * + * {
+  margin-top: 0.3rem !important;
+}
+
+.one-page-fit-active .space-y-3 > * + * {
+  margin-top: 0.25rem !important;
+}
+
+.one-page-fit-active .space-y-2 > * + *,
+.one-page-fit-active .space-y-2\.5 > * + * {
+  margin-top: 0.18rem !important;
+}
+
+.one-page-fit-active .space-y-1\.5 > * + * {
+  margin-top: 0.12rem !important;
+}
+
+.one-page-fit-active .py-2,
+.one-page-fit-active .py-3 {
+  padding-top: 0.15rem !important;
+  padding-bottom: 0.15rem !important;
+}
+
+.one-page-fit-active .pb-2\.5,
+.one-page-fit-active .pb-2 {
+  padding-bottom: 0.2rem !important;
 }
