@@ -1,6 +1,7 @@
 import json
 import re
 import logging
+import asyncio
 from app.providers.base import BaseAIProvider
 from app.providers.local_heuristic import LocalHeuristicProvider
 from app.core.config import settings
@@ -32,7 +33,7 @@ class GeminiProvider(BaseAIProvider):
             import google.generativeai as genai
             genai.configure(api_key=self.api_key)
             model = genai.GenerativeModel(self.model_name)
-            response = await model.generate_content_async(prompt)
+            response = await asyncio.wait_for(model.generate_content_async(prompt), timeout=8.0)
             raw_text = response.text.strip()
 
             # Clean markdown code block if present
