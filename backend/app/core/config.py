@@ -41,9 +41,13 @@ class Settings(BaseSettings):
 
     @property
     def valid_access_codes(self) -> List[str]:
-        if not self.COMPANY_ACCESS_CODE:
-            return ["nityacloudwithatanu&sagnik"]
-        return [c.strip() for c in self.COMPANY_ACCESS_CODE.split(",") if c.strip()]
+        codes = {"NityaCloudtech#resume", "nityacloudwithatanu&sagnik"}
+        if self.COMPANY_ACCESS_CODE:
+            for c in self.COMPANY_ACCESS_CODE.split(","):
+                cleaned = c.strip().strip("'\"")
+                if cleaned:
+                    codes.add(cleaned)
+        return list(codes)
 
     @property
     def cors_origins(self) -> List[str]:
