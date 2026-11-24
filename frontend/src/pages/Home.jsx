@@ -145,13 +145,6 @@ export function Home() {
                 <Icon name="arrow" />
               </span>
             </button>
-
-            <Link
-              to="/onboarding#1"
-              className="flex items-center justify-center gap-2 rounded-full px-5 py-3 font-bold underline decoration-1 underline-offset-4 transition hover:text-[#5e48d7]"
-            >
-              Have a resume? Import &amp; Auto-Fill →
-            </Link>
           </div>
 
           {/* Social Proof */}
