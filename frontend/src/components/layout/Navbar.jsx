@@ -1,25 +1,12 @@
 import React, { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ArrowRight, Menu, X, ShieldCheck, LogOut } from 'lucide-react';
-import { useResume } from '../../context/ResumeContext';
+import { Link, useLocation } from 'react-router-dom';
+import { Menu, X, ShieldCheck, LogOut } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 export function Navbar() {
   const location = useLocation();
-  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
-  const { createNewResume } = useResume();
-  const { isAuthenticated, openLoginModal, logout, requireAuth } = useAuth();
-
-  const handleBuildYours = async () => {
-    requireAuth(async () => {
-      try {
-        navigate('/onboarding#1');
-      } catch (e) {
-        navigate('/onboarding#1');
-      }
-    }, 'Enter your company access code to open the resume editor.');
-  };
+  const { isAuthenticated, openLoginModal, logout } = useAuth();
 
   return (
     <header className="sticky top-0 z-50 bg-[#f4f0e8]/95 backdrop-blur-md border-b border-black/10 no-print">
@@ -86,14 +73,6 @@ export function Navbar() {
               Log in
             </button>
           )}
-
-          <button
-            onClick={handleBuildYours}
-            className="ink-button px-5 py-2.5 text-sm"
-          >
-            <span>Build yours</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
         </div>
 
         {/* Mobile Menu Toggle Button */}
@@ -142,16 +121,6 @@ export function Navbar() {
                     Log in with Code
                   </button>
                 )}
-                <button
-                  onClick={() => {
-                    setMenuOpen(false);
-                    handleBuildYours();
-                  }}
-                  className="ink-button w-full justify-center py-2.5 text-sm"
-                >
-                  <span>Build yours</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
               </div>
             </nav>
           </div>

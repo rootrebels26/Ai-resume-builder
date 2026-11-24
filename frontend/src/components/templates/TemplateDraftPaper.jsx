@@ -459,32 +459,26 @@ export function TemplateDraftPaper({ template }) {
   // 5. SOFTWARE DEVELOPER CATEGORY — Code/Terminal accents, Tech Stack tags, Git metrics
   if (category === 'developer') {
     return (
-      <div className="w-full h-full bg-slate-900 text-slate-100 p-3 flex flex-col justify-between text-[7px] leading-tight select-none font-mono overflow-hidden">
+      <div className="w-full h-full bg-white text-slate-800 p-3 flex flex-col justify-between text-[7px] leading-tight select-none font-mono overflow-hidden">
         {/* Terminal Header */}
-        <div className="space-y-1 pb-1.5 border-b border-slate-800">
-          <div className="flex items-center gap-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-            <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            <span className="text-[5px] text-slate-500 pl-1 font-sans">alex@archlinux: ~/resume.sh</span>
-          </div>
-          <div className="flex justify-between items-end">
-            <div>
-              <div className="font-bold text-[9.5px] text-white">Alex Rivera</div>
-              <div className="text-[6.5px] text-cyan-400 font-sans">Lead Full Stack & Infrastructure Engineer</div>
-            </div>
-            <div className="text-[5px] text-slate-400 text-right">
-              github.com/alexrivera<br/>alex.rivera@dev
-            </div>
+        <div className="text-center pb-1 mb-1 border-b border-slate-200">
+          <div className="font-bold text-[10px] text-slate-900 uppercase">&gt; Alex Rivera</div>
+          <div className="text-[6px] text-slate-700 font-semibold uppercase">Lead Full Stack & Infrastructure Engineer</div>
+          <div className="text-[5px] text-slate-500 pt-0.5 flex justify-center gap-2">
+            <span>alex.rivera@dev</span>
+            <span>|</span>
+            <span>San Francisco, CA</span>
+            <span>|</span>
+            <span>github.com/alexrivera</span>
           </div>
         </div>
 
         {/* Tech Stack Pills */}
         <div className="space-y-0.5">
-          <div className="text-[5.5px] text-slate-400 uppercase tracking-wider font-sans">Core Stack:</div>
+          <div className="text-[5.5px] text-slate-600 uppercase tracking-wider font-sans font-bold">Core Stack:</div>
           <div className="flex flex-wrap gap-1">
             {['React', 'Node.js', 'FastAPI', 'Docker', 'AWS', 'Kubernetes'].map(tech => (
-              <span key={tech} className="px-1 py-0.2 bg-slate-800 text-cyan-300 rounded text-[5px] border border-slate-700">
+              <span key={tech} className="px-1 py-0.2 bg-slate-100 text-slate-800 rounded text-[5px] border border-slate-200">
                 {tech}
               </span>
             ))}
@@ -493,15 +487,15 @@ export function TemplateDraftPaper({ template }) {
 
         {/* Production Experience */}
         <div className="space-y-1 font-sans">
-          <div className="text-[6.5px] font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-0.5">
+          <div className="text-[6.5px] font-bold text-slate-900 uppercase tracking-wider border-b border-slate-200 pb-0.5">
             Production Scale
           </div>
-          <div className="bg-slate-800/80 p-1.5 rounded border border-slate-700/80 space-y-0.5">
-            <div className="flex justify-between text-[6px] text-cyan-300 font-mono">
+          <div className="bg-slate-50 p-1.5 rounded border border-slate-200 space-y-0.5">
+            <div className="flex justify-between text-[6px] text-slate-900 font-mono font-semibold">
               <span>Apex Cloud [Staff Engineer]</span>
-              <span className="text-slate-400">2021 – Present</span>
+              <span className="text-slate-500">2021 – Present</span>
             </div>
-            <div className="text-[5.5px] text-slate-300">
+            <div className="text-[5.5px] text-slate-700">
               • Scaled real-time streaming pipeline to 15,000 req/sec.<br/>
               • Reduced cluster AWS compute bill by $140,000 annually.
             </div>
@@ -509,9 +503,9 @@ export function TemplateDraftPaper({ template }) {
         </div>
 
         {/* Open Source Footer */}
-        <div className="flex justify-between items-center text-[5px] text-slate-400 pt-1 border-t border-slate-800">
+        <div className="flex justify-between items-center text-[5px] text-slate-500 pt-1 border-t border-slate-200">
           <span>OS Contributor: Linux, Vite, FastAPI</span>
-          <span className="text-emerald-400">● 100% Tests Passing</span>
+          <span className="text-emerald-600 font-bold">● 100% Tests Passing</span>
         </div>
       </div>
     );
@@ -585,29 +579,30 @@ export function TemplateDraftPaper({ template }) {
   // 7. AI & ML ENGINEER CATEGORY — Architecture tags, arXiv citations, LoRA/RAG metrics
   if (category === 'aiml') {
     return (
-      <div className="w-full h-full bg-slate-950 text-slate-100 p-3 flex flex-col justify-between text-[7px] leading-tight select-none font-sans overflow-hidden">
+      <div className="w-full h-full bg-white text-slate-800 p-3 flex flex-col justify-between text-[7px] leading-tight select-none font-sans overflow-hidden">
         {/* Header */}
-        <div className="pb-1 border-b border-indigo-900/60 flex justify-between items-start">
-          <div>
-            <div className="font-extrabold text-[10px] text-white flex items-center gap-1">
-              Alex Rivera
-              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-            </div>
-            <div className="text-[6.5px] font-bold text-indigo-400">
-              AI / GenAI & Deep Learning Engineer
-            </div>
+        <div className="text-center pb-1 mb-1 border-b border-slate-200">
+          <div className="font-extrabold text-[10px] text-slate-900 uppercase">
+            Alex Rivera
           </div>
-          <div className="text-[5px] text-indigo-300 font-mono text-right">
-            huggingface.co/alex<br/>arXiv:2401.xxxxx
+          <div className="text-[6.5px] font-bold text-slate-700 uppercase">
+            AI / GenAI & Deep Learning Engineer
+          </div>
+          <div className="text-[5px] text-slate-500 pt-0.5 flex justify-center gap-2">
+            <span>alex.rivera@ai.dev</span>
+            <span>|</span>
+            <span>San Francisco, CA</span>
+            <span>|</span>
+            <span>huggingface.co/alex</span>
           </div>
         </div>
 
         {/* Model Architecture Badges */}
         <div className="space-y-0.5 my-0.5">
-          <div className="text-[5.5px] text-slate-400 uppercase font-mono">Specializations:</div>
+          <div className="text-[5.5px] text-slate-600 uppercase font-mono font-bold">Specializations:</div>
           <div className="flex flex-wrap gap-1">
             {['PyTorch', 'LLMs', 'LoRA', 'vLLM', 'CUDA', 'RAG'].map(badge => (
-              <span key={badge} className="px-1 py-0.2 bg-indigo-950 text-indigo-300 rounded text-[5px] border border-indigo-800">
+              <span key={badge} className="px-1 py-0.2 bg-slate-100 text-slate-800 rounded text-[5px] border border-slate-200">
                 {badge}
               </span>
             ))}
@@ -615,18 +610,18 @@ export function TemplateDraftPaper({ template }) {
         </div>
 
         {/* ML Achievements */}
-        <div className="space-y-1 bg-slate-900/90 p-1.5 rounded border border-indigo-950">
-          <div className="font-bold text-[6px] text-indigo-300 uppercase font-mono">Deployment Impact</div>
-          <div className="text-[5.5px] text-slate-300 space-y-0.5">
+        <div className="space-y-1 bg-slate-50 p-1.5 rounded border border-slate-200">
+          <div className="font-bold text-[6px] text-slate-900 uppercase font-mono">Deployment Impact</div>
+          <div className="text-[5.5px] text-slate-700 space-y-0.5">
             <div>• Fine-tuned 70B parameter open-weights models for sub-100ms reasoning.</div>
             <div>• Engineered RAG vector architecture cutting hallucination by 58%.</div>
           </div>
         </div>
 
         {/* Research / arXiv */}
-        <div className="text-[5px] text-slate-400 font-mono pt-1 border-t border-indigo-950 flex justify-between">
+        <div className="text-[5px] text-slate-500 font-mono pt-1 border-t border-slate-200 flex justify-between">
           <span>Paper: "Low-Latency Distributed LLM Inference"</span>
-          <span className="text-indigo-400">UC Berkeley CS</span>
+          <span className="text-slate-700 font-semibold">UC Berkeley CS</span>
         </div>
       </div>
     );

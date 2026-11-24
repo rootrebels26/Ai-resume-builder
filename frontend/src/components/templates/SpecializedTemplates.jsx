@@ -212,19 +212,17 @@ export function AIMLTemplate({ resumeData, themeColor = "#7c3aed" }) {
 
   return (
     <div className="text-slate-900 leading-relaxed font-sans text-xs">
-      <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 text-white p-3 -mx-4 -mt-4 mb-3 rounded-b">
-        <div className="flex justify-between items-baseline flex-wrap gap-2">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">{personalInfo.fullName}</h1>
-            <p className="text-xs font-mono text-purple-300 mt-0.5">{personalInfo.professionalTitle || "AI / Machine Learning Engineer"}</p>
-          </div>
-          <div className="text-[11px] text-purple-200">
-            {personalInfo.email} • {personalInfo.location}
-          </div>
-        </div>
-        <div className="mt-1.5 pt-1.5 border-t border-purple-800">
-          <ContactList personalInfo={personalInfo} iconClass="w-3.5 h-3.5 text-purple-300" className="text-purple-200" />
-        </div>
+      <div className="text-center pb-1 mb-2">
+        <h1 className="text-xl sm:text-2xl font-bold font-mono tracking-tight text-slate-900 uppercase">
+          {personalInfo.fullName || "Your Name"}
+        </h1>
+        {personalInfo.professionalTitle && (
+          <p className="text-xs font-mono font-semibold tracking-wider uppercase text-slate-700 mt-0.5">
+            {personalInfo.professionalTitle}
+          </p>
+        )}
+        <ContactList personalInfo={personalInfo} className="justify-center mt-1.5 font-mono text-[11px]" separator="|" />
+        <hr className="border-t border-slate-300 mt-2 mb-2" />
       </div>
 
       <div className="space-y-2.5">
