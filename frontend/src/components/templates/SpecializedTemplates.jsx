@@ -78,17 +78,17 @@ export function DeveloperTemplate({ resumeData, themeColor = "#0284c7" }) {
 
   return (
     <div className="text-slate-900 leading-relaxed font-sans text-xs">
-      <div className="bg-slate-950 text-emerald-400 p-3 -mx-4 -mt-4 mb-3 rounded-b border-b-2 border-emerald-500">
-        <div className="flex justify-between items-center flex-wrap gap-2">
-          <div>
-            <h1 className="text-xl font-bold font-mono text-white">&gt; {personalInfo.fullName}</h1>
-            <p className="text-xs text-slate-300 font-mono mt-0.5">{personalInfo.professionalTitle}</p>
-          </div>
-          <div className="text-right text-[11px] text-slate-400 font-mono">
-            {personalInfo.github && <div>gh: {personalInfo.github.replace(/^https?:\/\//, '')}</div>}
-            {personalInfo.email && <div>email: {personalInfo.email}</div>}
-          </div>
-        </div>
+      <div className="text-center pb-1 mb-2">
+        <h1 className="text-xl sm:text-2xl font-bold font-mono tracking-tight text-slate-900 uppercase">
+          &gt; {personalInfo.fullName || "Your Name"}
+        </h1>
+        {personalInfo.professionalTitle && (
+          <p className="text-xs font-mono font-semibold tracking-wider uppercase text-slate-700 mt-0.5">
+            {personalInfo.professionalTitle}
+          </p>
+        )}
+        <ContactList personalInfo={personalInfo} className="justify-center mt-1.5 font-mono text-[11px]" separator="|" />
+        <hr className="border-t border-slate-300 mt-2 mb-2" />
       </div>
 
       <div className="space-y-2.5">
@@ -416,10 +416,13 @@ export function BusinessTemplate({ resumeData, themeColor = "#1e3a8a" }) {
 
   return (
     <div className="text-slate-900 leading-relaxed font-sans text-xs">
-      <div className="bg-slate-100 p-3 rounded-lg border-t-4 mb-3" style={{ borderColor: themeColor }}>
-        <h1 className="text-2xl font-extrabold text-slate-900">{personalInfo.fullName}</h1>
-        <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 mt-0.5">{personalInfo.professionalTitle}</p>
-        <ContactList personalInfo={personalInfo} className="mt-1.5 text-slate-600" separator="|" />
+      <div className="text-center pb-1 mb-2">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 uppercase">{personalInfo.fullName || "Your Name"}</h1>
+        {personalInfo.professionalTitle && (
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 mt-0.5">{personalInfo.professionalTitle}</p>
+        )}
+        <ContactList personalInfo={personalInfo} className="justify-center mt-1.5 text-slate-600" separator="|" />
+        <hr className="border-t border-slate-300 mt-2 mb-2" />
       </div>
 
       <div className="space-y-2.5">

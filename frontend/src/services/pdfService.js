@@ -40,6 +40,27 @@ export const pdfService = {
         pageEl.style.boxShadow = 'none';
         pageEl.style.border = 'none';
 
+        // Extract all clickable hyperlinks on this page for active PDF link annotations
+        const pageRect = pageEl.getBoundingClientRect();
+        const linkNodes = Array.from(pageEl.querySelectorAll('a[href]'));
+        const linkAnnotations = linkNodes.map(link => {
+          const rect = link.getBoundingClientRect();
+          let href = link.getAttribute('href') || link.href;
+          if (!href || href.startsWith('#') || href.startsWith('javascript:')) return null;
+          if (!/^(https?:\/\/|mailto:|tel:)/i.test(href)) {
+            href = 'https://' + href;
+          }
+          if (rect.width <= 0 || rect.height <= 0 || pageRect.width <= 0 || pageRect.height <= 0) return null;
+          
+          return {
+            href,
+            x: ((rect.left - pageRect.left) / pageRect.width) * 210,
+            y: ((rect.top - pageRect.top) / pageRect.height) * 297,
+            w: (rect.width / pageRect.width) * 210,
+            h: (rect.height / pageRect.height) * 297
+          };
+        }).filter(Boolean);
+
         // High-resolution capture (scale 2 gives crystal-clear 300 DPI text)
         const canvas = await html2canvas(pageEl, {
           scale: 2,
@@ -62,6 +83,15 @@ export const pdfService = {
 
         // Place image precisely covering the 210mm x 297mm A4 page
         pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+
+        // Overlay active PDF link annotations so GitHub, LinkedIn, portfolio, and project links are 100% clickable
+        linkAnnotations.forEach(link => {
+          try {
+            pdf.link(link.x, link.y, link.w, link.h, { url: link.href });
+          } catch (linkErr) {
+            console.warn('Could not register PDF link annotation:', link.href, linkErr);
+          }
+        });
       }
 
       pdf.save(filename);

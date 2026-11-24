@@ -151,39 +151,40 @@ Return ONLY valid JSON matching this schema:
         return await self.fallback.match_resume(request)
 
     async def tailor_resume(self, request: TailorResumeRequest) -> TailorResumeResponse:
-        prompt = f"""You are a Principal Tech Recruiter and ATS Optimization Expert.
-Analyze the candidate's current resume against the provided Job Description and generate targeted, section-by-section improvements.
+        prompt = f"""You are a Principal Software Engineering Bar-Raiser and ATS Optimization Expert.
+Analyze the candidate's current resume against the provided Job Description and generate targeted, Senior/Staff Developer caliber improvements.
 
-Target Role / Title: {request.job_title or 'Target Role'}
+Target Role / Title: {request.job_title or 'Senior Software Engineer'}
 Job Description:
 {request.job_description}
 
 Current Candidate Resume:
 {json.dumps(request.resume_data, indent=2)}
 
-INSTRUCTIONS:
-1. Tailor the professional summary to directly address the key requirements, technologies, and responsibilities in the Job Description.
-2. Review candidate experience bullets. Identify specific bullets that can be rewritten to highlight keywords and metrics relevant to the JD. Provide section, target_id (if available), original_text, tailored_text, and why it improves ATS ranking.
-3. Identify missing critical skills mentioned in the JD that the candidate should add.
-4. Provide concrete suggestions for projects if relevant.
+SENIOR DEVELOPER WRITING STANDARDS:
+1. Google XYZ Formula: Formulate bullets strictly as "Accomplished [X] as measured by [Y] by doing [Z]".
+2. Quantifiable Senior Impact: Always inject realistic senior-level metrics (e.g., p99 latency reduction, RPS/throughput, concurrency, 99.99% SLA availability, cloud spend reduction, and cross-team velocity gains).
+3. Architectural Depth: Highlight architectural decisions, distributed systems trade-offs, CI/CD pipeline modernization, and technical squad mentorship.
+4. Professional Summary: Craft an authoritative, executive-ready summary highlighting core domain mastery, scale handled, and leadership.
+5. Provide actionable before/after suggestions for Experience, Projects, and Summary sections with clear rationales.
 
 Return ONLY valid JSON matching this schema:
 {{
-  "tailored_summary": "Tailored 3-4 sentence professional summary",
+  "tailored_summary": "High-impact 2-3 sentence senior developer professional summary",
   "suggestions": [
     {{
       "section": "summary",
       "target_id": null,
       "original_text": "original summary if any",
-      "tailored_text": "tailored summary",
-      "reason": "Directly incorporates JD keywords and core competencies."
+      "tailored_text": "tailored senior summary",
+      "reason": "Directly incorporates JD keywords with senior-level scale and leadership competencies."
     }},
     {{
       "section": "experience",
       "target_id": null,
       "original_text": "exact original bullet",
-      "tailored_text": "improved STAR bullet with JD keywords",
-      "reason": "Quantifies results and includes required stack."
+      "tailored_text": "senior STAR/XYZ bullet with quantified impact (e.g. latency, scale, RPS) and required stack",
+      "reason": "Elevates to Senior Developer standard using Google XYZ formula with concrete engineering metrics."
     }}
   ],
   "recommended_skills_to_add": ["Skill1", "Skill2", "Skill3"],

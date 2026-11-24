@@ -14,6 +14,7 @@ import { pdfService } from '../services/pdfService';
 import { storageService } from '../services/storageService';
 import { aiService } from '../services/aiService';
 import { resumeService } from '../services/resumeService';
+import { docxService } from '../services/docxService';
 import { useResumePagination } from '../utils/resumePaginator';
 
 const COLOR_PRESETS = [
@@ -574,6 +575,25 @@ export function Builder() {
     }
   };
 
+  // State for DOCX Export
+  const [isExportingDocx, setIsExportingDocx] = useState(false);
+
+  // DOCX Export Handler
+  const handleDownloadDOCX = async () => {
+    setIsExportingDocx(true);
+    try {
+      const candidate = (resumeData.personalInfo?.fullName || 'Resume').replace(/\s+/g, '_');
+      const role = (resumeData.personalInfo?.professionalTitle || 'CV').replace(/\s+/g, '_');
+      const filename = `${candidate}_${role}.docx`;
+      await docxService.exportToDocx(resumeData, filename);
+    } catch (e) {
+      console.error('DOCX export error:', e);
+      alert('Could not export Word document: ' + (e.message || 'Unknown error'));
+    } finally {
+      setIsExportingDocx(false);
+    }
+  };
+
   // PDF Export
   const handleDownloadPDF = async () => {
     if (!previewRef.current) return;
@@ -812,6 +832,25 @@ export function Builder() {
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Back to Optimizer</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleDownloadDOCX}
+                disabled={isExportingDocx}
+                className="btn-secondary py-1.5 sm:py-2 px-3 sm:px-3.5 text-xs shadow-brutal-sm flex items-center gap-1.5 font-extrabold cursor-pointer bg-white hover:bg-slate-50"
+                title="Download editable Microsoft Word format"
+              >
+                {isExportingDocx ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Word...</span>
+                  </>
+                ) : (
+                  <>
+                    <FileText className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Download DOCX</span>
+                  </>
+                )}
               </button>
               <button
                 type="button"
@@ -2222,15 +2261,27 @@ export function Builder() {
                   Export Resume:
                 </span>
 
-                <button
-                  type="button"
-                  onClick={handleDownloadPDF}
-                  disabled={isExporting}
-                  className="btn-volt w-full py-3 px-4 text-xs font-extrabold shadow-brutal flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>{isExporting ? 'Generating High-DPI PDF...' : 'Download ATS-Optimized PDF'}</span>
-                </button>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={handleDownloadPDF}
+                    disabled={isExporting}
+                    className="btn-volt py-3 px-4 text-xs font-extrabold shadow-brutal flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>{isExporting ? 'Generating PDF...' : 'Download ATS PDF'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleDownloadDOCX}
+                    disabled={isExportingDocx}
+                    className="btn-secondary py-3 px-4 text-xs font-extrabold shadow-brutal flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 bg-white hover:bg-slate-50 border border-ink"
+                  >
+                    <FileText className="w-4 h-4 text-blue-600" />
+                    <span>{isExportingDocx ? 'Generating Word...' : 'Download Word (.docx)'}</span>
+                  </button>
+                </div>
 
                 <div className="grid grid-cols-2 gap-2 pt-1">
                   <button

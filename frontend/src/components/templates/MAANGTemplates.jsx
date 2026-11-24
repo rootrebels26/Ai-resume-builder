@@ -180,16 +180,17 @@ export function MAANGSWEAmazon({ resumeData, themeColor = "#FF9900" }) {
 
   return (
     <div className="text-slate-900 leading-normal font-sans text-xs">
-      <div className="bg-slate-900 text-white p-3.5 -mx-4 -mt-4 mb-3 rounded-b border-b-4" style={{ borderColor: themeColor }}>
-        <div className="flex justify-between items-center flex-wrap gap-2">
-          <div>
-            <h1 className="text-xl font-bold tracking-tight text-white">{personalInfo.fullName}</h1>
-            <p className="text-xs font-medium text-amber-400 mt-0.5">{personalInfo.professionalTitle}</p>
-          </div>
-          <div className="text-right text-[11px] text-slate-300">
-            {personalInfo.email} • {personalInfo.phone} • {personalInfo.location}
-          </div>
-        </div>
+      <div className="text-center pb-1 mb-2">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 uppercase">
+          {personalInfo.fullName || "Your Name"}
+        </h1>
+        {personalInfo.professionalTitle && (
+          <p className="text-xs font-semibold tracking-wider uppercase text-slate-700 mt-0.5">
+            {personalInfo.professionalTitle}
+          </p>
+        )}
+        <ContactList personalInfo={personalInfo} className="justify-center mt-1.5" separator="|" />
+        <hr className="border-t border-slate-300 mt-2 mb-2" />
       </div>
 
       <div className="space-y-2.5">
@@ -392,16 +393,17 @@ export function MAANGNvidiaGPU({ resumeData, themeColor = "#76B900" }) {
 
   return (
     <div className="text-slate-900 leading-normal font-sans text-xs">
-      <div className="bg-slate-955 text-white p-3 -mx-4 -mt-4 mb-2.5 rounded-b border-b-2" style={{ borderColor: themeColor }}>
-        <div className="flex justify-between items-center flex-wrap gap-2">
-          <div>
-            <h1 className="text-xl font-bold font-mono tracking-tight text-white">{personalInfo.fullName}</h1>
-            <p className="text-xs font-mono font-semibold text-lime-400 mt-0.5">{personalInfo.professionalTitle}</p>
-          </div>
-          <div className="text-right text-[11px] font-mono text-slate-400">
-            {personalInfo.email} • {personalInfo.location}
-          </div>
-        </div>
+      <div className="text-center pb-1 mb-2">
+        <h1 className="text-xl sm:text-2xl font-bold font-mono tracking-tight text-slate-900 uppercase">
+          {personalInfo.fullName || "Your Name"}
+        </h1>
+        {personalInfo.professionalTitle && (
+          <p className="text-xs font-mono font-semibold tracking-wider uppercase text-slate-700 mt-0.5">
+            {personalInfo.professionalTitle}
+          </p>
+        )}
+        <ContactList personalInfo={personalInfo} className="justify-center mt-1.5 font-mono text-[11px]" separator="|" />
+        <hr className="border-t border-slate-300 mt-2 mb-2" />
       </div>
 
       <div className="space-y-2.5">
@@ -698,16 +700,17 @@ export function MAANGSREPlatform({ resumeData, themeColor = "#0284c7" }) {
 
   return (
     <div className="text-slate-900 leading-normal font-sans text-xs">
-      <div className="bg-slate-900 text-white p-3 -mx-4 -mt-4 mb-2.5 rounded-b border-b-2" style={{ borderColor: themeColor }}>
-        <div className="flex justify-between items-center flex-wrap gap-2">
-          <div>
-            <h1 className="text-xl font-bold font-mono tracking-tight text-white">{personalInfo.fullName}</h1>
-            <p className="text-xs font-mono font-semibold text-sky-400 mt-0.5">{personalInfo.professionalTitle}</p>
-          </div>
-          <div className="text-right text-[11px] font-mono text-slate-300">
-            {personalInfo.email} • {personalInfo.phone} • {personalInfo.location}
-          </div>
-        </div>
+      <div className="text-center pb-1 mb-2">
+        <h1 className="text-xl sm:text-2xl font-bold font-mono tracking-tight text-slate-900 uppercase">
+          {personalInfo.fullName || "Your Name"}
+        </h1>
+        {personalInfo.professionalTitle && (
+          <p className="text-xs font-mono font-semibold tracking-wider uppercase text-slate-700 mt-0.5">
+            {personalInfo.professionalTitle}
+          </p>
+        )}
+        <ContactList personalInfo={personalInfo} className="justify-center mt-1.5 font-mono text-[11px]" separator="|" />
+        <hr className="border-t border-slate-300 mt-2 mb-2" />
       </div>
 
       <div className="space-y-2.5">

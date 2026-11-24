@@ -1,6 +1,13 @@
 import React from 'react';
 import { Mail, Phone, MapPin, Globe, Linkedin, Github, ExternalLink } from 'lucide-react';
 
+export function ensureUrl(url) {
+  if (!url) return '';
+  const trimmed = String(url).trim();
+  if (/^(https?:\/\/|mailto:|tel:)/i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+}
+
 export function ContactList({ personalInfo = {}, className = "", iconClass = "w-3.5 h-3.5 text-slate-500", showIcons = true, separator = "•" }) {
   const { email, phone, location, website, linkedin, github, portfolio } = personalInfo;
 
@@ -8,10 +15,10 @@ export function ContactList({ personalInfo = {}, className = "", iconClass = "w-
     phone && { icon: Phone, text: phone, href: `tel:${phone}` },
     email && { icon: Mail, text: email, href: `mailto:${email}` },
     location && { icon: MapPin, text: location },
-    website && { icon: Globe, text: website.replace(/^https?:\/\//, ''), href: website },
-    linkedin && { icon: Linkedin, text: 'LinkedIn', href: linkedin },
-    github && { icon: Github, text: 'GitHub', href: github },
-    portfolio && { icon: ExternalLink, text: 'Portfolio', href: portfolio },
+    website && { icon: Globe, text: website.replace(/^https?:\/\//, ''), href: ensureUrl(website) },
+    linkedin && { icon: Linkedin, text: 'LinkedIn', href: ensureUrl(linkedin) },
+    github && { icon: Github, text: 'GitHub', href: ensureUrl(github) },
+    portfolio && { icon: ExternalLink, text: 'Portfolio', href: ensureUrl(portfolio) },
   ].filter(Boolean);
 
   if (items.length === 0) return null;
@@ -196,12 +203,12 @@ export function ProjectsSection({ items = [] }) {
             <h3 className="font-semibold text-slate-900 text-xs">
               {proj.name}
               {proj.liveUrl && (
-                <a href={proj.liveUrl} target="_blank" rel="noreferrer" className="ml-1.5 text-blue-600 hover:underline font-normal text-[11px]">
+                <a href={ensureUrl(proj.liveUrl)} target="_blank" rel="noopener noreferrer" className="ml-1.5 text-blue-600 hover:underline font-normal text-[11px]">
                   [Demo]
                 </a>
               )}
               {proj.githubUrl && (
-                <a href={proj.githubUrl} target="_blank" rel="noreferrer" className="ml-1 text-slate-500 hover:underline font-normal text-[11px]">
+                <a href={ensureUrl(proj.githubUrl)} target="_blank" rel="noopener noreferrer" className="ml-1 text-slate-500 hover:underline font-normal text-[11px]">
                   [GitHub]
                 </a>
               )}

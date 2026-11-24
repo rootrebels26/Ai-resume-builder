@@ -59,17 +59,17 @@ class LocalHeuristicProvider(BaseAIProvider):
         words = cleaned.split()
         first_word = words[0] if words else "Worked"
 
-        # Formulate 3 distinct improvements using STAR methodology and strong action verbs
-        opt1_text = f"Architected and deployed {cleaned.lower() if not cleaned.startswith(('A', 'I', 'The')) else cleaned}, optimizing workflow latency by 28% and ensuring high availability."
-        opt2_text = f"Spearheaded end-to-end execution of {cleaned.lower()}, collaborating cross-functionally to boost team delivery velocity and customer satisfaction."
-        opt3_text = f"Engineered robust solutions for {cleaned.lower()}, automating manual overhead and reducing operational bottlenecks."
+        # Formulate 3 distinct senior developer improvements using STAR/Google XYZ methodology and quantifiable impact
+        opt1_text = f"Architected and delivered {cleaned.lower() if not cleaned.startswith(('A', 'I', 'The')) else cleaned}, reducing p99 query latency by 42% across 10M+ daily events while ensuring 99.99% service uptime."
+        opt2_text = f"Spearheaded technical architecture and cross-functional roadmap for {cleaned.lower()}, accelerating squad release velocity by 35% across multi-disciplinary engineering teams."
+        opt3_text = f"Re-engineered core infrastructure for {cleaned.lower()}, eliminating systemic performance bottlenecks and reducing cloud compute expenditure by 28%."
 
         return ImproveBulletResponse(
             original=orig,
             options=[
-                BulletOption(text=opt1_text, rationale="Quantified impact with measurable efficiency metric and strong action verb.", metrics_included=True),
-                BulletOption(text=opt2_text, rationale="Emphasizes cross-functional leadership, collaboration and delivery velocity.", metrics_included=False),
-                BulletOption(text=opt3_text, rationale="Focuses on automation, architectural robustness and bottleneck reduction.", metrics_included=False)
+                BulletOption(text=opt1_text, rationale="Quantified Senior-level impact with latency reduction, scale (10M+ events), and 99.99% uptime SLA.", metrics_included=True),
+                BulletOption(text=opt2_text, rationale="Highlights Senior/Staff engineering leadership, architectural ownership, and measurable velocity gain.", metrics_included=True),
+                BulletOption(text=opt3_text, rationale="Emphasizes systems optimization, cost efficiency, and elimination of operational risk.", metrics_included=True)
             ]
         )
 
@@ -79,11 +79,11 @@ class LocalHeuristicProvider(BaseAIProvider):
         techs = request.technologies or ["Python", "React", "REST APIs"]
         techs_str = ", ".join(techs)
 
-        improved = f"Developed {name}, a high-performance application built with {techs_str}. Designed modular architecture to ensure fault-tolerance, responsive UX, and scalable data throughput."
+        improved = f"Architected and engineered {name}, an enterprise-grade distributed platform powered by {techs_str}. Designed fault-tolerant event processing pipelines handling peak load with sub-50ms p95 latency and zero data loss."
         bullets = [
-            f"Implemented clean, decoupled architecture using {techs_str}, adhering to test-driven development practices.",
-            f"Designed and optimized core RESTful endpoints, achieving sub-100ms response times and robust data integrity.",
-            f"Integrated automated CI/CD deployment pipeline and state management, reducing bug turnaround by 35%."
+            f"Engineered high-throughput asynchronous services using {techs_str}, sustaining 15,000+ requests/sec with distributed caching and connection pooling.",
+            f"Optimized relational schema indexing and query execution paths, reducing database round-trip times from 280ms to 35ms under heavy concurrency.",
+            f"Orchestrated automated CI/CD deployment pipelines with containerization and health telemetry, slashing defect escapement by 40%."
         ]
 
         suggested = [t for t in ["Docker", "Jest", "Tailwind CSS", "PostgreSQL", "Redis"] if t not in techs][:3]
@@ -221,8 +221,12 @@ class LocalHeuristicProvider(BaseAIProvider):
         jd_skills = extract_matching_skills(jd)
         skills_str = ", ".join(jd_skills[:4]) if jd_skills else "modern software engineering"
 
-        target_title = request.job_title or "Target Role"
-        tailored_summary = f"Results-driven {target_title} specialist adept in {skills_str}. Proven track record of architecting scalable systems, driving engineering quality, and meeting business requirements in agile environments."
+        target_title = request.job_title or "Senior Software Engineer"
+        tailored_summary = (
+            f"Accomplished {target_title} with deep expertise across {skills_str}. "
+            f"Proven track record of architecting mission-critical distributed platforms, cutting p99 query latency by 35%+, "
+            f"and driving engineering excellence across high-velocity teams."
+        )
 
         suggestions = []
         if resume.get("professionalSummary"):
@@ -230,36 +234,52 @@ class LocalHeuristicProvider(BaseAIProvider):
                 section="summary",
                 original_text=resume.get("professionalSummary", ""),
                 tailored_text=tailored_summary,
-                reason="Aligns directly with target job responsibilities and highlights critical skills required."
+                reason="Restructures summary with Senior-level impact metrics, leadership ownership, and target role competencies."
             ))
 
-        # Check experience bullets
+        # Check experience bullets with senior developer impact
         exp_list = resume.get("experience", [])
         if exp_list and len(exp_list) > 0:
-            first_exp = exp_list[0]
-            if first_exp.get("responsibilities"):
-                orig_bullet = first_exp["responsibilities"][0]
-                tailored_bullet = f"Spearheaded implementation of scalable solutions using {skills_str}, improving deployment efficiency and adherence to engineering best practices."
-                suggestions.append(TailorSuggestion(
-                    section="experience",
-                    target_id=first_exp.get("id"),
-                    original_text=orig_bullet,
-                    tailored_text=tailored_bullet,
-                    reason="Injects target role keywords while maintaining achievement-oriented STAR format."
-                ))
+            for exp_idx, exp in enumerate(exp_list[:2]):
+                resps = exp.get("responsibilities", [])
+                if resps and len(resps) > 0:
+                    orig_bullet = resps[0]
+                    if exp_idx == 0:
+                        tailored_bullet = (
+                            f"Architected and deployed high-availability microservices utilizing {skills_str}, "
+                            f"reducing p99 API latency by 38% and supporting 250K+ daily active users."
+                        )
+                        reason = "Employs Google XYZ formula: highlights scale, quantified latency reduction, and core JD technologies."
+                    else:
+                        tailored_bullet = (
+                            f"Spearheaded technical roadmap and CI/CD automation for distributed services using {skills_str}, "
+                            f"accelerating release cycles by 40% and maintaining 99.99% service availability."
+                        )
+                        reason = "Demonstrates Senior engineering leadership, release velocity, and system reliability."
 
-        # Check projects
+                    suggestions.append(TailorSuggestion(
+                        section="experience",
+                        target_id=exp.get("id"),
+                        original_text=orig_bullet,
+                        tailored_text=tailored_bullet,
+                        reason=reason
+                    ))
+
+        # Check projects with senior developer architectural depth
         proj_list = resume.get("projects", [])
         if proj_list and len(proj_list) > 0:
             first_proj = proj_list[0]
             orig_desc = first_proj.get("description", "")
-            tailored_desc = f"{orig_desc} Engineered architectural components leveraging {skills_str}, improving responsiveness and system throughput."
+            tailored_desc = (
+                f"{orig_desc} Architected resilient micro-architecture with {skills_str}, "
+                f"achieving sub-50ms dispatch latency and sustained throughput under high concurrency."
+            )
             suggestions.append(TailorSuggestion(
                 section="projects",
                 target_id=first_proj.get("id"),
                 original_text=orig_desc,
                 tailored_text=tailored_desc,
-                reason="Enhances technical credibility by framing project achievements with target JD stack."
+                reason="Upgrades project description to demonstrate Senior-level architectural resilience and throughput metrics."
             ))
 
         return TailorResumeResponse(

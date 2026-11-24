@@ -93,15 +93,14 @@ export function TemplateDraftPaper({ template }) {
     return (
       <div className="w-full h-full bg-white text-slate-800 p-3 sm:p-3.5 flex flex-col justify-between text-[7.5px] leading-tight select-none font-sans overflow-hidden">
         {/* Header */}
-        <div className="bg-slate-900 text-white p-2 -mx-3 -mt-3 mb-1 border-b-2" style={{ borderColor: accentColor }}>
-          <div className="flex justify-between items-baseline">
-            <div className="font-bold text-[10px] text-white">Alex Rivera</div>
-            <span className="text-[5px] font-mono text-sky-400 font-bold">[99.999% SLA]</span>
-          </div>
-          <div className="text-[6px] text-sky-300 font-semibold">Principal Cloud & Site Reliability Architect</div>
-          <div className="text-[5px] text-slate-400 pt-0.5 flex gap-2">
+        <div className="text-center pb-1 mb-1 border-b border-slate-200">
+          <div className="font-bold text-[10px] text-slate-900 uppercase">Alex Rivera</div>
+          <div className="text-[6px] text-slate-700 font-semibold uppercase">Principal Cloud & Site Reliability Architect</div>
+          <div className="text-[5px] text-slate-500 pt-0.5 flex justify-center gap-2">
             <span>alex.rivera@sre.dev</span>
+            <span>|</span>
             <span>San Francisco, CA</span>
+            <span>|</span>
             <span>github.com/alex</span>
           </div>
         </div>
