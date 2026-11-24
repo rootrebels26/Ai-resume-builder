@@ -73,6 +73,9 @@ export function Builder() {
   const [tailorResult, setTailorResult] = useState(null);
   const [atsMatchResult, setAtsMatchResult] = useState(null);
   const [appliedSuggestions, setAppliedSuggestions] = useState({});
+  const [preOptimizationSnapshot, setPreOptimizationSnapshot] = useState(null);
+  const [checkedChecklist, setCheckedChecklist] = useState({});
+  const [checklistFilter, setChecklistFilter] = useState('all');
 
   const previewRef = useRef(null);
   const jsonInputRef = useRef(null);
@@ -139,6 +142,10 @@ export function Builder() {
     setTailorError(null);
     setIsTailoring(true);
 
+    // Save snapshot of resume before tailoring for clean 1-click uncheck & revert
+    const snapshot = JSON.parse(JSON.stringify(resumeData));
+    setPreOptimizationSnapshot(snapshot);
+
     try {
       const [matchRes, tailorRes] = await Promise.all([
         resumeService.matchResume(resumeData, jobDescription, targetJobTitle),
@@ -156,6 +163,257 @@ export function Builder() {
       setTailorError("AI analysis failed to complete. Please ensure backend is reachable and try again.");
     } finally {
       setIsTailoring(false);
+    }
+  };
+
+  // Compile structured Checklist covering every required section
+  const checklistItems = useMemo(() => {
+    if (!tailorResult && !atsMatchResult) return [];
+    const items = [];
+
+    // 1. Professional Summary Item
+    if (tailorResult?.tailored_summary) {
+      items.push({
+        id: 'item_summary',
+        section: 'summary',
+        sectionLabel: 'Summary Hook',
+        title: 'Elevate Professional Summary Positioning',
+        original: preOptimizationSnapshot?.professionalSummary || resumeData.professionalSummary || '',
+        tailored: tailorResult.tailored_summary,
+        reason: 'Aligns your professional trajectory directly with the core requirements and keywords of this role.',
+        impact: '+15% ATS Match',
+        badgeColor: 'bg-purple-100 text-purple-800 border-purple-200'
+      });
+    }
+
+    // 2. Work Experience Items
+    const expSuggestions = tailorResult?.suggestions?.filter(s => s.section === 'experience') || [];
+    if (expSuggestions.length > 0) {
+      expSuggestions.forEach((sug, idx) => {
+        items.push({
+          id: `item_exp_${idx}`,
+          section: 'experience',
+          sectionLabel: `Experience Bullet #${idx + 1}`,
+          targetId: sug.target_id,
+          title: `Apply STAR Metrics Formula to Experience Bullet`,
+          original: sug.original_text || '',
+          tailored: sug.tailored_text,
+          reason: sug.reason || 'Converts passive duties into achievement-driven STAR bullet with action verbs and metrics.',
+          impact: 'STAR Metric Impact',
+          badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-200'
+        });
+      });
+    } else if (resumeData.experience && resumeData.experience.length > 0) {
+      const firstExp = resumeData.experience[0];
+      if (firstExp.responsibilities && firstExp.responsibilities.length > 0) {
+        items.push({
+          id: 'item_exp_0',
+          section: 'experience',
+          sectionLabel: 'Experience Bullet #1',
+          targetId: firstExp.id,
+          title: 'Inject Measurable High-Scale Outcomes',
+          original: firstExp.responsibilities[0],
+          tailored: `Spearheaded delivery of high-impact features using ${targetJobTitle || 'modern architecture'}, improving efficiency and SLA reliability.`,
+          reason: 'Reframes duty into high-impact outcome incorporating target role competencies.',
+          impact: 'Action-Driven Result',
+          badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-200'
+        });
+      }
+    }
+
+    // 3. Technical Skills Items
+    const missingSkills = atsMatchResult?.missing_keywords || tailorResult?.recommended_skills_to_add || [];
+    missingSkills.slice(0, 6).forEach((skill) => {
+      items.push({
+        id: `item_skill_${skill.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
+        section: 'skills',
+        sectionLabel: 'Technical Stack',
+        skillName: skill,
+        title: `Add Critical Stack Keyword: "${skill}"`,
+        original: '(Not currently listed in skills)',
+        tailored: `Include "${skill}" in core competencies category`,
+        reason: `Required skill identified in Job Description scan. Crucial for passing initial ATS filter.`,
+        impact: 'Required Keyword',
+        badgeColor: 'bg-blue-100 text-blue-800 border-blue-200'
+      });
+    });
+
+    // 4. Projects Items
+    const projSuggestions = tailorResult?.suggestions?.filter(s => s.section === 'projects') || [];
+    if (projSuggestions.length > 0) {
+      projSuggestions.forEach((sug, idx) => {
+        items.push({
+          id: `item_proj_${idx}`,
+          section: 'projects',
+          sectionLabel: `Project Architecture #${idx + 1}`,
+          targetId: sug.target_id,
+          title: 'Enhance Project with Production-Grade Architecture',
+          original: sug.original_text || '',
+          tailored: sug.tailored_text,
+          reason: sug.reason || 'Highlights cloud deployment, architectural decisions, and end-to-end delivery.',
+          impact: 'Production Tech Proof',
+          badgeColor: 'bg-amber-100 text-amber-800 border-amber-200'
+        });
+      });
+    } else if (resumeData.projects && resumeData.projects.length > 0) {
+      const firstProj = resumeData.projects[0];
+      const origDesc = firstProj.description || '';
+      items.push({
+        id: 'item_proj_0',
+        section: 'projects',
+        sectionLabel: `Project: ${firstProj.name}`,
+        targetId: firstProj.id,
+        title: `Highlight System Architecture for "${firstProj.name}"`,
+        original: origDesc,
+        tailored: `${origDesc}${origDesc.endsWith('.') ? '' : '.'} Engineered full-stack components adhering to production design patterns and optimized system response latency.`,
+        reason: 'Frames technical achievements with enterprise standards expected in target role.',
+        impact: 'System Scalability',
+        badgeColor: 'bg-amber-100 text-amber-800 border-amber-200'
+      });
+    }
+
+    // 5. Education & Academic Item
+    if (resumeData.education && resumeData.education.length > 0) {
+      const firstEdu = resumeData.education[0];
+      items.push({
+        id: 'item_edu_0',
+        section: 'education',
+        sectionLabel: 'Academic Background',
+        targetId: firstEdu.id,
+        title: 'Align Coursework & Technical Specialization',
+        original: firstEdu.description || 'General coursework',
+        tailored: (firstEdu.description ? `${firstEdu.description} • ` : '') + `Specialized focus in ${targetJobTitle || 'Advanced Computer Science Systems'}`,
+        reason: 'Signals formal background and specialized theoretical foundations to recruiters.',
+        impact: 'Academic Foundation',
+        badgeColor: 'bg-cyan-100 text-cyan-800 border-cyan-200'
+      });
+    }
+
+    return items;
+  }, [tailorResult, atsMatchResult, preOptimizationSnapshot, resumeData, targetJobTitle]);
+
+  // Toggle individual checklist item (Check to Apply, Uncheck to Revert live)
+  const handleToggleChecklistItem = (item) => {
+    const isChecked = !!checkedChecklist[item.id];
+    const willBeChecked = !isChecked;
+
+    setCheckedChecklist(prev => ({ ...prev, [item.id]: willBeChecked }));
+
+    if (willBeChecked) {
+      // APPLY IMPROVEMENT TO CANVAS
+      if (item.section === 'summary') {
+        updateSummary(item.tailored);
+      } else if (item.section === 'experience') {
+        const expList = [...(resumeData.experience || [])];
+        if (expList.length > 0) {
+          const targetExp = expList.find(e => e.id === item.targetId) || expList[0];
+          const newResp = [...(targetExp.responsibilities || [])];
+          const idx = newResp.findIndex(r => r.trim() === (item.original || '').trim());
+          if (idx !== -1) {
+            newResp[idx] = item.tailored;
+          } else {
+            newResp.unshift(item.tailored);
+          }
+          updateItemInSection('experience', targetExp.id, { responsibilities: newResp });
+        }
+      } else if (item.section === 'skills' && item.skillName) {
+        handleAddSkillToResume(item.skillName);
+      } else if (item.section === 'projects') {
+        const projList = [...(resumeData.projects || [])];
+        if (projList.length > 0) {
+          const targetProj = projList.find(p => p.id === item.targetId) || projList[0];
+          updateItemInSection('projects', targetProj.id, { description: item.tailored });
+        }
+      } else if (item.section === 'education') {
+        const eduList = [...(resumeData.education || [])];
+        if (eduList.length > 0) {
+          const targetEdu = eduList.find(e => e.id === item.targetId) || eduList[0];
+          updateItemInSection('education', targetEdu.id, { description: item.tailored });
+        }
+      }
+    } else {
+      // REVERT TO ORIGINAL
+      const snap = preOptimizationSnapshot || {};
+      if (item.section === 'summary') {
+        updateSummary(snap.professionalSummary || item.original || '');
+      } else if (item.section === 'experience') {
+        const expList = [...(resumeData.experience || [])];
+        if (expList.length > 0) {
+          const targetExp = expList.find(e => e.id === item.targetId) || expList[0];
+          const newResp = [...(targetExp.responsibilities || [])];
+          const idx = newResp.findIndex(r => r.trim() === (item.tailored || '').trim());
+          if (idx !== -1 && item.original) {
+            newResp[idx] = item.original;
+          } else if (idx !== -1) {
+            newResp.splice(idx, 1);
+          }
+          updateItemInSection('experience', targetExp.id, { responsibilities: newResp });
+        }
+      } else if (item.section === 'skills' && item.skillName) {
+        const currentSkills = (resumeData.skills || []).map(cat => ({
+          ...cat,
+          items: (cat.items || []).filter(i => i.toLowerCase() !== item.skillName.toLowerCase())
+        }));
+        setResumeData({ ...resumeData, skills: currentSkills });
+      } else if (item.section === 'projects') {
+        const projList = [...(resumeData.projects || [])];
+        if (projList.length > 0) {
+          const targetProj = projList.find(p => p.id === item.targetId) || projList[0];
+          const origDesc = snap.projects?.find(p => p.id === item.targetId)?.description || item.original || '';
+          updateItemInSection('projects', targetProj.id, { description: origDesc });
+        }
+      } else if (item.section === 'education') {
+        const eduList = [...(resumeData.education || [])];
+        if (eduList.length > 0) {
+          const targetEdu = eduList.find(e => e.id === item.targetId) || eduList[0];
+          const origDesc = snap.education?.find(e => e.id === item.targetId)?.description || item.original || '';
+          updateItemInSection('education', targetEdu.id, { description: origDesc });
+        }
+      }
+    }
+  };
+
+  // Check All Checklist Items
+  const handleCheckAllChecklist = () => {
+    const allChecked = {};
+    checklistItems.forEach(item => {
+      allChecked[item.id] = true;
+    });
+    setCheckedChecklist(allChecked);
+
+    let updated = JSON.parse(JSON.stringify(resumeData));
+    checklistItems.forEach(item => {
+      if (item.section === 'summary') {
+        updated.professionalSummary = item.tailored;
+      } else if (item.section === 'experience' && updated.experience?.length) {
+        const exp = updated.experience.find(e => e.id === item.targetId) || updated.experience[0];
+        const idx = (exp.responsibilities || []).findIndex(r => r.trim() === (item.original || '').trim());
+        if (idx !== -1) {
+          exp.responsibilities[idx] = item.tailored;
+        } else {
+          exp.responsibilities = [item.tailored, ...(exp.responsibilities || [])];
+        }
+      } else if (item.section === 'skills' && item.skillName && updated.skills?.length) {
+        const firstCat = updated.skills[0];
+        if (!firstCat.items.some(i => i.toLowerCase() === item.skillName.toLowerCase())) {
+          firstCat.items.push(item.skillName);
+        }
+      } else if (item.section === 'projects' && updated.projects?.length) {
+        const proj = updated.projects.find(p => p.id === item.targetId) || updated.projects[0];
+        proj.description = item.tailored;
+      } else if (item.section === 'education' && updated.education?.length) {
+        const edu = updated.education.find(e => e.id === item.targetId) || updated.education[0];
+        edu.description = item.tailored;
+      }
+    });
+    setResumeData(updated);
+  };
+
+  // Uncheck All Checklist Items
+  const handleUncheckAllChecklist = () => {
+    setCheckedChecklist({});
+    if (preOptimizationSnapshot) {
+      setResumeData(JSON.parse(JSON.stringify(preOptimizationSnapshot)));
     }
   };
 
@@ -1693,104 +1951,199 @@ export function Builder() {
                 </button>
               </div>
 
-              {/* Step-by-Step Suggestions (1-Click Accept) */}
-              {tailorResult && (
+              {/* Interactive AI Optimization Checklist */}
+              {checklistItems.length > 0 && (
                 <div className="space-y-4 pt-2">
-                  <div className="flex items-center justify-between pb-2 border-b border-ink/10">
-                    <span className="font-extrabold text-xs uppercase tracking-wide text-ink">
-                      Review & Accept Step-by-Step Recommendations:
-                    </span>
-                    <span className="text-[11px] font-mono text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                      Live Synced
-                    </span>
-                  </div>
-
-                  {/* 1. Tailored Summary */}
-                  {tailorResult.tailored_summary && (
-                    <div className="card-surface p-4 bg-white border border-ink/15 rounded-xl space-y-2.5">
-                      <div className="flex justify-between items-center">
-                        <span className="font-extrabold text-xs text-ink flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-editorial-violet" />
-                          Step 1: Professional Summary Improvement
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleApplySummarySuggestion(tailorResult.tailored_summary, 0)}
-                          className="btn-volt py-1 px-3 text-[11px] font-extrabold shadow-brutal-sm cursor-pointer"
-                        >
-                          {appliedSuggestions['summary_0'] ? '✓ Accepted & Applied' : 'Accept & Apply'}
-                        </button>
-                      </div>
-                      <div className="p-2.5 bg-canvas rounded-lg text-ink text-xs leading-relaxed border border-ink/10 font-medium">
-                        {tailorResult.tailored_summary}
-                      </div>
-                      <p className="text-[10px] text-ink-muted">
-                        💡 Highlights target keywords and aligns your trajectory with this role.
-                      </p>
-                    </div>
-                  )}
-
-                  {/* 2. Experience Bullets */}
-                  {tailorResult?.suggestions?.filter(s => s.section === 'experience').map((sug, idx) => (
-                    <div key={idx} className="card-surface p-4 bg-white border border-ink/15 rounded-xl space-y-2.5">
-                      <div className="flex justify-between items-center">
-                        <span className="font-extrabold text-xs text-ink flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-emerald-600" />
-                          Step 2.{idx + 1}: Experience Bullet Improvement
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleApplyExpSuggestion(sug, idx)}
-                          className="btn-volt py-1 px-3 text-[11px] font-extrabold shadow-brutal-sm cursor-pointer"
-                        >
-                          {appliedSuggestions[`exp_${idx}`] ? '✓ Accepted & Applied' : 'Accept & Apply'}
-                        </button>
-                      </div>
-                      {sug.original_text && (
-                        <div className="p-2 bg-slate-50 rounded text-slate-500 text-[11px] border border-slate-200">
-                          <span className="font-bold text-slate-700 block text-[10px] uppercase">Current:</span>
-                          {sug.original_text}
+                  {/* Checklist Header & Progress Bar */}
+                  <div className="card-surface p-4 bg-white border border-ink/15 rounded-xl space-y-3 shadow-brutal-sm">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-ink/10 pb-2.5">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 border border-ink animate-pulse" />
+                          <span className="font-extrabold text-xs uppercase tracking-wide text-ink">
+                            AI Optimization Checklist
+                          </span>
                         </div>
-                      )}
-                      <div className="p-2.5 bg-emerald-50/50 rounded-lg text-slate-900 text-xs leading-relaxed border border-emerald-200 font-medium">
-                        <span className="font-bold text-emerald-800 block text-[10px] uppercase">Tailored STAR Bullet:</span>
-                        {sug.tailored_text}
+                        <p className="text-[11px] text-ink-muted mt-0.5">
+                          Check any item to apply it live to your resume. Uncheck to revert back.
+                        </p>
                       </div>
-                      <p className="text-[10px] text-emerald-700 font-mono">
-                        {sug.reason || 'Quantifies outcomes and introduces high-frequency JD skills.'}
-                      </p>
-                    </div>
-                  ))}
 
-                  {/* 3. Missing Keywords */}
-                  {atsMatchResult?.missing_keywords && atsMatchResult.missing_keywords.length > 0 && (
-                    <div className="card-surface p-4 bg-white border border-ink/15 rounded-xl space-y-2.5">
-                      <span className="font-extrabold text-xs text-ink flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-blue-600" />
-                        Step 3: Recommended Keywords from Job Description
+                      {/* Acceptance Counter Badge */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-[11px] font-mono font-bold bg-volt px-2.5 py-0.5 rounded-full border border-ink shadow-xs">
+                          {Object.values(checkedChecklist).filter(Boolean).length} / {checklistItems.length} Accepted
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-[10px] font-mono font-bold text-ink-muted">
+                        <span>Optimization Progress</span>
+                        <span>
+                          {checklistItems.length > 0
+                            ? Math.round((Object.values(checkedChecklist).filter(Boolean).length / checklistItems.length) * 100)
+                            : 0}%
+                        </span>
+                      </div>
+                      <div className="w-full h-2 rounded-full bg-canvas border border-ink/20 overflow-hidden">
+                        <div
+                          className="h-full bg-emerald-500 transition-all duration-300"
+                          style={{
+                            width: `${checklistItems.length > 0
+                              ? Math.round((Object.values(checkedChecklist).filter(Boolean).length / checklistItems.length) * 100)
+                              : 0}%`
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Quick Batch Actions: Check All / Uncheck All */}
+                    <div className="flex items-center justify-between pt-1">
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={handleCheckAllChecklist}
+                          className="btn-secondary py-1 px-2.5 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                        >
+                          <Check className="w-3 h-3 text-emerald-600" />
+                          <span>Check All (Apply All)</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleUncheckAllChecklist}
+                          className="btn-secondary py-1 px-2.5 text-[11px] font-bold text-ink-muted hover:text-ink cursor-pointer"
+                        >
+                          <span>Uncheck All (Revert)</span>
+                        </button>
+                      </div>
+
+                      <span className="text-[10px] font-mono text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                        Live Synced to Canvas
                       </span>
-                      <p className="text-[11px] text-ink-muted">
-                        Click any keyword to instantly append it to your skills stack:
-                      </p>
-                      <div className="flex flex-wrap gap-1.5 pt-1">
-                        {atsMatchResult.missing_keywords.map((kw, kIdx) => (
+                    </div>
+
+                    {/* Section Filter Pills */}
+                    <div className="flex items-center gap-1 overflow-x-auto pt-1 no-scrollbar text-[11px]">
+                      {[
+                        { id: 'all', label: `All (${checklistItems.length})` },
+                        { id: 'summary', label: 'Summary' },
+                        { id: 'experience', label: 'Experience' },
+                        { id: 'skills', label: 'Skills' },
+                        { id: 'projects', label: 'Projects' },
+                        { id: 'education', label: 'Education' }
+                      ].map(f => {
+                        const count = f.id === 'all'
+                          ? checklistItems.length
+                          : checklistItems.filter(i => i.section === f.id).length;
+                        if (f.id !== 'all' && count === 0) return null;
+                        return (
                           <button
-                            key={kIdx}
+                            key={f.id}
                             type="button"
-                            onClick={() => handleAddSkillToResume(kw)}
-                            className={`px-2.5 py-1 text-xs font-semibold rounded-lg border transition cursor-pointer flex items-center gap-1 ${
-                              appliedSuggestions[`skill_${kw}`]
-                                ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                                : 'bg-white hover:bg-volt text-ink border-ink/20 shadow-xs'
+                            onClick={() => setChecklistFilter(f.id)}
+                            className={`px-2.5 py-0.5 rounded-full font-bold border transition shrink-0 cursor-pointer ${
+                              checklistFilter === f.id
+                                ? 'bg-ink text-white border-ink shadow-xs'
+                                : 'bg-canvas text-ink-muted border-ink/15 hover:border-ink hover:text-ink'
                             }`}
                           >
-                            <span>{appliedSuggestions[`skill_${kw}`] ? '✓' : '+'}</span>
-                            <span>{kw}</span>
+                            {f.label}
                           </button>
-                        ))}
-                      </div>
+                        );
+                      })}
                     </div>
-                  )}
+                  </div>
+
+                  {/* Checklist Cards List */}
+                  <div className="space-y-3">
+                    {checklistItems
+                      .filter(item => checklistFilter === 'all' || item.section === checklistFilter)
+                      .map((item) => {
+                        const isChecked = !!checkedChecklist[item.id];
+                        return (
+                          <div
+                            key={item.id}
+                            onClick={() => handleToggleChecklistItem(item)}
+                            className={`card-surface p-4 transition-all duration-150 rounded-xl space-y-2.5 cursor-pointer select-none border ${
+                              isChecked
+                                ? 'bg-emerald-50/40 border-emerald-500 ring-1 ring-emerald-500/50 shadow-brutal-sm'
+                                : 'bg-white border-ink/15 hover:border-ink/40 hover:bg-canvas/40'
+                            }`}
+                          >
+                            {/* Card Header with Checkbox */}
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-start gap-2.5">
+                                <div className="pt-0.5">
+                                  <input
+                                    type="checkbox"
+                                    checked={isChecked}
+                                    onChange={(e) => {
+                                      e.stopPropagation();
+                                      handleToggleChecklistItem(item);
+                                    }}
+                                    className="w-4 h-4 rounded border-2 border-ink text-volt focus:ring-volt cursor-pointer"
+                                  />
+                                </div>
+                                <div className="space-y-0.5">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="font-extrabold text-xs text-ink">
+                                      {item.title}
+                                    </span>
+                                    <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${item.badgeColor}`}>
+                                      {item.sectionLabel}
+                                    </span>
+                                  </div>
+                                  <p className="text-[11px] text-ink-muted">
+                                    {item.reason}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border border-ink/20 bg-white text-ink shrink-0">
+                                {item.impact}
+                              </span>
+                            </div>
+
+                            {/* Before & After Comparison */}
+                            <div className="space-y-1.5 pl-6">
+                              {/* Original */}
+                              {item.original && item.original !== '(Not currently listed in skills)' && (
+                                <div className={`p-2 rounded text-[11px] border transition ${
+                                  isChecked
+                                    ? 'bg-slate-50 text-slate-400 border-slate-200 line-through'
+                                    : 'bg-slate-50 text-slate-600 border-slate-200'
+                                }`}>
+                                  <span className="font-bold text-[10px] uppercase text-slate-500 block mb-0.5">
+                                    Current on Resume:
+                                  </span>
+                                  {item.original}
+                                </div>
+                              )}
+
+                              {/* Tailored / AI Suggestion */}
+                              <div className={`p-2.5 rounded-lg text-xs leading-relaxed border transition font-medium ${
+                                isChecked
+                                  ? 'bg-emerald-50 text-emerald-950 border-emerald-300 font-semibold shadow-xs'
+                                  : 'bg-white text-slate-800 border-ink/15'
+                              }`}>
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className="font-bold text-[10px] uppercase text-emerald-800 flex items-center gap-1">
+                                    <Sparkles className="w-3 h-3 text-emerald-600" />
+                                    <span>{isChecked ? '✓ Active on Live Resume:' : 'AI Recommended Improvement:'}</span>
+                                  </span>
+                                  <span className="text-[10px] font-mono font-bold text-emerald-700">
+                                    {isChecked ? 'Accepted' : 'Click to Accept & Apply'}
+                                  </span>
+                                </div>
+                                {item.tailored}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
 
                   {/* Next Stage Button */}
                   <div className="pt-4 border-t border-ink/10">

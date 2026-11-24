@@ -248,6 +248,20 @@ class LocalHeuristicProvider(BaseAIProvider):
                     reason="Injects target role keywords while maintaining achievement-oriented STAR format."
                 ))
 
+        # Check projects
+        proj_list = resume.get("projects", [])
+        if proj_list and len(proj_list) > 0:
+            first_proj = proj_list[0]
+            orig_desc = first_proj.get("description", "")
+            tailored_desc = f"{orig_desc} Engineered architectural components leveraging {skills_str}, improving responsiveness and system throughput."
+            suggestions.append(TailorSuggestion(
+                section="projects",
+                target_id=first_proj.get("id"),
+                original_text=orig_desc,
+                tailored_text=tailored_desc,
+                reason="Enhances technical credibility by framing project achievements with target JD stack."
+            ))
+
         return TailorResumeResponse(
             tailored_summary=tailored_summary,
             suggestions=suggestions,
