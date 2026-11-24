@@ -117,6 +117,10 @@ def sanitize_and_hydrate_resume(data: Dict[str, Any], raw_text: str = "") -> Res
                             break
                     if location:
                         break
+        # Guardrail: clean location from any accidental technical terms or acronyms
+        tech_words = {"etl", "sql", "modeling", "architecture", "data", "pipeline", "aws", "azure", "gcp", "developer", "engineer", "framework"}
+        if location and any(tw in location.lower().split() or tw in [p.strip().lower() for p in re.split(r'[,|/]', location)] for tw in tech_words):
+            location = ""
         if not linkedin:
             li = LINKEDIN_REGEX.findall(raw_text)
             if li:

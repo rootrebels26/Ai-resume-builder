@@ -61,20 +61,28 @@ export const pdfService = {
           };
         }).filter(Boolean);
 
-        // High-resolution capture (scale 2 gives crystal-clear 300 DPI text)
+        // Detect computed background color of the page sheet so dark/colored templates keep exact palette
+        const computedBg = window.getComputedStyle(pageEl).backgroundColor;
+        const pageBg = (!computedBg || computedBg === 'transparent' || computedBg === 'rgba(0, 0, 0, 0)')
+          ? '#ffffff'
+          : computedBg;
+
+        // High-resolution capture (scale 2.5 gives crystal-clear 300+ DPI vector-like clarity)
         const canvas = await html2canvas(pageEl, {
-          scale: 2,
+          scale: 2.5,
           useCORS: true,
+          allowTaint: true,
           letterRendering: true,
           logging: false,
-          backgroundColor: '#ffffff'
+          backgroundColor: pageBg
         });
 
         // Restore screen styles immediately
         pageEl.style.boxShadow = prevShadow;
         pageEl.style.border = prevBorder;
 
-        const imgData = canvas.toDataURL('image/jpeg', 0.98);
+        // Use lossless PNG to completely eliminate JPEG compression degradation on fonts and rules
+        const imgData = canvas.toDataURL('image/png');
 
         // Add page in PDF if beyond the first sheet
         if (i > 0) {
@@ -82,7 +90,7 @@ export const pdfService = {
         }
 
         // Place image precisely covering the 210mm x 297mm A4 page
-        pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+        pdf.addImage(imgData, 'PNG', 0, 0, 210, 297, undefined, 'FAST');
 
         // Overlay active PDF link annotations so GitHub, LinkedIn, portfolio, and project links are 100% clickable
         linkAnnotations.forEach(link => {

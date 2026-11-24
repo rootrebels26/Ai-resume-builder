@@ -392,10 +392,14 @@ class LocalHeuristicProvider(BaseAIProvider):
 
         # Location heuristic
         location = ""
-        loc_match = re.search(r'\b([A-Z][a-zA-Z\s.-]+,\s*[A-Z]{2,}(?:\s+\d{5})?|[A-Z][a-zA-Z\s.-]+,\s*(?:USA|United States|India|Canada|UK|United Kingdom|Germany|Australia|Bengal|Delhi|Bangalore|Hyderabad|Mumbai|Kolkata))\b', cleaned_text)
+        # Search specifically within the top 10 lines (header area), never across full body text where tech acronyms reside
+        header_text = "\n".join(lines[:10])
+        tech_acronyms = {"etl", "sql", "aws", "gcp", "adf", "lld", "hld", "ssas", "ssis", "ssrs", "api", "ml", "ai", "bi", "db", "devops", "ci/cd", "nosql"}
+        loc_match = re.search(r'\b([A-Z][a-zA-Z\s.-]+,\s*(?:[A-Z]{2}\b|USA|United States|India|Canada|UK|United Kingdom|Germany|Australia|Bengal|Delhi|Bangalore|Bengaluru|Hyderabad|Mumbai|Kolkata|Pune|Chennai|Noida|Gurgaon|Gurugram|Bhopal))\b', header_text)
         if loc_match:
             loc_candidate = loc_match.group(1).strip()
-            if len(loc_candidate) < 50 and not any(kw in loc_candidate.lower() for kw in ["university", "college", "experience", "skills", "engineering"]):
+            parts_check = [p.strip().lower() for p in loc_candidate.split(",")]
+            if len(loc_candidate) < 50 and not any(p in tech_acronyms for p in parts_check) and not any(kw in loc_candidate.lower() for kw in ["university", "college", "experience", "skills", "engineering", "data", "modeling"]):
                 location = loc_candidate
 
         # Candidate Full Name heuristic
@@ -417,11 +421,10 @@ class LocalHeuristicProvider(BaseAIProvider):
 
         # Professional Title heuristic
         prof_title = ""
-        role_keywords = [
-            "engineer", "developer", "manager", "architect", "lead", "specialist",
-            "designer", "analyst", "consultant", "generalist", "scientist", "intern",
-            "administrator", "researcher", "coordinator"
-        ]
+        role_regex = re.compile(
+            r'\b(engineer|developer|manager|architect|lead|specialist|designer|analyst|consultant|generalist|scientist|interns?|administrator|researcher|coordinator)\b',
+            re.IGNORECASE
+        )
         for line in lines[:8]:
             if line == candidate_name:
                 continue
@@ -432,38 +435,44 @@ class LocalHeuristicProvider(BaseAIProvider):
             if "|" in line_clean:
                 segments = [s.strip() for s in line_clean.split("|") if s.strip()]
                 for seg in segments:
-                    if any(rk in seg.lower() for rk in role_keywords) and len(seg) < 45:
+                    if role_regex.search(seg) and len(seg) < 45:
                         prof_title = seg
                         break
                 if prof_title:
                     break
-            elif any(rk in line_clean.lower() for rk in role_keywords) and len(line_clean) < 60:
+            elif role_regex.search(line_clean) and len(line_clean) < 60:
                 prof_title = line_clean
                 break
 
         # 2. Section Segmentation
         section_patterns = {
             "summary": re.compile(r'^(?:professional\s+summary|summary|profile|about\s+me|career\s+objective|objective|focus)\b', re.IGNORECASE),
-            "experience": re.compile(r'^(?:work\s+experience|professional\s+experience|employment\s+history|experience|work\s+history|engineering\s+experience)\b', re.IGNORECASE),
-            "education": re.compile(r'^(?:education|academic\s+background|academics|qualifications|educational\s+qualifications)\b', re.IGNORECASE),
+            "experience": re.compile(r'^(?:work\s+experience|professional\s+experience|employment\s+history|experience|work\s+history|engineering\s+experience|career\s+history|relevant\s+experience)\b', re.IGNORECASE),
+            "education": re.compile(r'^(?:education\s*(?:&|and)\s*academics|education\s*(?:&|and)\s*training|education|academic\s+background|academics|qualifications|educational\s+qualifications)\b', re.IGNORECASE),
             "projects": re.compile(r'^(?:(?:featured|key|technical|personal|academic|selected|notable|major|relevant|independent|open\s+source)?\s*projects|project\s+experience|project\s+work|portfolio\s+&\s+projects|architectures\s+&\s+systems)\b', re.IGNORECASE),
-            "skills": re.compile(r'^(?:skills|technical\s+skills|core\s+competencies|technologies|proficiencies|tools\s+&\s+skills|core\s+proficiencies)\b', re.IGNORECASE),
+            "skills": re.compile(r'^(?:(?:core\s+)?technical\s+skills|core\s+skills|technical\s+competencies|technical\s+expertise|skills\s*(?:&|and)\s*competencies|skills\s*(?:&|and)\s*tools|skills|technologies|proficiencies|tools\s*(?:&|and)\s*technologies|core\s+competencies|key\s+skills)\b', re.IGNORECASE),
             "certifications": re.compile(r'^(?:certifications|certificates|licenses|courses|credentials|workshops|training|trainings|accreditations)\b', re.IGNORECASE),
+            "leadership": re.compile(r'^(?:leaderships?(?:\s*(?:&|and|interpersonal)?\s*skills)?|leadership\s+activities|interpersonal\s+skills|soft\s+skills)\b', re.IGNORECASE),
             "languages": re.compile(r'^(?:languages|language\s+proficiency)\b', re.IGNORECASE),
             "achievements": re.compile(r'^(?:achievements|awards|honors|honours|accomplishments)\b', re.IGNORECASE)
         }
 
         sections: Dict[str, List[str]] = {
             "summary": [], "experience": [], "education": [], "projects": [],
-            "skills": [], "certifications": [], "languages": [], "achievements": [], "other": []
+            "skills": [], "certifications": [], "leadership": [], "languages": [], "achievements": [], "other": []
         }
+
+        date_pattern = re.compile(
+            r'((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?[\s\-_]*\d{2,4}|\d{4}|(?:0[1-9]|1[0-2])/\d{2,4})\s*[-–—to/]+\s*((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?[\s\-_]*\d{2,4}|\d{4}|(?:0[1-9]|1[0-2])/\d{2,4}|Present|Current|Till\s*Date|Ongoing|Now)',
+            re.IGNORECASE
+        )
 
         current_sec = "summary"
         for line in lines:
             matched_sec = None
             clean_l = re.sub(r'^[#*\-•\s]+', '', line).strip()
             # A line is a section header ONLY if it's brief AND does not contain in-line content after a colon
-            if len(clean_l) < 45 and (":" not in clean_l or clean_l.endswith(":")):
+            if len(clean_l) < 50 and (":" not in clean_l or clean_l.endswith(":")):
                 for s_key, s_regex in section_patterns.items():
                     if s_regex.match(clean_l):
                         matched_sec = s_key
@@ -472,15 +481,21 @@ class LocalHeuristicProvider(BaseAIProvider):
             if matched_sec:
                 current_sec = matched_sec
             else:
-                # Merge multi-line wrapped items (e.g. line wrapped mid-bullet or mid-category)
+                # Merge multi-line wrapped items ONLY if it's true continuation and NOT a job header, category, or bullet
                 if sections[current_sec]:
                     prev = sections[current_sec][-1]
                     is_bullet = any(line.strip().startswith(sym) for sym in ['-', '*', '•', '–', '+', 'o '])
                     prev_is_bullet = any(prev.strip().startswith(sym) for sym in ['-', '*', '•', '–', '+', 'o '])
-                    # If this line is not a new bullet and not a new category with ':', merge with previous
-                    if not is_bullet and ":" not in line and (prev_is_bullet or ":" in prev or prev.endswith(('-', '–', '—', ',', '|'))):
-                        sections[current_sec][-1] = f"{prev} {line.strip()}".strip()
-                        continue
+                    
+                    # Guardrails: never merge if line is a job header or category
+                    has_date_range = bool(date_pattern.search(line))
+                    is_likely_job_hdr = ("|" in line or "—" in line or "–" in line) and bool(role_regex.search(line))
+                    is_cat_colon = ":" in line and len(line.split(":", 1)[0].strip()) < 40
+
+                    if not is_bullet and not has_date_range and not is_likely_job_hdr and not is_cat_colon:
+                        if prev_is_bullet or ":" in prev or prev.endswith(('-', '–', '—', ',', '|')):
+                            sections[current_sec][-1] = f"{prev} {line.strip()}".strip()
+                            continue
                 sections[current_sec].append(line)
 
         # 3. Parse Summary
@@ -492,7 +507,7 @@ class LocalHeuristicProvider(BaseAIProvider):
             l_lower = l.lower()
             if any(sp in l_lower for sp in skip_summary_phrases):
                 continue
-            if "|" in l and any(rk in l_lower for rk in role_keywords):
+            if "|" in l and bool(role_regex.search(l)):
                 continue # was title line
             summary_lines.append(l)
 
@@ -500,8 +515,6 @@ class LocalHeuristicProvider(BaseAIProvider):
 
         # 4. Parse Work Experience (Robust Multi-Item)
         experience_items = []
-        date_pattern = re.compile(r'((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{4}|\d{4}|(?:0[1-9]|1[0-2])/\d{4})\s*[-–—to]+\s*((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{4}|\d{4}|(?:0[1-9]|1[0-2])/\d{4}|Present|Current|Now)', re.IGNORECASE)
-
         exp_lines = sections["experience"]
         current_job = None
 
@@ -512,13 +525,14 @@ class LocalHeuristicProvider(BaseAIProvider):
             if d_match and not is_bullet:
                 start_d = d_match.group(1).strip()
                 end_d = d_match.group(2).strip()
-                is_curr = any(w in end_d.lower() for w in ["present", "current", "now"])
+                is_curr = any(w in end_d.lower() for w in ["present", "current", "now", "ongoing"])
 
-                remainder = l[:d_match.start()] + l[d_match.end():]
+                remainder = l[:d_match.start()] + " | " + l[d_match.end():]
                 remainder = re.sub(r'[-–|,]+$', '', remainder).strip()
                 parts = [p.strip() for p in re.split(r'[-–|•—]', remainder) if p.strip()]
 
-                if current_job and not current_job.get("responsibilities"):
+                # If current_job was just created without dates, hydrate its dates and location
+                if current_job and not current_job.get("responsibilities") and not current_job.get("startDate"):
                     current_job["startDate"] = start_d
                     current_job["endDate"] = end_d
                     current_job["current"] = is_curr
@@ -529,25 +543,34 @@ class LocalHeuristicProvider(BaseAIProvider):
                 if current_job and current_job.get("company"):
                     experience_items.append(current_job)
 
-                comp = parts[0] if parts else "Organization"
+                comp = "Organization"
                 pos = prof_title or "Engineer"
-                if len(parts) > 1:
-                    if any(rk in parts[1].lower() for rk in role_keywords):
-                        comp = parts[0]
-                        pos = parts[1]
-                    elif any(rk in parts[0].lower() for rk in role_keywords):
-                        pos = parts[0]
-                        comp = parts[1]
-                    else:
-                        comp = parts[0]
-                        pos = parts[1]
+                loc = ""
+
+                pos_idx = -1
+                for i, p in enumerate(parts):
+                    if role_regex.search(p):
+                        pos_idx = i
+                        break
+
+                if pos_idx != -1:
+                    pos = parts[pos_idx]
+                    other_parts = [p for i, p in enumerate(parts) if i != pos_idx]
+                    if other_parts:
+                        comp = other_parts[0]
+                        if len(other_parts) > 1:
+                            loc = other_parts[-1]
+                else:
+                    if parts: comp = parts[0]
+                    if len(parts) > 1: pos = parts[1]
+                    if len(parts) > 2: loc = parts[2]
 
                 current_job = {
                     "id": str(uuid.uuid4())[:8],
                     "company": comp,
                     "position": pos,
                     "employmentType": "Full-time",
-                    "location": "",
+                    "location": loc,
                     "startDate": start_d,
                     "endDate": end_d,
                     "current": is_curr,
@@ -573,10 +596,10 @@ class LocalHeuristicProvider(BaseAIProvider):
                     current_job["responsibilities"].append(clean_bullet)
             else:
                 # Line without dates or bullets
-                # Only treat as a new job header if it has a clear role keyword AND separator AND starts with capital
+                # Check if it is a new job header (e.g. pipe-separated company and role)
                 has_sep = any(sep in l for sep in ['—', '–', '-', '|'])
-                has_role = any(rk in l.lower() for rk in role_keywords)
-                if has_sep and has_role and len(l) < 80 and l[0].isupper():
+                has_role = bool(role_regex.search(l))
+                if (has_sep and has_role and len(l) < 95 and l[0].isupper()) or ("|" in l and len(l.split("|")) >= 3 and len(l) < 120):
                     if current_job and current_job.get("responsibilities"):
                         experience_items.append(current_job)
                         current_job = None
@@ -584,20 +607,32 @@ class LocalHeuristicProvider(BaseAIProvider):
                     parts = [p.strip() for p in re.split(r'[-–|•—]', l) if p.strip()]
                     comp = parts[0] if parts else l
                     pos = prof_title or "Engineer"
-                    if len(parts) > 1:
-                        if any(rk in parts[1].lower() for rk in role_keywords):
+                    loc = ""
+                    pos_idx = -1
+                    for i, p in enumerate(parts):
+                        if role_regex.search(p):
+                            pos_idx = i
+                            break
+                    if pos_idx != -1:
+                        pos = parts[pos_idx]
+                        other_parts = [p for i, p in enumerate(parts) if i != pos_idx]
+                        if other_parts:
+                            comp = other_parts[0]
+                            if len(other_parts) > 1:
+                                loc = other_parts[-1]
+                    else:
+                        if len(parts) > 1:
                             comp = parts[0]
                             pos = parts[1]
-                        elif any(rk in parts[0].lower() for rk in role_keywords):
-                            pos = parts[0]
-                            comp = parts[1]
+                        if len(parts) > 2:
+                            loc = parts[2]
 
                     current_job = {
                         "id": str(uuid.uuid4())[:8],
                         "company": comp,
                         "position": pos,
                         "employmentType": "Full-time",
-                        "location": "",
+                        "location": loc,
                         "startDate": "",
                         "endDate": "Present",
                         "current": True,
@@ -610,6 +645,7 @@ class LocalHeuristicProvider(BaseAIProvider):
                         current_job["responsibilities"][-1] = f"{current_job['responsibilities'][-1]} {l}".strip()
                     else:
                         current_job["responsibilities"].append(l)
+                        current_job["responsibilities"].append(l)
 
         if current_job and current_job.get("company"):
             experience_items.append(current_job)
@@ -618,22 +654,27 @@ class LocalHeuristicProvider(BaseAIProvider):
         education_items = []
         edu_lines = sections["education"]
         current_edu = None
-        edu_keywords = ["bachelor", "master", "b.s", "bs", "m.s", "ms", "b.tech", "m.tech", "ph.d", "bba", "mba", "diploma", "degree", "associate"]
+        edu_keywords = ["bachelor", "master", "b.s", "bs", "m.s", "ms", "b.tech", "m.tech", "ph.d", "bba", "mba", "diploma", "degree", "associate", "engineering", "b.e", "be", "bca", "mca"]
+        deg_regex = re.compile(
+            r'\b(Bachelor(?:\s+of\s+[A-Za-z\s&()]+)?|Master(?:\s+of\s+[A-Za-z\s&()]+)?|B\.?E\.?(?:\s+in\s+[A-Za-z\s&()]+)?|B\.?Tech(?:\s+in\s+[A-Za-z\s&()]+)?|M\.?Tech|B\.?Sc|M\.?Sc|BCA|MCA|BS|MS|MBA|BBA|Ph\.?D)\b',
+            re.IGNORECASE
+        )
 
         for l in edu_lines:
-            l_lower = l.lower()
-            d_match = date_pattern.search(l) or re.search(r'\b(20\d{2}|19\d{2})\b', l)
+            l_clean = re.sub(r'^[#*\-•–+o\s]+', '', l).strip()
+            l_lower = l_clean.lower()
+            d_match = date_pattern.search(l_clean) or re.search(r'\b(20\d{2}|19\d{2})\b', l_clean)
             has_degree_kw = any(re.search(r'\b' + re.escape(dkw) + r'\b', l_lower) for dkw in edu_keywords)
-            has_inst_kw = any(ikw in l_lower for ikw in ["university", "college", "institute", "school", "academy", "iit", "nit", "bits"])
+            has_inst_kw = any(ikw in l_lower for ikw in ["university", "college", "institute", "school", "academy", "iit", "nit", "bits", "rgpv"])
 
             # Coursework lines should ALWAYS go to description
             if l_lower.startswith("coursework") or "coursework:" in l_lower:
                 if current_edu:
-                    current_edu["description"] = l.strip()
+                    current_edu["description"] = l_clean
                 continue
 
             # GPA / CGPA line
-            gpa_match = re.search(r'\b(?:gpa|cgpa|grade)[\s:]*([0-9.]+(?:\s*/\s*[0-9.]+)?%?)\b', l, re.IGNORECASE)
+            gpa_match = re.search(r'\b(?:gpa|cgpa|grade)[\s:]*([0-9.]+(?:\s*/\s*[0-9.]+)?%?)\b', l_clean, re.IGNORECASE)
             if gpa_match:
                 if current_edu:
                     current_edu["cgpa"] = gpa_match.group(1).strip()
@@ -650,7 +691,7 @@ class LocalHeuristicProvider(BaseAIProvider):
                 continue
 
             if has_degree_kw or has_inst_kw or (d_match and not current_edu):
-                if current_edu and (has_degree_kw and current_edu.get("degree")) and (has_inst_kw and current_edu.get("institution")):
+                if current_edu and current_edu.get("degree") and (current_edu.get("institution") or has_degree_kw):
                     education_items.append(current_edu)
                     current_edu = None
 
@@ -675,35 +716,39 @@ class LocalHeuristicProvider(BaseAIProvider):
                         end_d = d_match.group(0).strip()
                     current_edu["startDate"] = start_d
                     current_edu["endDate"] = end_d
-                    # Remove date string from line so it does not pollute degree or institution name
-                    l = l[:d_match.start()] + l[d_match.end():]
-                    l = l.strip()
+                    l_clean = l_clean[:d_match.start()] + l_clean[d_match.end():]
+                    l_clean = l_clean.strip()
 
-                gpa_match = re.search(r'\b(?:gpa|cgpa|grade)[\s:]*([0-9.]+(?:\s*/\s*[0-9.]+)?%?)\b', l, re.IGNORECASE)
-                if gpa_match:
-                    current_edu["cgpa"] = gpa_match.group(1).strip()
-                    l = l[:gpa_match.start()] + l[gpa_match.end():]
-                    l = l.strip()
+                deg_match = re.search(
+                    r'\b(Bachelor(?:\s+of\s+[A-Za-z\s&]+)?|Master(?:\s+of\s+[A-Za-z\s&]+)?|B\.?E\.?(?:\s+in\s+[A-Za-z\s&]+)?|B\.?Tech(?:\s+in\s+[A-Za-z\s&]+)?|M\.?Tech|B\.?Sc|M\.?Sc|BCA|MCA|BS|MS|MBA|BBA|Ph\.?D)\b',
+                    l_clean,
+                    re.IGNORECASE
+                )
+                fos_m = re.search(r'\(([^)]+)\)', l_clean)
 
-                parts = [p.strip() for p in re.split(r'[-–|•,]', l) if p.strip()]
-                for p in parts:
-                    p_low = p.lower()
-                    if any(ikw in p_low for ikw in ["university", "college", "institute", "school", "academy", "iit", "nit", "bits"]) and not current_edu["institution"]:
-                        current_edu["institution"] = p
-                    elif any(re.search(r'\b' + re.escape(dkw) + r'\b', p_low) for dkw in edu_keywords) and not current_edu["degree"]:
-                        fos_match = re.search(r'\b(?:in|of)\s+([A-Za-z\s&]+)', p, re.IGNORECASE)
-                        if fos_match:
-                            current_edu["fieldOfStudy"] = fos_match.group(1).strip()
-                            current_edu["degree"] = p.strip()
-                        else:
-                            current_edu["degree"] = p.strip()
+                if deg_match:
+                    current_edu["degree"] = deg_match.group(0).strip()
+                if fos_m:
+                    current_edu["fieldOfStudy"] = fos_m.group(1).strip()
+
+                rem = l_clean
+                if deg_match:
+                    rem = rem.replace(deg_match.group(0), "")
+                if fos_m:
+                    rem = rem.replace(fos_m.group(0), "")
+                rem = re.sub(r'[-–—|]+', ' ', rem).strip(' ,')
+
+                if rem and not current_edu["institution"]:
+                    current_edu["institution"] = rem
+                elif not current_edu["institution"] and any(ikw in l_lower for ikw in ["university", "college", "institute", "school", "academy", "iit", "nit", "bits", "rgpv"]):
+                    current_edu["institution"] = l_clean
             elif current_edu:
-                if not current_edu["institution"] and any(ikw in l_lower for ikw in ["university", "college", "institute", "school", "academy", "iit", "nit"]):
-                    current_edu["institution"] = l
+                if not current_edu["institution"] and any(ikw in l_lower for ikw in ["university", "college", "institute", "school", "academy", "iit", "nit", "bits", "rgpv"]):
+                    current_edu["institution"] = l_clean
                 elif not current_edu["degree"] and any(re.search(r'\b' + re.escape(dkw) + r'\b', l_lower) for dkw in edu_keywords):
-                    current_edu["degree"] = l
-                elif len(l) > 10:
-                    current_edu["description"] = (current_edu["description"] + " " + l).strip()
+                    current_edu["degree"] = l_clean
+                elif len(l_clean) > 10:
+                    current_edu["description"] = (current_edu["description"] + " " + l_clean).strip()
 
         if current_edu:
             if not current_edu["institution"] and current_edu["degree"]:
@@ -776,6 +821,18 @@ class LocalHeuristicProvider(BaseAIProvider):
                 skill_categories.append({"category": "Developer Tools", "items": tools_list})
             if soft_skills_list:
                 skill_categories.append({"category": "Core Competencies", "items": soft_skills_list})
+
+        # Append leadership items as a dedicated skill category if present
+        if sections.get("leadership"):
+            lead_items = []
+            for ll in sections["leadership"]:
+                clean_lead = re.sub(r'^[#*\-•–+o\s]+', '', ll).strip()
+                if ":" in clean_lead:
+                    clean_lead = clean_lead.split(":", 1)[0].strip()
+                if clean_lead and len(clean_lead) < 60:
+                    lead_items.append(clean_lead)
+            if lead_items:
+                skill_categories.append({"category": "Leadership & Core Competencies", "items": lead_items})
 
         # 7. Parse Projects
         project_items = []
