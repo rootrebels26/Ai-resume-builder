@@ -60,17 +60,18 @@ The repository includes a pre-configured [render.yaml](file:///c:/Users/sagni/On
 | :--- | :--- | :--- |
 | `APP_ENV` | `production` | Enables production security mode |
 | `API_V1_PREFIX` | `/api/v1` | Base API route prefix |
+| `COMPANY_ACCESS_CODE` | `NityaCloudtech#resume` | Company access code required for builder authorization |
 | `ALLOWED_ORIGINS` | `https://your-app.vercel.app` | Comma-separated list of allowed frontend domains *(Update after deploying to Vercel)* |
 | `AI_PROVIDER` | `gemini` *(or `groq` / `local`)* | AI model provider |
 | `GEMINI_API_KEY` | `Your-Gemini-API-Key` | Required if `AI_PROVIDER=gemini` |
 | `GROQ_API_KEY` | `Your-Groq-API-Key` | Required if `AI_PROVIDER=groq` |
 | `MAX_UPLOAD_SIZE_MB` | `10` | Max document size for PDF/DOCX uploads |
 
-5. Under **Health Check Path**, enter: `/api/v1/health`.
+5. Under **Health Check Path**, enter: `/health` (or `/api/v1/health`).
 6. Click **Create Web Service**.
 7. Once deployment completes, verify:
    ```bash
-   curl https://ai-resume-builder-api.onrender.com/api/v1/health
+   curl https://ai-resume-builder-api.onrender.com/health
    # Expected output: {"success":true,"data":{"status":"healthy","version":"1.0.0",...}}
    ```
 
