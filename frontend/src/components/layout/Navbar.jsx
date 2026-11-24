@@ -40,10 +40,10 @@ export function Navbar() {
         {/* Desktop Navigation Links */}
         <nav className="hidden items-center gap-8 text-sm font-semibold md:flex">
           <Link
-            to="/builder"
-            className={`nav-link ${location.pathname === '/builder' ? 'text-[#5e48d7]' : ''}`}
+            to="/onboarding#1"
+            className={`nav-link ${location.pathname === '/onboarding' ? 'text-[#5e48d7]' : ''}`}
           >
-            Editor
+            Create New
           </Link>
           <Link
             to="/templates"
@@ -109,7 +109,7 @@ export function Navbar() {
         {menuOpen && (
           <div className="absolute left-5 right-5 top-20 rounded-2xl border border-black bg-[#fffdf7] p-5 shadow-[5px_5px_0_#171713] md:hidden">
             <nav className="flex flex-col gap-4 font-semibold text-[#171713]">
-              <Link to="/builder" onClick={() => setMenuOpen(false)} className="hover:text-[#5e48d7]">Editor</Link>
+              <Link to="/onboarding#1" onClick={() => setMenuOpen(false)} className="hover:text-[#5e48d7]">Create New</Link>
               <Link to="/templates" onClick={() => setMenuOpen(false)} className="hover:text-[#5e48d7]">Templates</Link>
               <Link to="/ats-checker" onClick={() => setMenuOpen(false)} className="hover:text-[#5e48d7]">ATS Checker</Link>
               <div className="pt-2 border-t border-black/10 flex flex-col gap-2">

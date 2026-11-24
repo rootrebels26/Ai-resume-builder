@@ -74,18 +74,18 @@ export function SectionHeading({ title, variant = "underline", color = "#0284c7"
 
   if (variant === "bar") {
     return (
-      <div className={`flex items-center gap-2 mb-2 pb-1 border-b border-slate-200 ${className}`}>
-        <span className="w-1.5 h-4 rounded-full" style={{ backgroundColor: color }}></span>
-        <h2 className="text-sm font-bold tracking-wider uppercase text-slate-900">{title}</h2>
+      <div className={`flex items-center gap-1.5 mb-1.5 pb-0.5 border-b border-slate-200 ${className}`}>
+        <span className="w-1.5 h-3.5 rounded-full" style={{ backgroundColor: color }}></span>
+        <h2 className="text-xs sm:text-sm font-bold tracking-wider uppercase text-slate-900">{title}</h2>
       </div>
     );
   }
 
   if (variant === "badge") {
     return (
-      <div className={`mb-2.5 ${className}`}>
+      <div className={`mb-1.5 ${className}`}>
         <span
-          className="inline-block px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider rounded text-white"
+          className="inline-block px-2 py-0.5 text-xs font-bold uppercase tracking-wider rounded text-white"
           style={{ backgroundColor: color }}
         >
           {title}
@@ -96,7 +96,7 @@ export function SectionHeading({ title, variant = "underline", color = "#0284c7"
 
   if (variant === "minimal") {
     return (
-      <div className={`mb-1.5 pt-1 border-t border-slate-200 ${className}`}>
+      <div className={`mb-1 pt-0.5 border-t border-slate-200 ${className}`}>
         <h2 className="text-xs font-bold tracking-widest uppercase text-slate-700">{title}</h2>
       </div>
     );
@@ -104,15 +104,15 @@ export function SectionHeading({ title, variant = "underline", color = "#0284c7"
 
   if (variant === "serif") {
     return (
-      <div className={`mb-2 pb-1 border-b-2 ${className}`} style={{ borderColor: color }}>
-        <h2 className="font-serif text-sm font-bold tracking-wide uppercase text-slate-900">{title}</h2>
+      <div className={`mb-1.5 pb-0.5 border-b-2 ${className}`} style={{ borderColor: color }}>
+        <h2 className="font-serif text-xs sm:text-sm font-bold tracking-wide uppercase text-slate-900">{title}</h2>
       </div>
     );
   }
 
   // Default: underline with custom accent color
   return (
-    <div className={`mb-2 pb-1 border-b ${className}`} style={{ borderColor: color }}>
+    <div className={`mb-1.5 pb-0.5 border-b ${className}`} style={{ borderColor: color }}>
       <h2
         className="text-xs font-bold tracking-wider uppercase"
         style={{ color: color }}
@@ -127,7 +127,7 @@ export function ExperienceSection({ items = [], bulletStyle = "disc", accentColo
   if (!items || items.length === 0) return null;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {items.map((exp, idx) => (
         <div key={exp.id || idx} className="break-inside-avoid">
           <div className="flex justify-between items-baseline flex-wrap gap-1">
@@ -141,9 +141,9 @@ export function ExperienceSection({ items = [], bulletStyle = "disc", accentColo
           </div>
 
           {exp.responsibilities && exp.responsibilities.length > 0 && (
-            <ul className={`mt-1.5 space-y-1 text-xs text-slate-700 list-${bulletStyle} list-inside`}>
+            <ul className={`mt-0.5 space-y-0.5 text-xs text-slate-700 list-${bulletStyle} list-inside`}>
               {exp.responsibilities.map((resp, rIdx) => (
-                <li key={rIdx} className="leading-relaxed">
+                <li key={rIdx} className="leading-snug">
                   <span className="-ml-1">{resp}</span>
                 </li>
               ))}
@@ -151,7 +151,7 @@ export function ExperienceSection({ items = [], bulletStyle = "disc", accentColo
           )}
 
           {exp.achievements && exp.achievements.length > 0 && (
-            <div className="mt-1 pl-2 text-xs italic text-slate-600 border-l-2 border-slate-200">
+            <div className="mt-0.5 pl-2 text-xs italic text-slate-600 border-l-2 border-slate-200">
               {exp.achievements.join(' • ')}
             </div>
           )}
@@ -165,7 +165,7 @@ export function EducationSection({ items = [] }) {
   if (!items || items.length === 0) return null;
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-1.5">
       {items.map((edu, idx) => (
         <div key={edu.id || idx} className="flex justify-between items-baseline flex-wrap gap-1 break-inside-avoid">
           <div>
@@ -173,7 +173,7 @@ export function EducationSection({ items = [] }) {
               {edu.degree} {edu.fieldOfStudy ? `in ${edu.fieldOfStudy}` : ""}
             </h3>
             <p className="text-xs text-slate-600">{edu.institution}</p>
-            {edu.description && <p className="text-xs text-slate-500 mt-0.5">{edu.description}</p>}
+            {edu.description && <p className="text-xs text-slate-500 mt-0.5 leading-snug">{edu.description}</p>}
           </div>
           <div className="text-right text-xs text-slate-500 font-mono">
             <div>{edu.startDate ? `${edu.startDate} – ${edu.endDate}` : edu.endDate}</div>
@@ -189,7 +189,7 @@ export function ProjectsSection({ items = [] }) {
   if (!items || items.length === 0) return null;
 
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-2">
       {items.map((proj, idx) => (
         <div key={proj.id || idx} className="break-inside-avoid">
           <div className="flex justify-between items-baseline flex-wrap gap-1">
@@ -214,11 +214,11 @@ export function ProjectsSection({ items = [] }) {
           </div>
 
           {proj.description && (
-            <p className="text-xs text-slate-700 mt-0.5 leading-relaxed">{proj.description}</p>
+            <p className="text-xs text-slate-700 mt-0.5 leading-snug">{proj.description}</p>
           )}
 
           {proj.technologies && proj.technologies.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-1">
+            <div className="flex flex-wrap gap-1 mt-0.5">
               {proj.technologies.map((tech, tIdx) => (
                 <span key={tIdx} className="px-1.5 py-0.2 text-[10px] bg-slate-100 text-slate-700 rounded font-mono">
                   {tech}
@@ -228,9 +228,11 @@ export function ProjectsSection({ items = [] }) {
           )}
 
           {proj.highlights && proj.highlights.length > 0 && (
-            <ul className="mt-1 list-disc list-inside text-xs text-slate-600">
+            <ul className="mt-0.5 space-y-0.5 text-xs text-slate-600 list-disc list-inside">
               {proj.highlights.map((h, hIdx) => (
-                <li key={hIdx}>{h}</li>
+                <li key={hIdx} className="leading-snug">
+                  <span className="-ml-1">{h}</span>
+                </li>
               ))}
             </ul>
           )}
@@ -243,10 +245,27 @@ export function ProjectsSection({ items = [] }) {
 export function SkillsSection({ categories = [], pillVariant = false, accentColor = "#0284c7" }) {
   if (!categories || categories.length === 0) return null;
 
+  const normalizedCats = categories.map((cat) => {
+    if (typeof cat === 'string') {
+      return { category: 'Technical Skills', items: [cat] };
+    }
+    const items = Array.isArray(cat?.items)
+      ? cat.items
+      : typeof cat?.items === 'string'
+      ? cat.items.split(',').map((s) => s.trim()).filter(Boolean)
+      : [];
+    return {
+      category: cat?.category || 'Technical Skills',
+      items
+    };
+  }).filter((c) => c.items.length > 0);
+
+  if (normalizedCats.length === 0) return null;
+
   if (pillVariant) {
     return (
       <div className="space-y-1.5">
-        {categories.map((cat, idx) => (
+        {normalizedCats.map((cat, idx) => (
           <div key={idx} className="text-xs break-inside-avoid">
             <span className="font-semibold text-slate-800 mr-2">{cat.category}:</span>
             <div className="inline-flex flex-wrap gap-1 mt-0.5">
@@ -267,11 +286,45 @@ export function SkillsSection({ categories = [], pillVariant = false, accentColo
 
   return (
     <div className="space-y-1 text-xs">
-      {categories.map((cat, idx) => (
+      {normalizedCats.map((cat, idx) => (
         <div key={idx} className="leading-relaxed break-inside-avoid">
           <span className="font-semibold text-slate-800">{cat.category}: </span>
           <span className="text-slate-700">{cat.items.join(', ')}</span>
         </div>
+      ))}
+    </div>
+  );
+}
+
+export function CertificationsSection({ items = [] }) {
+  if (!items || items.length === 0) return null;
+
+  return (
+    <div className="space-y-1 text-xs">
+      {items.map((cert, idx) => (
+        <div key={cert.id || idx} className="flex justify-between items-baseline flex-wrap gap-1 break-inside-avoid">
+          <span className="font-semibold text-slate-800">
+            {cert.name} {cert.issuer ? <span className="font-normal text-slate-600">— {cert.issuer}</span> : ""}
+          </span>
+          {cert.issueDate && (
+            <span className="text-[11px] text-slate-500 font-mono">{cert.issueDate}</span>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function LanguagesSection({ items = [] }) {
+  if (!items || items.length === 0) return null;
+
+  return (
+    <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-700">
+      {items.map((lang, idx) => (
+        <span key={lang.id || idx} className="inline-flex items-center gap-1">
+          <span className="font-semibold text-slate-800">{lang.name}</span>
+          {lang.proficiency && <span className="text-slate-500">({lang.proficiency})</span>}
+        </span>
       ))}
     </div>
   );

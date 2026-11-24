@@ -21,9 +21,23 @@ export const resumeService = {
     });
   },
 
+  // Analyze job description
+  async analyzeJobDescription(payload) {
+    return await apiClient.post('/jobs/analyze', payload);
+  },
+
   // Tailor resume to a specific job description
   async tailorResume(resumeData, jobDescription, jobTitle = '') {
     return await apiClient.post('/resume/tailor', {
+      resume_data: resumeData,
+      job_description: jobDescription,
+      job_title: jobTitle,
+    });
+  },
+
+  // Match resume with job description (ATS match %, missing skills & keywords)
+  async matchResume(resumeData, jobDescription, jobTitle = '') {
+    return await apiClient.post('/jobs/match', {
       resume_data: resumeData,
       job_description: jobDescription,
       job_title: jobTitle,

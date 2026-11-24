@@ -12,7 +12,7 @@ from app.core.middleware import (
     SecurityHeadersMiddleware,
     RateLimitMiddleware,
 )
-from app.api.routes import health, resume, ai, ats, auth
+from app.api.routes import health, resume, ai, ats, auth, jobs
 
 logging.basicConfig(
     level=getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO),
@@ -73,6 +73,7 @@ app.include_router(auth.router, prefix=f"{settings.API_V1_PREFIX}/auth", tags=["
 app.include_router(resume.router, prefix=f"{settings.API_V1_PREFIX}/resume", tags=["Resume"])
 app.include_router(ai.router, prefix=f"{settings.API_V1_PREFIX}/ai", tags=["AI"])
 app.include_router(ats.router, prefix=f"{settings.API_V1_PREFIX}/ats", tags=["ATS"])
+app.include_router(jobs.router, prefix=f"{settings.API_V1_PREFIX}/jobs", tags=["Jobs"])
 
 
 @app.get("/", tags=["Health"])

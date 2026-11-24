@@ -3,13 +3,16 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Sparkles, FileText, UploadCloud, Target, ArrowRight, ArrowLeft,
   Check, Star, Briefcase, GraduationCap, Award, ShieldCheck,
-  CheckCircle2, AlertTriangle, Loader2, RefreshCw, Palette, Layers, User
+  CheckCircle2, AlertTriangle, Loader2, RefreshCw, Palette, Layers, User,
+  Search, Eye, X
 } from 'lucide-react';
 import { useResume } from '../context/ResumeContext';
-import { TEMPLATES } from '../constants/templatesList';
+import { TEMPLATES, TEMPLATE_CATEGORIES, TOTAL_TEMPLATES_COUNT } from '../constants/templatesList';
 import { TemplateDraftPaper } from '../components/templates/TemplateDraftPaper';
+import { TemplateQuickPreviewModal } from '../components/templates/TemplateQuickPreviewModal';
 import { resumeService } from '../services/resumeService';
 import { ExtractionReviewModal } from '../components/resume/ExtractionReviewModal';
+import { sanitizeResumeData } from '../utils/sanitizeResume';
 
 const COLOR_SWATCHES = [
   { name: 'Classic Slate', color: '#1e293b' },
@@ -48,7 +51,8 @@ export function Onboarding() {
     setResumeData,
     selectTemplate,
     selectedTemplateId,
-    updatePreferences
+    updatePreferences,
+    setTargetJob
   } = useResume();
 
   // Step hash sync (#1, #2, #3) matching Enhancv
@@ -73,13 +77,15 @@ export function Onboarding() {
   const [isReviewOpen, setIsReviewOpen] = useState(false);
 
   // Scratch Mode inputs
-  const [targetRole, setTargetRole] = useState(resumeData?.personalInfo?.professionalTitle || 'Senior Full Stack Engineer');
+  const [targetRole, setTargetRole] = useState('');
   const [seniority, setSeniority] = useState('mid');
 
   // Step 2: Template & Style Selection
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [chosenTemplateId, setChosenTemplateId] = useState(selectedTemplateId || 'modern-01');
-  const [chosenColor, setChosenColor] = useState('#0284c7');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [previewTemplate, setPreviewTemplate] = useState(null);
+  const [chosenTemplateId, setChosenTemplateId] = useState(selectedTemplateId || 'maang-01');
+  const [chosenColor, setChosenColor] = useState('#1a73e8');
 
   const fileInputRef = useRef(null);
 
@@ -110,13 +116,21 @@ export function Onboarding() {
     try {
       const res = await resumeService.parseResumeFile(file);
       if (res.success && res.data?.resume_data) {
-        const parsed = res.data.resume_data;
+        const parsed = sanitizeResumeData(res.data.resume_data);
         setExtractedData(parsed);
         setRawParseResult(res.data);
 
         // Pre-fill target role if detected in resume
-        if (parsed.personalInfo?.professionalTitle) {
-          setTargetRole(parsed.personalInfo.professionalTitle);
+        const extractedTitle = parsed.personalInfo?.professionalTitle ||
+          parsed.experience?.[0]?.position ||
+          parsed.internships?.[0]?.role ||
+          '';
+
+        if (extractedTitle) {
+          setTargetRole(extractedTitle);
+          if (setTargetJob) {
+            setTargetJob({ role: extractedTitle, company: '', description: '' });
+          }
         }
       } else {
         setParseError(res.message || "Failed to extract text from document. Please upload a standard PDF or Word file.");
@@ -131,9 +145,19 @@ export function Onboarding() {
 
   // Filter templates for Step 2
   const filteredTemplates = useMemo(() => {
-    if (selectedCategory === 'all') return TEMPLATES;
-    return TEMPLATES.filter(t => t.category === selectedCategory);
-  }, [selectedCategory]);
+    return TEMPLATES.filter((tpl) => {
+      const matchCat = selectedCategory === 'all' || tpl.category === selectedCategory;
+      const q = searchQuery.toLowerCase().trim();
+      const matchSearch =
+        !q ||
+        tpl.name.toLowerCase().includes(q) ||
+        tpl.description.toLowerCase().includes(q) ||
+        tpl.id.toLowerCase().includes(q) ||
+        (tpl.badge && tpl.badge.toLowerCase().includes(q)) ||
+        (tpl.layout && tpl.layout.toLowerCase().includes(q));
+      return matchCat && matchSearch;
+    });
+  }, [selectedCategory, searchQuery]);
 
   const activeTemplateObj = useMemo(() => {
     return TEMPLATES.find(t => t.id === chosenTemplateId) || TEMPLATES[0];
@@ -162,7 +186,7 @@ export function Onboarding() {
           accentColor: chosenColor
         }
       };
-      if (targetRole && (!finalResume.personalInfo || !finalResume.personalInfo.professionalTitle)) {
+      if (targetRole) {
         finalResume.personalInfo = {
           ...(finalResume.personalInfo || {}),
           professionalTitle: targetRole
@@ -188,6 +212,13 @@ export function Onboarding() {
     // Update global context
     setResumeData(finalResume);
     selectTemplate(chosenTemplateId);
+    if (setTargetJob) {
+      setTargetJob({
+        role: targetRole || finalResume.personalInfo?.professionalTitle || 'Software Engineer',
+        company: '',
+        description: ''
+      });
+    }
     if (updatePreferences) {
       updatePreferences('themeColor', chosenColor);
       updatePreferences('accentColor', chosenColor);
@@ -477,110 +508,166 @@ export function Onboarding() {
               </h1>
               <p className="text-xs sm:text-sm text-ink-secondary leading-relaxed">
                 {method === 'upload' && extractedData
-                  ? `Your extracted data for ${extractedData.personalInfo?.fullName || "Candidate"} will be rendered inside your chosen template.`
-                  : `Tailored for ${targetRole}. You can switch templates anytime inside the live editor.`}
+                  ? `Your extracted data for ${extractedData.personalInfo?.fullName || "Candidate"} (${targetRole || extractedData.personalInfo?.professionalTitle || 'Software Engineer'}) will be formatted with your chosen template.`
+                  : `Tailored for ${targetRole || 'your target role'}. You can switch templates anytime inside the live editor.`}
               </p>
             </div>
 
-            {/* Category Filter Pills & Swatches */}
+            {/* Category Filter Pills, Search Bar & Swatches */}
             <div className="card-surface p-4 sm:p-5 bg-white space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                {/* Category Filter */}
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
-                  {[
-                    { id: 'all', label: 'All Designs' },
-                    { id: 'modern', label: 'Modern Sidebar' },
-                    { id: 'ats', label: 'ATS-Friendly' },
-                    { id: 'minimalist', label: 'Minimalist' },
-                    { id: 'developer', label: 'Developer' },
-                    { id: 'executive', label: 'Executive' }
-                  ].map((cat) => (
+              {/* Row 1: Search & Color Palette */}
+              <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 pb-3 border-b border-ink/10">
+                {/* Search Input */}
+                <div className="relative flex-1 max-w-md">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search 130+ templates (Google, AWS, React, Python, ATS, Minimalist)..."
+                    className="w-full pl-10 pr-9 py-2 text-xs rounded-xl border border-ink/20 bg-canvas focus:bg-white focus:outline-none focus:ring-2 focus:ring-ink transition"
+                  />
+                  {searchQuery && (
                     <button
-                      key={cat.id}
                       type="button"
-                      onClick={() => setSelectedCategory(cat.id)}
-                      className={`px-3 py-1 rounded-full text-xs font-bold transition cursor-pointer border ${
-                        selectedCategory === cat.id
-                          ? 'bg-ink text-white border-ink shadow-brutal-sm'
-                          : 'bg-canvas text-ink border-ink/20 hover:bg-canvas-dark'
-                      }`}
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink cursor-pointer"
                     >
-                      {cat.label}
+                      <X className="w-3.5 h-3.5" />
                     </button>
-                  ))}
+                  )}
                 </div>
 
-                {/* Color Swatch Picker */}
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-mono font-bold text-ink-muted uppercase">Accent:</span>
-                  <div className="flex items-center gap-1.5">
-                    {COLOR_SWATCHES.map((swatch) => (
-                      <button
-                        key={swatch.color}
-                        type="button"
-                        onClick={() => setChosenColor(swatch.color)}
-                        title={swatch.name}
-                        className={`w-5 h-5 rounded-full border border-ink transition-transform cursor-pointer ${
-                          chosenColor === swatch.color ? 'scale-125 ring-2 ring-ink shadow-sm' : 'hover:scale-110'
-                        }`}
-                        style={{ backgroundColor: swatch.color }}
-                      />
-                    ))}
+                {/* Counter & Color Swatches */}
+                <div className="flex items-center justify-between md:justify-end gap-3 flex-wrap">
+                  <span className="text-[11px] font-mono font-bold text-ink-muted uppercase">
+                    Showing <span className="text-ink font-black">{filteredTemplates.length}</span> of {TOTAL_TEMPLATES_COUNT} Designs
+                  </span>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-mono font-bold text-ink-muted uppercase">Accent:</span>
+                    <div className="flex items-center gap-1.5">
+                      {COLOR_SWATCHES.map((swatch) => (
+                        <button
+                          key={swatch.color}
+                          type="button"
+                          onClick={() => setChosenColor(swatch.color)}
+                          title={swatch.name}
+                          className={`w-5 h-5 rounded-full border border-ink transition-transform cursor-pointer ${
+                            chosenColor === swatch.color ? 'scale-125 ring-2 ring-ink shadow-sm' : 'hover:scale-110'
+                          }`}
+                          style={{ backgroundColor: swatch.color }}
+                        />
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Templates Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[520px] overflow-y-auto pr-1">
-                {filteredTemplates.slice(0, 9).map((tpl) => {
-                  const isSelected = chosenTemplateId === tpl.id;
+              {/* Row 2: Comprehensive Category Pills (All 14 Categories with Badges) */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar">
+                {TEMPLATE_CATEGORIES.map((cat) => {
+                  const count = cat.id === 'all' ? TEMPLATES.length : TEMPLATES.filter(t => t.category === cat.id).length;
+                  const isActive = selectedCategory === cat.id;
 
                   return (
-                    <div
-                      key={tpl.id}
-                      onClick={() => handleSelectTemplate(tpl.id)}
-                      className={`card-surface p-3.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between group ${
-                        isSelected
-                          ? 'ring-2 ring-volt border-ink shadow-brutal-lg bg-white'
-                          : 'border-ink/20 bg-white/70 hover:bg-white hover:border-ink'
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setSelectedCategory(cat.id)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-bold transition whitespace-nowrap cursor-pointer border flex items-center gap-1.5 ${
+                        isActive
+                          ? 'bg-ink text-white border-ink shadow-brutal-sm'
+                          : 'bg-canvas text-ink border-ink/20 hover:bg-canvas-dark'
                       }`}
                     >
-                      {/* Top Bar */}
-                      <div className="flex items-center justify-between pb-2 text-xs">
-                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-volt text-ink border border-ink">
-                          {tpl.badge || tpl.category}
-                        </span>
-                        <div className="flex items-center gap-1 text-[11px] font-bold text-ink">
-                          <Star className="w-3 h-3 text-amber-500 fill-amber-400" />
-                          <span>{tpl.rating}</span>
-                        </div>
-                      </div>
-
-                      {/* Miniature Paper Sheet Preview */}
-                      <div className="bg-canvas p-2.5 rounded-lg border border-ink/10 flex items-center justify-center overflow-hidden aspect-[210/297] my-1">
-                        <div className="w-full h-full rounded shadow-sm overflow-hidden transform transition-transform group-hover:scale-[1.02]">
-                          <TemplateDraftPaper template={{ ...tpl, accentColor: chosenColor }} />
-                        </div>
-                      </div>
-
-                      {/* Card Info */}
-                      <div className="pt-2 flex items-center justify-between gap-2">
-                        <div className="truncate">
-                          <h4 className="font-extrabold text-xs text-ink truncate">{tpl.name}</h4>
-                          <span className="text-[10px] text-ink-muted capitalize">{tpl.layout}</span>
-                        </div>
-                        <button
-                          type="button"
-                          className={`px-2.5 py-1 rounded-full text-[10px] font-bold shrink-0 transition ${
-                            isSelected ? 'bg-ink text-white' : 'bg-canvas text-ink border border-ink/20'
-                          }`}
-                        >
-                          {isSelected ? '✓ Selected' : 'Choose'}
-                        </button>
-                      </div>
-                    </div>
+                      <span>{cat.name.split(' (')[0]}</span>
+                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                        isActive ? 'bg-volt text-ink font-bold' : 'bg-ink/10 text-ink-muted'
+                      }`}>
+                        {count}
+                      </span>
+                    </button>
                   );
                 })}
+              </div>
+
+              {/* Templates Grid — Shows ALL matching templates without slicing */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[600px] overflow-y-auto pr-1">
+                {filteredTemplates.length === 0 ? (
+                  <div className="col-span-full py-12 text-center text-ink-muted">
+                    <p className="font-bold text-sm">No templates found matching "{searchQuery}"</p>
+                    <p className="text-xs mt-1">Try selecting another category or clear your search.</p>
+                  </div>
+                ) : (
+                  filteredTemplates.map((tpl) => {
+                    const isSelected = chosenTemplateId === tpl.id;
+
+                    return (
+                      <div
+                        key={tpl.id}
+                        className={`card-surface p-3.5 rounded-2xl border transition-all flex flex-col justify-between group relative ${
+                          isSelected
+                            ? 'ring-2 ring-volt border-ink shadow-brutal-lg bg-white'
+                            : 'border-ink/20 bg-white/70 hover:bg-white hover:border-ink'
+                        }`}
+                      >
+                        {/* Top Bar */}
+                        <div className="flex items-center justify-between pb-2 text-xs">
+                          <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-volt text-ink border border-ink">
+                            {tpl.badge || tpl.category}
+                          </span>
+                          <div className="flex items-center gap-1 text-[11px] font-bold text-ink">
+                            <Star className="w-3 h-3 text-amber-500 fill-amber-400" />
+                            <span>{tpl.rating}</span>
+                          </div>
+                        </div>
+
+                        {/* Miniature Paper Sheet Preview Container with Hover Action */}
+                        <div
+                          onClick={() => handleSelectTemplate(tpl.id)}
+                          className="bg-canvas p-2.5 rounded-lg border border-ink/10 flex items-center justify-center overflow-hidden aspect-[210/297] my-1 relative cursor-pointer"
+                        >
+                          <div className="w-full h-full rounded shadow-sm overflow-hidden transform transition-transform group-hover:scale-[1.02]">
+                            <TemplateDraftPaper template={{ ...tpl, accentColor: chosenColor }} />
+                          </div>
+
+                          {/* Hover Quick Preview Button */}
+                          <div className="absolute inset-0 bg-ink/30 backdrop-blur-[1px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 p-2">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setPreviewTemplate(tpl);
+                              }}
+                              className="px-3 py-1.5 rounded-full text-xs font-bold bg-white text-ink border border-ink shadow-brutal-sm hover:bg-canvas transition flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Eye className="w-3.5 h-3.5 text-editorial-violet" />
+                              <span>Preview</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Card Info */}
+                        <div className="pt-2 flex items-center justify-between gap-2">
+                          <div className="truncate">
+                            <h4 className="font-extrabold text-xs text-ink truncate">{tpl.name}</h4>
+                            <span className="text-[10px] text-ink-muted capitalize">{tpl.layout}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleSelectTemplate(tpl.id)}
+                            className={`px-3 py-1 rounded-full text-[10px] font-bold shrink-0 transition cursor-pointer ${
+                              isSelected ? 'bg-volt text-ink border border-ink shadow-brutal-sm' : 'bg-canvas text-ink border border-ink/20 hover:bg-ink hover:text-white'
+                            }`}
+                          >
+                            {isSelected ? '✓ Selected' : 'Choose'}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </div>
 
@@ -654,18 +741,22 @@ export function Onboarding() {
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div className="grid grid-cols-2 gap-3 text-xs items-center">
                       <div>
-                        <span className="text-[10px] text-ink-muted uppercase font-bold block">Target Role</span>
-                        <span className="font-bold text-ink">
-                          {targetRole || extractedData?.personalInfo?.professionalTitle || "Professional"}
-                        </span>
+                        <span className="text-[10px] text-ink-muted uppercase font-bold block mb-1">Target Role</span>
+                        <input
+                          type="text"
+                          value={targetRole || extractedData?.personalInfo?.professionalTitle || (extractedData?.experience?.[0]?.position) || ''}
+                          onChange={(e) => setTargetRole(e.target.value)}
+                          placeholder="e.g. Senior Full Stack Engineer"
+                          className="w-full text-xs font-bold text-ink bg-white border border-ink/20 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-ink"
+                        />
                       </div>
                       <div>
-                        <span className="text-[10px] text-ink-muted uppercase font-bold block">Selected Color</span>
+                        <span className="text-[10px] text-ink-muted uppercase font-bold block mb-1">Selected Color</span>
                         <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="w-3.5 h-3.5 rounded-full border border-ink" style={{ backgroundColor: chosenColor }} />
-                          <span className="font-mono text-[11px] font-bold">{chosenColor}</span>
+                          <span className="w-4 h-4 rounded-full border border-ink" style={{ backgroundColor: chosenColor }} />
+                          <span className="font-mono text-xs font-bold">{chosenColor}</span>
                         </div>
                       </div>
                     </div>
@@ -747,6 +838,19 @@ export function Onboarding() {
               setIsReviewOpen(false);
             }}
             parseResult={rawParseResult}
+          />
+        )}
+
+        {/* Modal for Quick Template Preview */}
+        {previewTemplate && (
+          <TemplateQuickPreviewModal
+            isOpen={!!previewTemplate}
+            onClose={() => setPreviewTemplate(null)}
+            template={previewTemplate}
+            onSelect={(id) => {
+              handleSelectTemplate(id);
+              setPreviewTemplate(null);
+            }}
           />
         )}
       </div>

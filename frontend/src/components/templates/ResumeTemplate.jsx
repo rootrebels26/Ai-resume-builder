@@ -13,11 +13,33 @@ import {
   StudentTemplate, DeveloperTemplate, DataScienceTemplate, AIMLTemplate,
   ExecutiveTemplate, CreativeTemplate, BusinessTemplate
 } from './SpecializedTemplates';
+import {
+  MAANGTemplateRouter, MAANGStaffPrincipal
+} from './MAANGTemplates';
+import { sanitizeResumeData } from '../../utils/sanitizeResume';
 
-export function ResumeTemplate({ templateId = "ats-01", resumeData }) {
-  if (!resumeData) return null;
+export function ResumeTemplate({ templateId = "ats-01", resumeData: rawResumeData }) {
+  if (!rawResumeData) return null;
+  const resumeData = sanitizeResumeData(rawResumeData);
 
-  // 1. ATS Category (10 templates)
+  const userColor = resumeData?.preferences?.themeColor;
+
+  // 1. FAANG / MAANG Tier Category (25 templates)
+  if (templateId.startsWith("maang-")) {
+    return <MAANGTemplateRouter templateId={templateId} resumeData={resumeData} themeColor={userColor} />;
+  }
+
+  // 2. Cloud, DevOps & SRE Category (15 templates)
+  if (templateId.startsWith("infra-")) {
+    return <MAANGTemplateRouter templateId={templateId} resumeData={resumeData} themeColor={userColor || "#0284c7"} />;
+  }
+
+  // 3. Staff & Principal Leadership Category (10 templates)
+  if (templateId.startsWith("lead-")) {
+    return <MAANGStaffPrincipal resumeData={resumeData} themeColor={userColor || "#0f172a"} />;
+  }
+
+  // 4. ATS Category (10 templates)
   if (templateId === "ats-01") return <ATS01 resumeData={resumeData} />;
   if (templateId === "ats-02") return <ATS02 resumeData={resumeData} />;
   if (templateId === "ats-03") return <ATS03 resumeData={resumeData} />;
@@ -29,7 +51,7 @@ export function ResumeTemplate({ templateId = "ats-01", resumeData }) {
   if (templateId === "ats-09") return <ATS09 resumeData={resumeData} />;
   if (templateId === "ats-10") return <ATS10 resumeData={resumeData} />;
 
-  // 2. Modern Category (10 templates)
+  // 5. Modern Category (10 templates)
   if (templateId === "modern-01") return <Modern01 resumeData={resumeData} />;
   if (templateId === "modern-02") return <Modern02 resumeData={resumeData} />;
   if (templateId === "modern-03") return <Modern03 resumeData={resumeData} />;
@@ -41,7 +63,7 @@ export function ResumeTemplate({ templateId = "ats-01", resumeData }) {
   if (templateId === "modern-09") return <Modern09 resumeData={resumeData} />;
   if (templateId === "modern-10") return <Modern10 resumeData={resumeData} />;
 
-  // 3. Minimalist Category (10 templates)
+  // 6. Minimalist Category (10 templates)
   if (templateId === "minimalist-01") return <Minimalist01 resumeData={resumeData} />;
   if (templateId === "minimalist-02") return <Minimalist02 resumeData={resumeData} />;
   if (templateId === "minimalist-03") return <Minimalist03 resumeData={resumeData} />;
@@ -53,9 +75,7 @@ export function ResumeTemplate({ templateId = "ats-01", resumeData }) {
   if (templateId === "minimalist-09") return <Minimalist09 resumeData={resumeData} />;
   if (templateId === "minimalist-10") return <Minimalist10 resumeData={resumeData} />;
 
-  const userColor = resumeData?.preferences?.themeColor;
-
-  // 4. Student Category (5 templates)
+  // 7. Student Category (5 templates)
   if (templateId.startsWith("student-")) {
     const colors = {
       "student-01": "#2563eb", "student-02": "#0891b2", "student-03": "#4f46e5",
@@ -64,34 +84,40 @@ export function ResumeTemplate({ templateId = "ats-01", resumeData }) {
     return <StudentTemplate resumeData={resumeData} themeColor={userColor || colors[templateId] || "#2563eb"} />;
   }
 
-  // 5. Developer Category (5 templates)
+  // 8. Developer Category (10 templates)
   if (templateId.startsWith("developer-")) {
     const colors = {
       "developer-01": "#0284c7", "developer-02": "#0d9488", "developer-03": "#7c3aed",
-      "developer-04": "#1e293b", "developer-05": "#4338ca"
+      "developer-04": "#1e293b", "developer-05": "#4338ca", "developer-06": "#0ea5e9",
+      "developer-07": "#f97316", "developer-08": "#22c55e", "developer-09": "#6366f1",
+      "developer-10": "#64748b"
     };
     return <DeveloperTemplate resumeData={resumeData} themeColor={userColor || colors[templateId] || "#0284c7"} />;
   }
 
-  // 6. Data Analyst & Data Scientist Category (5 templates)
+  // 9. Data Analyst & Data Scientist Category (10 templates)
   if (templateId.startsWith("data-")) {
     const colors = {
       "data-01": "#0284c7", "data-02": "#0f766e", "data-03": "#d97706",
-      "data-04": "#2563eb", "data-05": "#475569"
+      "data-04": "#2563eb", "data-05": "#475569", "data-06": "#2563eb",
+      "data-07": "#7c3aed", "data-08": "#059669", "data-09": "#d97706",
+      "data-10": "#475569"
     };
     return <DataScienceTemplate resumeData={resumeData} themeColor={userColor || colors[templateId] || "#0284c7"} />;
   }
 
-  // 7. AI/ML & GenAI Category (5 templates)
+  // 10. AI/ML & GenAI Category (10 templates)
   if (templateId.startsWith("aiml-")) {
     const colors = {
       "aiml-01": "#7c3aed", "aiml-02": "#9333ea", "aiml-03": "#0891b2",
-      "aiml-04": "#4f46e5", "aiml-05": "#059669"
+      "aiml-04": "#4f46e5", "aiml-05": "#059669", "aiml-06": "#8b5cf6",
+      "aiml-07": "#ec4899", "aiml-08": "#06b6d4", "aiml-09": "#f59e0b",
+      "aiml-10": "#10b981"
     };
     return <AIMLTemplate resumeData={resumeData} themeColor={userColor || colors[templateId] || "#7c3aed"} />;
   }
 
-  // 8. Executive Category (5 templates)
+  // 11. Executive Category (5 templates)
   if (templateId.startsWith("executive-")) {
     const colors = {
       "executive-01": "#0f172a", "executive-02": "#1e3a8a", "executive-03": "#1e293b",
@@ -100,7 +126,7 @@ export function ResumeTemplate({ templateId = "ats-01", resumeData }) {
     return <ExecutiveTemplate resumeData={resumeData} themeColor={userColor || colors[templateId] || "#0f172a"} />;
   }
 
-  // 9. Creative Category (5 templates)
+  // 12. Creative Category (5 templates)
   if (templateId.startsWith("creative-")) {
     const colors = {
       "creative-01": "#ec4899", "creative-02": "#8b5cf6", "creative-03": "#f59e0b",
@@ -109,7 +135,7 @@ export function ResumeTemplate({ templateId = "ats-01", resumeData }) {
     return <CreativeTemplate resumeData={resumeData} themeColor={userColor || colors[templateId] || "#ec4899"} />;
   }
 
-  // 10. Business Category (5 templates)
+  // 13. Business Category (5 templates)
   if (templateId.startsWith("business-")) {
     const colors = {
       "business-01": "#1e3a8a", "business-02": "#047857", "business-03": "#0f172a",

@@ -11,6 +11,169 @@ import { User, Mail, Phone, MapPin, Globe, Linkedin, Github, Award, CheckCircle2
 export function TemplateDraftPaper({ template }) {
   const { id, category, accentColor = "#1e293b", name } = template;
 
+  // 0. FAANG / MAANG CATEGORY — Top-tier single column, Google XYZ metrics, 100% picture-free
+  if (category === 'maang') {
+    return (
+      <div className="w-full h-full bg-white text-slate-800 p-3 sm:p-3.5 flex flex-col justify-between text-[7.5px] leading-tight select-none font-sans overflow-hidden">
+        {/* Header */}
+        <div className="space-y-0.5 pb-1 border-b-2" style={{ borderColor: accentColor }}>
+          <div className="flex justify-between items-baseline">
+            <div className="font-extrabold text-[10.5px] tracking-tight text-slate-900">
+              Alex Rivera
+            </div>
+            <span className="text-[5px] font-mono px-1 py-0.2 rounded bg-slate-100 text-slate-700 font-bold border border-slate-300">
+              FAANG L5 CALIBRATED
+            </span>
+          </div>
+          <div className="text-[6.5px] font-bold text-slate-700" style={{ color: accentColor }}>
+            Senior Distributed Systems & Platform Engineer
+          </div>
+          <div className="text-[5.5px] text-slate-500 flex items-center justify-between flex-wrap gap-x-1 pt-0.5">
+            <span>alex.rivera@dev</span>
+            <span>+1 (555) 234-5678</span>
+            <span>San Francisco, CA</span>
+            <span>github.com/alex</span>
+            <span>linkedin.com/in/alex</span>
+          </div>
+        </div>
+
+        {/* Technical Arsenal (Top Placement for FAANG Hiring Committees) */}
+        <div className="space-y-0.5">
+          <div className="text-[6px] font-bold uppercase tracking-wider text-slate-900 flex items-center justify-between">
+            <span>Core Competencies & Stack</span>
+            <span className="text-[5px] text-slate-400 font-mono">100% ATS Parse Rate</span>
+          </div>
+          <div className="flex flex-wrap gap-0.5">
+            {['Go', 'Rust', 'Python', 'C++', 'Kafka', 'Redis', 'Kubernetes', 'AWS', 'GraphQL', 'gRPC'].map(s => (
+              <span key={s} className="bg-slate-100 text-slate-800 px-1 py-0.2 rounded text-[5px] font-medium border border-slate-200">
+                {s}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Google XYZ Experience */}
+        <div className="space-y-1">
+          <div className="text-[6px] font-bold uppercase tracking-wider text-slate-900 flex justify-between">
+            <span>Production Experience</span>
+            <span className="text-[5px] text-slate-400 font-mono">[XYZ Impact Formula]</span>
+          </div>
+          <div className="space-y-0.5">
+            <div className="flex justify-between font-bold text-[6.5px] text-slate-900">
+              <span>Apex Cloud — Senior Distributed Systems Lead</span>
+              <span className="text-slate-500 font-normal">2021 – Present</span>
+            </div>
+            <div className="text-[5.5px] text-slate-600 space-y-0.5 pl-1.5 border-l-2" style={{ borderColor: accentColor }}>
+              <div>• Engineered telemetry pipeline measured by 350k QPS at 99.999% SLA by deploying Kafka & Go microservices.</div>
+              <div>• Spearheaded database partitioning, cutting p99 read latency from 140ms to 24ms across 12M daily queries.</div>
+              <div>• Automated canary rollouts and zero-downtime migrations, saving $1.4M annual cloud spend.</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Distributed Systems Project & Education */}
+        <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-100">
+          <div>
+            <div className="text-[6px] font-bold uppercase text-slate-900">Distributed Projects</div>
+            <div className="text-[5.5px] text-slate-800 font-semibold">Raft Consensus Engine</div>
+            <div className="text-[5px] text-slate-500">Go • gRPC • Distributed WAL</div>
+          </div>
+          <div>
+            <div className="text-[6px] font-bold uppercase text-slate-900">Education & Honors</div>
+            <div className="text-[5.5px] text-slate-800 font-semibold">UC Berkeley — B.S. CS</div>
+            <div className="text-[5px] text-slate-500">GPA 3.85 • ACM-ICPC Finalist</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 0.1 CLOUD, DEVOPS & SRE CATEGORY
+  if (category === 'infra') {
+    return (
+      <div className="w-full h-full bg-white text-slate-800 p-3 sm:p-3.5 flex flex-col justify-between text-[7.5px] leading-tight select-none font-sans overflow-hidden">
+        {/* Header */}
+        <div className="bg-slate-900 text-white p-2 -mx-3 -mt-3 mb-1 border-b-2" style={{ borderColor: accentColor }}>
+          <div className="flex justify-between items-baseline">
+            <div className="font-bold text-[10px] text-white">Alex Rivera</div>
+            <span className="text-[5px] font-mono text-sky-400 font-bold">[99.999% SLA]</span>
+          </div>
+          <div className="text-[6px] text-sky-300 font-semibold">Principal Cloud & Site Reliability Architect</div>
+          <div className="text-[5px] text-slate-400 pt-0.5 flex gap-2">
+            <span>alex.rivera@sre.dev</span>
+            <span>San Francisco, CA</span>
+            <span>github.com/alex</span>
+          </div>
+        </div>
+
+        {/* Infrastructure Stack */}
+        <div className="space-y-0.5">
+          <div className="text-[6px] font-bold uppercase tracking-wider text-slate-900">Infrastructure & SRE Stack</div>
+          <div className="flex flex-wrap gap-0.5">
+            {['Kubernetes', 'Terraform', 'AWS Multi-Region', 'Prometheus', 'Datadog', 'Istio', 'Docker', 'eBPF', 'ArgoCD'].map(s => (
+              <span key={s} className="bg-sky-50 text-sky-900 border border-sky-200 px-1 py-0.2 rounded text-[5px]">
+                {s}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Experience */}
+        <div className="space-y-0.5">
+          <div className="text-[6px] font-bold uppercase tracking-wider text-slate-900">Reliability & Platform Engineering</div>
+          <div className="text-[5.5px] text-slate-600 space-y-0.5 pl-1.5 border-l-2 border-sky-600">
+            <div>• Maintained five-nines 99.999% availability across 4 multi-region AWS availability zones.</div>
+            <div>• Reduced Mean Time to Detection (MTTD) by 64% using eBPF distributed tracing and Datadog APM.</div>
+            <div>• Enacted GitOps continuous delivery with ArgoCD, decreasing release failure rate by 82%.</div>
+          </div>
+        </div>
+
+        {/* Credentials */}
+        <div className="pt-1 border-t border-slate-200 flex justify-between text-[5px] text-slate-600">
+          <span>AWS Certified Solutions Architect Pro</span>
+          <span>CKA Kubernetes Administrator</span>
+        </div>
+      </div>
+    );
+  }
+
+  // 0.2 STAFF & PRINCIPAL LEADERSHIP CATEGORY
+  if (category === 'lead') {
+    return (
+      <div className="w-full h-full bg-white text-slate-800 p-3 sm:p-3.5 flex flex-col justify-between text-[7.5px] leading-tight select-none font-sans overflow-hidden">
+        {/* Header */}
+        <div className="border-b-2 border-slate-900 pb-1 mb-1 text-center">
+          <div className="font-black text-[11px] uppercase tracking-widest text-slate-900">Alex Rivera</div>
+          <div className="text-[6.5px] font-bold uppercase tracking-wider text-slate-600">Staff Software Engineer & Systems Architect (L6+)</div>
+          <div className="text-[5.5px] text-slate-500 pt-0.5">
+            alex.rivera@eng.com | +1 (555) 234-5678 | San Francisco, CA | linkedin.com/in/alex
+          </div>
+        </div>
+
+        {/* Executive Impact */}
+        <div className="bg-slate-50 p-1.5 rounded border border-slate-200 text-[5.5px] text-slate-700 italic">
+          "Technical leader steering cross-organizational architecture across 40+ engineers. Author of 12 internal RFCs defining corporate data streaming and security standards."
+        </div>
+
+        {/* Leadership Experience */}
+        <div className="space-y-0.5">
+          <div className="text-[6px] font-bold uppercase text-slate-900">Architectural Leadership & Strategic Impact</div>
+          <div className="text-[5.5px] text-slate-600 space-y-0.5 pl-1.5 border-l-2 border-slate-900">
+            <div>• Led 3-year foundational platform migration to event-driven microservices, decoupling core revenue pipelines.</div>
+            <div>• Chaired Architecture Review Board reviewing 80+ engineering proposals annually.</div>
+            <div>• Mentored 14 senior and staff engineers toward promotion to Staff+ engineering tracks.</div>
+          </div>
+        </div>
+
+        {/* Patents & Education */}
+        <div className="pt-1 border-t border-slate-200 flex justify-between text-[5px] text-slate-600">
+          <span>US Patent: Distributed Resilient Transaction Journaling</span>
+          <span>UC Berkeley — M.S. Computer Science</span>
+        </div>
+      </div>
+    );
+  }
+
   // 1. ATS CATEGORY — Single column, clean horizontal rules, high parsing hierarchy
   if (category === 'ats') {
     const isAcademic = id === 'ats-04' || id === 'ats-09';

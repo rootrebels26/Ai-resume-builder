@@ -4,19 +4,25 @@
  * Prevents text cut-off across page boundaries and handles multi-page preview & PDF export.
  */
 import { useMemo } from 'react';
+import { sanitizeResumeData } from './sanitizeResume.js';
 
 /**
  * Calculates estimated heights of resume sections and assigns them to discrete pages
  * A4 height = 297mm ≈ 1122.5px at 96 DPI
  * 18mm padding top and bottom = 36mm ≈ 136px
- * Available printable content height = 986px.
- * Using 930px for Page 1 and 920px for continuation pages gives safe margins.
+ * Footer area ≈ 26px
+ * Printable content height safety threshold ≈ 890px (ensuring zero text clipping).
  */
-export function paginateResume(resumeData, options = {}) {
-  if (!resumeData) return [{}];
+export function paginateResume(rawResumeData, options = {}) {
+  if (!rawResumeData) return [{}];
+  const resumeData = sanitizeResumeData(rawResumeData);
 
-  const PAGE_1_MAX = options.page1Max || 925;
-  const PAGE_CONT_MAX = options.pageContMax || 910;
+  const forceTwoPages = options.forceTwoPages === true;
+  const forceSinglePage = options.forceSinglePage === true;
+
+  // Realistic thresholds calibrated for 18mm padding + footer
+  const PAGE_1_MAX = forceTwoPages ? (options.page1Max || 550) : (options.page1Max || 890);
+  const PAGE_CONT_MAX = options.pageContMax || 880;
 
   const personalInfo = resumeData.personalInfo || {};
   const professionalSummary = resumeData.professionalSummary || '';
@@ -28,70 +34,71 @@ export function paginateResume(resumeData, options = {}) {
   const languages = Array.isArray(resumeData.languages) ? resumeData.languages : [];
   const customSections = Array.isArray(resumeData.customSections) ? resumeData.customSections : [];
 
-  // Helper height calculators (in pixels)
+  // Calibrated height calculators matching real rendered DOM
   const calcHeaderHeight = () => {
-    let h = 55; // Name
-    if (personalInfo.professionalTitle) h += 20;
-    if (personalInfo.email || personalInfo.phone || personalInfo.location || personalInfo.linkedin) h += 26;
-    return Math.max(75, h);
+    let h = 48; // Name + margins
+    if (personalInfo.professionalTitle) h += 18;
+    if (personalInfo.email || personalInfo.phone || personalInfo.location || personalInfo.linkedin) h += 22;
+    return Math.max(68, h);
   };
 
   const calcSummaryHeight = () => {
     if (!professionalSummary) return 0;
-    // Section header (26px) + body text (~18px per 85 chars) + margins
-    const lines = Math.ceil(professionalSummary.length / 85);
-    return 28 + (lines * 18) + 12;
+    const lines = Math.ceil(professionalSummary.length / 90);
+    return 24 + (lines * 16) + 8; // Header + lines + margins
   };
 
   const calcJobHeight = (job) => {
-    let h = 30; // Title + company + dates
+    let h = 26; // Title + company + dates
     if (job.responsibilities && job.responsibilities.length > 0) {
-      h += job.responsibilities.reduce((acc, r) => acc + Math.max(18, Math.ceil(r.length / 80) * 18), 0);
+      h += job.responsibilities.reduce((acc, r) => acc + Math.max(16, Math.ceil(r.length / 90) * 16 + 4), 0);
     }
     if (job.achievements && job.achievements.length > 0) {
-      h += 22;
+      h += 20;
     }
-    return h + 14; // margin
+    return h + 8; // margin
   };
 
   const calcEduHeight = (edu) => {
-    let h = 46; // Degree + institution + dates
-    if (edu.description) h += Math.max(18, Math.ceil(edu.description.length / 80) * 16);
+    let h = 32; // Degree + institution + dates
+    if (edu.cgpa) h += 16;
+    if (edu.description) h += Math.max(16, Math.ceil(edu.description.length / 85) * 15);
     return h + 10;
   };
 
   const calcProjHeight = (proj) => {
     let h = 28; // Title + links
-    if (proj.description) h += Math.max(18, Math.ceil(proj.description.length / 80) * 16);
-    if (proj.technologies && proj.technologies.length > 0) h += 24;
-    if (proj.highlights && proj.highlights.length > 0) h += proj.highlights.length * 18;
-    return h + 12;
+    if (proj.description) h += Math.max(16, Math.ceil(proj.description.length / 85) * 15);
+    if (proj.technologies && proj.technologies.length > 0) h += 26; // Pill badges row
+    if (proj.highlights && proj.highlights.length > 0) h += proj.highlights.length * 16;
+    return h + 10;
   };
 
   const calcSkillsHeight = (skillsList) => {
     if (!skillsList || skillsList.length === 0) return 0;
     return 28 + skillsList.reduce((acc, cat) => {
       const textLen = (cat.category || '').length + (cat.items || []).join(', ').length;
-      return acc + Math.max(22, Math.ceil(textLen / 70) * 20);
-    }, 0) + 10;
+      const lines = Math.max(1, Math.ceil(textLen / 70));
+      return acc + (lines * 24) + 6;
+    }, 0) + 8;
   };
 
   const calcCertsHeight = (certs) => {
     if (!certs || certs.length === 0) return 0;
-    return 28 + (certs.length * 24) + 10;
+    return 26 + (certs.length * 20) + 8;
   };
 
   const calcLangsHeight = (langs) => {
     if (!langs || langs.length === 0) return 0;
-    return 28 + Math.max(22, Math.ceil(langs.length / 3) * 22) + 10;
+    return 24 + Math.max(18, Math.ceil(langs.length / 3) * 18) + 8;
   };
 
   // Check total document height first
   const headerH = calcHeaderHeight();
   const summaryH = calcSummaryHeight();
-  const expH = experience.reduce((acc, j) => acc + calcJobHeight(j), 0) + (experience.length ? 28 : 0);
-  const eduH = education.reduce((acc, e) => acc + calcEduHeight(e), 0) + (education.length ? 28 : 0);
-  const projH = projects.reduce((acc, p) => acc + calcProjHeight(p), 0) + (projects.length ? 28 : 0);
+  const expH = experience.reduce((acc, j) => acc + calcJobHeight(j), 0) + (experience.length ? 24 : 0);
+  const eduH = education.reduce((acc, e) => acc + calcEduHeight(e), 0) + (education.length ? 24 : 0);
+  const projH = projects.reduce((acc, p) => acc + calcProjHeight(p), 0) + (projects.length ? 24 : 0);
   const skillsH = calcSkillsHeight(skills);
   const certsH = calcCertsHeight(certifications);
   const langsH = calcLangsHeight(languages);
@@ -103,12 +110,12 @@ export function paginateResume(resumeData, options = {}) {
 
   // Handle Two-Column Modern templates specifically
   if (isTwoColumn) {
-    const RIGHT_PAGE_1_MAX = options.rightPage1Max || 940;
-    const RIGHT_PAGE_CONT_MAX = options.rightPageContMax || 920;
+    const RIGHT_PAGE_1_MAX = forceTwoPages ? 520 : (options.rightPage1Max || 860);
+    const RIGHT_PAGE_CONT_MAX = options.rightPageContMax || 840;
     const rightHeaderH = 80;
     const rightContentH = rightHeaderH + summaryH + expH + projH;
 
-    if (rightContentH <= RIGHT_PAGE_1_MAX) {
+    if (!forceTwoPages && (forceSinglePage || rightContentH <= RIGHT_PAGE_1_MAX)) {
       return [{
         ...resumeData,
         isContinuation: false,
@@ -196,8 +203,8 @@ export function paginateResume(resumeData, options = {}) {
     }));
   }
 
-  // Single page fits cleanly!
-  if (totalCalculatedHeight <= PAGE_1_MAX) {
+  // Single page fits cleanly and not forced to 2 pages
+  if (!forceTwoPages && (forceSinglePage || totalCalculatedHeight <= PAGE_1_MAX)) {
     return [{
       ...resumeData,
       isContinuation: false,
@@ -244,7 +251,17 @@ export function paginateResume(resumeData, options = {}) {
     currentLimit = PAGE_CONT_MAX;
   };
 
-  // 1. Professional Summary
+  // Check template rendering order:
+  // MAANG templates and Developer templates render: Summary -> Skills -> Experience/Projects -> Education -> Certs
+  // ATS templates render: Summary -> Experience -> Education/Projects -> Skills -> Certs
+  const skillsFirst = typeof templateId === 'string' && (
+    templateId.startsWith('maang-') ||
+    templateId.startsWith('developer-') ||
+    templateId.startsWith('data-') ||
+    templateId.startsWith('student-')
+  );
+
+  // 1. Summary
   if (summaryH > 0) {
     if (currentHeight + summaryH <= currentLimit) {
       currentPage.professionalSummary = professionalSummary;
@@ -256,82 +273,103 @@ export function paginateResume(resumeData, options = {}) {
     }
   }
 
-  // 2. Work Experience
-  if (experience.length > 0) {
-    let expHeadingAdded = false;
-    for (const job of experience) {
-      const jh = calcJobHeight(job) + (expHeadingAdded ? 0 : 28);
-      if (currentHeight + jh > currentLimit && (currentPage.experience.length > 0 || currentHeight > 240)) {
+  // Helper function for adding skills
+  const addSkillsSection = () => {
+    if (skills.length > 0) {
+      const sh = calcSkillsHeight(skills);
+      if (currentHeight + sh > currentLimit && (currentHeight > 200 || currentPage.experience.length > 0)) {
         advancePage();
-        expHeadingAdded = false;
       }
-      currentPage.experience.push(job);
-      currentHeight += calcJobHeight(job) + (expHeadingAdded ? 0 : 28);
-      expHeadingAdded = true;
+      currentPage.skills = skills;
+      currentHeight += sh;
     }
-  }
+  };
 
-  // 3. Education
-  if (education.length > 0) {
-    let eduHeadingAdded = false;
-    for (const edu of education) {
-      const eh = calcEduHeight(edu) + (eduHeadingAdded ? 0 : 28);
-      if (currentHeight + eh > currentLimit && (currentPage.education.length > 0 || currentPage.experience.length > 0)) {
-        advancePage();
-        eduHeadingAdded = false;
+  // Helper function for adding experience
+  const addExperienceSection = () => {
+    if (experience.length > 0) {
+      let expHeadingAdded = false;
+      for (const job of experience) {
+        const jh = calcJobHeight(job) + (expHeadingAdded ? 0 : 28);
+        if (currentHeight + jh > currentLimit && (currentPage.experience.length > 0 || currentHeight > 240)) {
+          advancePage();
+          expHeadingAdded = false;
+        }
+        currentPage.experience.push(job);
+        currentHeight += calcJobHeight(job) + (expHeadingAdded ? 0 : 28);
+        expHeadingAdded = true;
       }
-      currentPage.education.push(edu);
-      currentHeight += calcEduHeight(edu) + (eduHeadingAdded ? 0 : 28);
-      eduHeadingAdded = true;
     }
-  }
+  };
 
-  // 4. Projects
-  if (projects.length > 0) {
-    let projHeadingAdded = false;
-    for (const proj of projects) {
-      const ph = calcProjHeight(proj) + (projHeadingAdded ? 0 : 28);
-      if (currentHeight + ph > currentLimit && (currentPage.projects.length > 0 || currentPage.education.length > 0 || currentPage.experience.length > 0)) {
-        advancePage();
-        projHeadingAdded = false;
+  // Helper function for adding projects
+  const addProjectsSection = () => {
+    if (projects.length > 0) {
+      let projHeadingAdded = false;
+      for (const proj of projects) {
+        const ph = calcProjHeight(proj) + (projHeadingAdded ? 0 : 28);
+        if (currentHeight + ph > currentLimit && (currentPage.projects.length > 0 || currentPage.experience.length > 0 || currentPage.skills.length > 0)) {
+          advancePage();
+          projHeadingAdded = false;
+        }
+        currentPage.projects.push(proj);
+        currentHeight += calcProjHeight(proj) + (projHeadingAdded ? 0 : 28);
+        projHeadingAdded = true;
       }
-      currentPage.projects.push(proj);
-      currentHeight += calcProjHeight(proj) + (projHeadingAdded ? 0 : 28);
-      projHeadingAdded = true;
     }
+  };
+
+  // Helper function for adding education
+  const addEducationSection = () => {
+    if (education.length > 0) {
+      let eduHeadingAdded = false;
+      for (const edu of education) {
+        const eh = calcEduHeight(edu) + (eduHeadingAdded ? 0 : 28);
+        if (currentHeight + eh > currentLimit && (currentPage.education.length > 0 || currentPage.experience.length > 0 || currentPage.projects.length > 0)) {
+          advancePage();
+          eduHeadingAdded = false;
+        }
+        currentPage.education.push(edu);
+        currentHeight += calcEduHeight(edu) + (eduHeadingAdded ? 0 : 28);
+        eduHeadingAdded = true;
+      }
+    }
+  };
+
+  // Execute in the exact visual order of the active template
+  if (skillsFirst) {
+    addSkillsSection();
+    addExperienceSection();
+    addProjectsSection();
+    addEducationSection();
+  } else {
+    addExperienceSection();
+    addProjectsSection();
+    addSkillsSection();
+    addEducationSection();
   }
 
-  // 5. Skills
-  if (skills.length > 0) {
-    const sh = calcSkillsHeight(skills);
-    if (currentHeight + sh > currentLimit && (currentPage.projects.length > 0 || currentPage.education.length > 0 || currentPage.experience.length > 0)) {
-      advancePage();
-    }
-    currentPage.skills = skills;
-    currentHeight += sh;
-  }
-
-  // 6. Certifications
+  // Certifications
   if (certifications.length > 0) {
     const ch = calcCertsHeight(certifications);
-    if (currentHeight + ch > currentLimit) {
+    if (currentHeight + ch > currentLimit && (currentHeight > 220 || currentPage.education.length > 0 || currentPage.projects.length > 0)) {
       advancePage();
     }
     currentPage.certifications = certifications;
     currentHeight += ch;
   }
 
-  // 7. Languages
+  // Languages
   if (languages.length > 0) {
     const lh = calcLangsHeight(languages);
-    if (currentHeight + lh > currentLimit) {
+    if (currentHeight + lh > currentLimit && (currentHeight > 220 || currentPage.certifications.length > 0)) {
       advancePage();
     }
     currentPage.languages = languages;
     currentHeight += lh;
   }
 
-  // 8. Custom Sections
+  // Custom Sections
   if (customSections.length > 0) {
     if (currentHeight + 60 > currentLimit) {
       advancePage();
@@ -356,7 +394,7 @@ export function paginateResume(resumeData, options = {}) {
 export function useResumePagination(resumeData, options = {}) {
   const pages = useMemo(() => {
     return paginateResume(resumeData, options);
-  }, [resumeData, options]);
+  }, [resumeData, options.forceTwoPages, options.forceSinglePage, options.page1Max, options.pageContMax]);
 
   return {
     pages,

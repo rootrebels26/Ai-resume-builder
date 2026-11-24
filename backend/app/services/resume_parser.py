@@ -63,8 +63,41 @@ def sanitize_and_hydrate_resume(data: Dict[str, Any], raw_text: str = "") -> Res
     github = str(pinfo.get("github", "") or "").strip()
     portfolio = str(pinfo.get("portfolio", "") or "").strip()
 
-    # Safety net: Recover contact items from raw_text if LLM missed them
+    # Safety net: Recover contact items and professional title from raw_text or experience if LLM missed them
+    if not prof_title:
+        # Check first experience position
+        raw_exps = data.get("experience", []) or []
+        for e in raw_exps:
+            if isinstance(e, dict) and e.get("position"):
+                prof_title = str(e.get("position")).strip()
+                break
+        # Check internships
+        if not prof_title:
+            raw_ints = data.get("internships", []) or []
+            for i in raw_ints:
+                if isinstance(i, dict) and i.get("role"):
+                    prof_title = str(i.get("role")).strip()
+                    break
+        # Check top lines of raw_text
+        if not prof_title and raw_text:
+            first_lines = [l.strip() for l in raw_text.splitlines()[:12] if l.strip()]
+            for line in first_lines:
+                clean_l = re.sub(r'[^a-zA-Z\s/\-]', '', line).strip()
+                if any(kw in clean_l.lower() for kw in ["engineer", "developer", "architect", "scientist", "analyst", "manager", "specialist", "designer", "consultant", "lead"]):
+                    if 2 <= len(clean_l.split()) <= 5:
+                        prof_title = clean_l
+                        break
+
     if raw_text:
+        if not full_name or full_name.lower() in ("candidate", "alex rivera", "john doe", ""):
+            first_lines = [l.strip() for l in raw_text.splitlines()[:6] if l.strip()]
+            for line in first_lines:
+                # Exclude lines with email, phone, or URL
+                if "@" not in line and "http" not in line and not any(c.isdigit() for c in line):
+                    clean_name = re.sub(r'[^a-zA-Z\s]', '', line).strip()
+                    if 1 < len(clean_name.split()) <= 4:
+                        full_name = clean_name
+                        break
         if not email:
             emails = EMAIL_REGEX.findall(raw_text)
             if emails:
@@ -379,9 +412,15 @@ def sanitize_and_hydrate_resume(data: Dict[str, Any], raw_text: str = "") -> Res
                 items=c_items
             ))
 
+    raw_summary = str(data.get("professionalSummary", "") or "").strip()
+    clean_summary = re.sub(r'---\s*\[PAGE\s*\d+\]\s*---', '', raw_summary)
+    clean_summary = re.sub(r'\[PAGE\s*\d+\]', '', clean_summary)
+    clean_summary = re.sub(r'\[SECTION:[^\]]*\]', '', clean_summary)
+    clean_summary = re.sub(r'\s{2,}', ' ', clean_summary).strip()
+
     return ResumeData(
         personalInfo=personal,
-        professionalSummary=str(data.get("professionalSummary", "") or "").strip(),
+        professionalSummary=clean_summary,
         education=education_items,
         experience=experience_items,
         internships=internship_items,

@@ -137,8 +137,8 @@ class DocumentExtractor:
                 "char_count": len(page_text)
             })
 
-            combined_text_lines.append(f"--- [PAGE {page_idx + 1}] ---")
-            combined_text_lines.append(page_text)
+            if page_text.strip():
+                combined_text_lines.append(page_text.strip())
 
         # Scanned page detection
         if is_scanned_doc:

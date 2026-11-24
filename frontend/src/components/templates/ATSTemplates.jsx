@@ -1,11 +1,12 @@
 import React from 'react';
 import {
-  ContactList, SectionHeading, ExperienceSection, EducationSection, ProjectsSection, SkillsSection, ContinuationHeader
+  ContactList, SectionHeading, ExperienceSection, EducationSection, ProjectsSection, SkillsSection, ContinuationHeader,
+  CertificationsSection, LanguagesSection
 } from './shared/SharedComponents';
 
 // ats-01: Classic ATS Standard
 export function ATS01({ resumeData }) {
-  const { personalInfo = {}, professionalSummary, experience = [], education = [], projects = [], skills = [], preferences = {} } = resumeData;
+  const { personalInfo = {}, professionalSummary, experience = [], education = [], projects = [], skills = [], certifications = [], languages = [], preferences = {} } = resumeData;
   const color = preferences.themeColor || "#1e293b";
 
   return (
@@ -13,16 +14,16 @@ export function ATS01({ resumeData }) {
       {resumeData.isContinuation ? (
         <ContinuationHeader personalInfo={personalInfo} color={color} pageNumber={resumeData.pageNumber} totalPages={resumeData.totalPages} />
       ) : (
-        <div className="text-center pb-3 border-b-2" style={{ borderColor: color }}>
+        <div className="text-center pb-2.5 border-b-2" style={{ borderColor: color }}>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight uppercase">{personalInfo.fullName || "Your Full Name"}</h1>
           {personalInfo.professionalTitle && (
             <p className="text-sm font-medium text-slate-700 mt-0.5">{personalInfo.professionalTitle}</p>
           )}
-          <ContactList personalInfo={personalInfo} className="justify-center mt-2" showIcons={preferences.showIcons} />
+          <ContactList personalInfo={personalInfo} className="justify-center mt-1.5" showIcons={preferences.showIcons} />
         </div>
       )}
 
-      <div className="mt-3.5 space-y-3.5">
+      <div className="mt-3 space-y-2.5">
         {professionalSummary && (
           <section>
             <SectionHeading title="Professional Summary" color={color} />
@@ -57,6 +58,20 @@ export function ATS01({ resumeData }) {
             <SkillsSection categories={skills} />
           </section>
         )}
+
+        {certifications.length > 0 && (
+          <section>
+            <SectionHeading title="Certifications & Honors" color={color} />
+            <CertificationsSection items={certifications} />
+          </section>
+        )}
+
+        {languages.length > 0 && (
+          <section>
+            <SectionHeading title="Languages" color={color} />
+            <LanguagesSection items={languages} />
+          </section>
+        )}
       </div>
     </div>
   );
@@ -64,7 +79,7 @@ export function ATS01({ resumeData }) {
 
 // ats-02: ATS Executive Corporate
 export function ATS02({ resumeData }) {
-  const { personalInfo = {}, professionalSummary, experience = [], education = [], projects = [], skills = [], preferences = {} } = resumeData;
+  const { personalInfo = {}, professionalSummary, experience = [], education = [], projects = [], skills = [], certifications = [], languages = [], preferences = {} } = resumeData;
   const color = preferences.themeColor || "#0f172a";
 
   return (
@@ -79,7 +94,7 @@ export function ATS02({ resumeData }) {
         </div>
       )}
 
-      <div className="mt-3 space-y-3">
+      <div className="mt-3 space-y-2.5">
         {professionalSummary && (
           <section>
             <SectionHeading title="Executive Summary" variant="bar" color={color} />
@@ -114,6 +129,20 @@ export function ATS02({ resumeData }) {
             <SkillsSection categories={skills} />
           </section>
         )}
+
+        {certifications.length > 0 && (
+          <section>
+            <SectionHeading title="Certifications & Honors" variant="bar" color={color} />
+            <CertificationsSection items={certifications} />
+          </section>
+        )}
+
+        {languages.length > 0 && (
+          <section>
+            <SectionHeading title="Languages" variant="bar" color={color} />
+            <LanguagesSection items={languages} />
+          </section>
+        )}
       </div>
     </div>
   );
@@ -121,7 +150,7 @@ export function ATS02({ resumeData }) {
 
 // ats-03: ATS Clean Compact
 export function ATS03({ resumeData }) {
-  const { personalInfo = {}, professionalSummary, experience = [], education = [], projects = [], skills = [] } = resumeData;
+  const { personalInfo = {}, professionalSummary, experience = [], education = [], projects = [], skills = [], certifications = [], languages = [] } = resumeData;
   return (
     <div className="text-slate-900 leading-snug font-sans text-xs">
       {resumeData.isContinuation ? (
@@ -139,7 +168,7 @@ export function ATS03({ resumeData }) {
         </div>
       )}
 
-      <div className="space-y-2.5">
+      <div className="space-y-2">
         {professionalSummary && (
           <section>
             <SectionHeading title="Profile" variant="minimal" />
@@ -170,6 +199,18 @@ export function ATS03({ resumeData }) {
             <SkillsSection categories={skills} />
           </section>
         )}
+        {certifications.length > 0 && (
+          <section>
+            <SectionHeading title="Certifications" variant="minimal" />
+            <CertificationsSection items={certifications} />
+          </section>
+        )}
+        {languages.length > 0 && (
+          <section>
+            <SectionHeading title="Languages" variant="minimal" />
+            <LanguagesSection items={languages} />
+          </section>
+        )}
       </div>
     </div>
   );
@@ -177,7 +218,7 @@ export function ATS03({ resumeData }) {
 
 // ats-04: ATS Harvard Standard
 export function ATS04({ resumeData }) {
-  const { personalInfo = {}, professionalSummary, experience = [], education = [], projects = [], skills = [] } = resumeData;
+  const { personalInfo = {}, professionalSummary, experience = [], education = [], projects = [], skills = [], certifications = [], languages = [] } = resumeData;
   return (
     <div className="text-black font-serif text-xs leading-relaxed">
       {resumeData.isContinuation ? (
@@ -189,7 +230,7 @@ export function ATS04({ resumeData }) {
         </div>
       )}
 
-      <div className="space-y-3 font-sans">
+      <div className="space-y-2.5 font-sans">
         {education.length > 0 && (
           <section>
             <SectionHeading title="Education" variant="serif" color="#000000" />
@@ -212,6 +253,18 @@ export function ATS04({ resumeData }) {
           <section>
             <SectionHeading title="Skills & Interests" variant="serif" color="#000000" />
             <SkillsSection categories={skills} />
+          </section>
+        )}
+        {certifications.length > 0 && (
+          <section>
+            <SectionHeading title="Certifications & Honors" variant="serif" color="#000000" />
+            <CertificationsSection items={certifications} />
+          </section>
+        )}
+        {languages.length > 0 && (
+          <section>
+            <SectionHeading title="Languages" variant="serif" color="#000000" />
+            <LanguagesSection items={languages} />
           </section>
         )}
       </div>

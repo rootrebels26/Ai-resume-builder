@@ -17,6 +17,8 @@ export function Modern01({ resumeData, defaultColor = "#0284c7" }) {
     education = [],
     projects = [],
     skills = [],
+    certifications = [],
+    languages = [],
     preferences = {}
   } = resumeData;
 
@@ -138,6 +140,37 @@ export function Modern01({ resumeData, defaultColor = "#0284c7" }) {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Certifications in Sidebar */}
+        {certifications.length > 0 && (
+          <div className="border-t border-white/25 pt-2.5 mt-3 space-y-1.5 text-xs text-white/95">
+            <div className="font-bold text-[10px] uppercase tracking-wider text-white/70">
+              Certifications
+            </div>
+            {certifications.map((c, idx) => (
+              <div key={idx} className="text-[11px] text-white/90">
+                <span className="font-semibold block">{c.name}</span>
+                {c.issuer && <span className="text-[10px] text-white/70">{c.issuer}</span>}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Languages in Sidebar */}
+        {languages.length > 0 && (
+          <div className="border-t border-white/25 pt-2.5 mt-3 space-y-1.5 text-xs text-white/95">
+            <div className="font-bold text-[10px] uppercase tracking-wider text-white/70">
+              Languages
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {languages.map((l, idx) => (
+                <span key={idx} className="px-1.5 py-0.5 bg-white/15 rounded text-[10px] text-white">
+                  {l.name}
+                </span>
+              ))}
+            </div>
           </div>
         )}
       </div>

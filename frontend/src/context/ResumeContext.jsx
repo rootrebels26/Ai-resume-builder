@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { INITIAL_RESUME_DATA } from '../constants/initialResumeData';
 import { storageService, INITIAL_WIZARD_STATE } from '../services/storageService';
 import { TEMPLATES } from '../constants/templatesList';
+import { sanitizeResumeData } from '../utils/sanitizeResume';
 
 const ResumeContext = createContext(null);
 
@@ -10,7 +11,14 @@ export function ResumeProvider({ children }) {
   const [wizardState, setWizardState] = useState(() => {
     try {
       const local = localStorage.getItem('active_wizard_state');
-      return local ? JSON.parse(local) : INITIAL_WIZARD_STATE;
+      if (local) {
+        const parsed = JSON.parse(local);
+        if (parsed.resumeData) {
+          parsed.resumeData = sanitizeResumeData(parsed.resumeData);
+        }
+        return parsed;
+      }
+      return INITIAL_WIZARD_STATE;
     } catch (e) {
       return INITIAL_WIZARD_STATE;
     }
@@ -22,7 +30,7 @@ export function ResumeProvider({ children }) {
   const saveTimeoutRef = useRef(null);
 
   // Resume Data is the core document inside wizardState
-  const resumeData = wizardState.resumeData || INITIAL_RESUME_DATA;
+  const resumeData = wizardState.resumeData ? sanitizeResumeData(wizardState.resumeData) : INITIAL_RESUME_DATA;
   const activeDraftId = wizardState.activeDraftId || 'active_resume_draft';
 
   const refreshDraftsList = useCallback(async () => {
@@ -39,6 +47,7 @@ export function ResumeProvider({ children }) {
     async function restoreFromIndexedDB() {
       const saved = await storageService.getWizardState();
       if (saved && saved.resumeData) {
+        saved.resumeData = sanitizeResumeData(saved.resumeData);
         setWizardState(saved);
       }
     }

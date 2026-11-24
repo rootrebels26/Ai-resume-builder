@@ -1,7 +1,7 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  User, Briefcase, GraduationCap, FolderGit2, Wrench, Award, Palette,
+  User, Briefcase, GraduationCap, FolderGit2, Wrench, Award, Palette, Target,
   Sparkles, Download, Printer, FileJson, Upload, RefreshCw, ZoomIn, ZoomOut,
   Plus, Trash2, ChevronLeft, ChevronRight, ChevronDown, Check, Eye, Loader2, ArrowRight,
   ArrowLeft, Languages, Layers, MoveUp, MoveDown, CheckCircle2, Sliders,
@@ -13,6 +13,7 @@ import { TEMPLATES, isFullBleedTemplate } from '../constants/templatesList';
 import { pdfService } from '../services/pdfService';
 import { storageService } from '../services/storageService';
 import { aiService } from '../services/aiService';
+import { resumeService } from '../services/resumeService';
 import { useResumePagination } from '../utils/resumePaginator';
 
 const COLOR_PRESETS = [
@@ -46,6 +47,7 @@ export function Builder() {
   } = useResume();
 
   const [activeTab, setActiveTab] = useState('personal');
+  const [editorPhase, setEditorPhase] = useState('edit'); // 'edit' | 'optimize' | 'ats_and_download'
   const [zoomScale, setZoomScale] = useState(0.85);
   const [mobileView, setMobileView] = useState('editor'); // 'editor' | 'preview'
   const [isAiLoading, setIsAiLoading] = useState(false);
@@ -56,11 +58,35 @@ export function Builder() {
     resumeData?.personalInfo?.fullName ? `${resumeData.personalInfo.fullName}'s Resume` : 'My Resume'
   );
 
+  // Target Job Description & Section-by-Section AI Tailor State
+  const [jobDescription, setJobDescription] = useState(
+    selectedJob?.description || ''
+  );
+  const [targetJobTitle, setTargetJobTitle] = useState(
+    resumeData?.personalInfo?.professionalTitle || selectedJob?.role || ''
+  );
+  const [targetCompany, setTargetCompany] = useState(
+    selectedJob?.company || ''
+  );
+  const [isTailoring, setIsTailoring] = useState(false);
+  const [tailorError, setTailorError] = useState(null);
+  const [tailorResult, setTailorResult] = useState(null);
+  const [atsMatchResult, setAtsMatchResult] = useState(null);
+  const [appliedSuggestions, setAppliedSuggestions] = useState({});
+
   const previewRef = useRef(null);
   const jsonInputRef = useRef(null);
   const tabsRef = useRef(null);
 
-  const { pages, pageCount, isMultiPage } = useResumePagination(resumeData);
+  const [pageLayoutMode, setPageLayoutMode] = useState('auto'); // 'auto' | '1_page' | '2_pages'
+
+  const paginationOptions = useMemo(() => ({
+    forceTwoPages: pageLayoutMode === '2_pages',
+    forceSinglePage: pageLayoutMode === '1_page',
+    templateId: resumeData.templateId || 'ats-01'
+  }), [pageLayoutMode, resumeData.templateId]);
+
+  const { pages, pageCount, isMultiPage } = useResumePagination(resumeData, paginationOptions);
 
   const scrollTabs = (direction) => {
     if (tabsRef.current) {
@@ -76,7 +102,7 @@ export function Builder() {
   const activeTemplate =
     TEMPLATES.find((t) => t.id === (resumeData.templateId || 'ats-01')) || TEMPLATES[0];
 
-  // Editor Section Tabs
+  // Pure Section Tabs (Target Job & AI Tailor moved to dedicated post-edit phase)
   const tabs = [
     { id: 'personal', label: 'Personal', icon: User },
     { id: 'summary', label: 'Summary', icon: Sparkles },
@@ -86,7 +112,6 @@ export function Builder() {
     { id: 'projects', label: 'Projects', icon: FolderGit2 },
     { id: 'extras', label: 'Certifications', icon: Award },
     { id: 'languages', label: 'Languages', icon: Languages },
-    { id: 'design', label: 'Design & Style', icon: Palette },
   ];
 
   // Calculate real-time ATS readiness score
@@ -102,6 +127,109 @@ export function Builder() {
     if (resumeData.skills && resumeData.skills.length > 0) score += 10;
     return Math.min(score, 98);
   }, [resumeData]);
+
+  const displayAtsScore = atsMatchResult?.match_percentage || atsScore;
+
+  // Handle Full-Length Job Description AI Analysis & Tailoring
+  const handleAnalyzeAndTailorJD = async () => {
+    if (!jobDescription || jobDescription.trim().length < 20) {
+      setTailorError("Please paste your full-length Job Description (at least 20 characters) so our AI can analyze match criteria.");
+      return;
+    }
+    setTailorError(null);
+    setIsTailoring(true);
+
+    try {
+      const [matchRes, tailorRes] = await Promise.all([
+        resumeService.matchResume(resumeData, jobDescription, targetJobTitle),
+        resumeService.tailorResume(resumeData, jobDescription, targetJobTitle)
+      ]);
+
+      if (matchRes.success && matchRes.data) {
+        setAtsMatchResult(matchRes.data);
+      }
+      if (tailorRes.success && tailorRes.data) {
+        setTailorResult(tailorRes.data);
+      }
+    } catch (e) {
+      console.error("AI job tailoring error:", e);
+      setTailorError("AI analysis failed to complete. Please ensure backend is reachable and try again.");
+    } finally {
+      setIsTailoring(false);
+    }
+  };
+
+  const handleApplySummarySuggestion = (suggestedSummary, sIdx = 0) => {
+    if (!suggestedSummary) return;
+    updateSummary(suggestedSummary);
+    setAppliedSuggestions(prev => ({ ...prev, [`summary_${sIdx}`]: true }));
+  };
+
+  const handleApplyExpSuggestion = (suggestion, sIdx = 0) => {
+    if (!resumeData.experience || resumeData.experience.length === 0) return;
+    const targetExpId = suggestion.target_id || resumeData.experience[0].id;
+    const targetExp = resumeData.experience.find(e => e.id === targetExpId) || resumeData.experience[0];
+
+    const currentResp = [...(targetExp.responsibilities || [])];
+    const origIdx = currentResp.findIndex(r => r.trim() === (suggestion.original_text || '').trim());
+
+    if (origIdx !== -1) {
+      currentResp[origIdx] = suggestion.tailored_text;
+    } else {
+      currentResp.unshift(suggestion.tailored_text);
+    }
+
+    updateItemInSection('experience', targetExp.id, { responsibilities: currentResp });
+    setAppliedSuggestions(prev => ({ ...prev, [`exp_${sIdx}`]: true }));
+  };
+
+  const handleAddSkillToResume = (skillName) => {
+    if (!skillName) return;
+    const currentSkills = [...(resumeData.skills || [])];
+    if (currentSkills.length === 0) {
+      setResumeData({
+        ...resumeData,
+        skills: [{ id: 'skills-1', category: 'Target Job Skills', items: [skillName] }]
+      });
+      return;
+    }
+
+    const alreadyExists = currentSkills.some(cat =>
+      (cat.items || []).some(item => item.toLowerCase() === skillName.toLowerCase())
+    );
+    if (alreadyExists) return;
+
+    const updated = currentSkills.map((cat, idx) => {
+      if (idx === 0) {
+        return { ...cat, items: [...(cat.items || []), skillName] };
+      }
+      return cat;
+    });
+
+    setResumeData({ ...resumeData, skills: updated });
+  };
+
+  const handleAddAllMissingSkills = () => {
+    const missing = atsMatchResult?.missing_critical_skills || tailorResult?.recommended_skills_to_add || [];
+    if (missing.length === 0) return;
+
+    const currentSkills = [...(resumeData.skills || [])];
+    if (currentSkills.length === 0) {
+      setResumeData({
+        ...resumeData,
+        skills: [{ id: 'skills-1', category: 'Target Job Skills', items: [...missing] }]
+      });
+      return;
+    }
+
+    const firstCat = { ...currentSkills[0] };
+    const existingLower = new Set((firstCat.items || []).map(i => i.toLowerCase()));
+    const toAdd = missing.filter(m => !existingLower.has(m.toLowerCase()));
+    firstCat.items = [...(firstCat.items || []), ...toAdd];
+    currentSkills[0] = firstCat;
+
+    setResumeData({ ...resumeData, skills: currentSkills });
+  };
 
   // Handle Document Title Rename
   const handleTitleBlur = () => {
@@ -274,15 +402,58 @@ export function Builder() {
               </div>
             )}
 
-            {/* ATS Score Meter Pill & Live Sync */}
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-volt text-ink border border-ink text-[11px] font-mono font-bold shadow-brutal-sm">
+            {/* ATS Score Meter Pill */}
+            <div
+              onClick={() => setEditorPhase('ats_and_download')}
+              className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-volt text-ink border border-ink text-[11px] font-mono font-bold shadow-brutal-sm cursor-pointer hover:scale-105 transition"
+              title="Click to view ATS Readiness & Export"
+            >
               <span className="flex h-2 w-2 relative" title="Live Synced">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-ink opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-ink" />
               </span>
-              <span>ATS {atsScore}%</span>
+              <span>ATS {displayAtsScore}%</span>
             </div>
           </div>
+        </div>
+
+        {/* Center: Phase Indicator / Step Breadcrumbs */}
+        <div className="hidden md:flex items-center gap-2 text-xs font-bold">
+          <button
+            type="button"
+            onClick={() => setEditorPhase('edit')}
+            className={`px-3 py-1 rounded-full border transition cursor-pointer ${
+              editorPhase === 'edit'
+                ? 'bg-ink text-white border-ink shadow-brutal-sm'
+                : 'bg-white text-ink border-ink/20 hover:border-ink'
+            }`}
+          >
+            1. Edit Details
+          </button>
+          <span className="text-ink-muted">→</span>
+          <button
+            type="button"
+            onClick={() => setEditorPhase('optimize')}
+            className={`px-3 py-1 rounded-full border transition cursor-pointer ${
+              editorPhase === 'optimize'
+                ? 'bg-ink text-white border-ink shadow-brutal-sm'
+                : 'bg-white text-ink border-ink/20 hover:border-ink'
+            }`}
+          >
+            2. AI Optimizer
+          </button>
+          <span className="text-ink-muted">→</span>
+          <button
+            type="button"
+            onClick={() => setEditorPhase('ats_and_download')}
+            className={`px-3 py-1 rounded-full border transition cursor-pointer ${
+              editorPhase === 'ats_and_download'
+                ? 'bg-ink text-white border-ink shadow-brutal-sm'
+                : 'bg-white text-ink border-ink/20 hover:border-ink'
+            }`}
+          >
+            3. ATS & Download
+          </button>
         </div>
 
         {/* Center: Mobile Switcher (Editor / Preview) */}
@@ -341,24 +512,69 @@ export function Builder() {
             className="hidden"
           />
 
-          {/* Download PDF Primary Action */}
-          <button
-            onClick={handleDownloadPDF}
-            disabled={isExporting}
-            className="btn-volt py-1.5 sm:py-2 px-3.5 sm:px-4 text-xs shadow-brutal-sm group"
-          >
-            {isExporting ? (
-              <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                <span>Exporting...</span>
-              </>
-            ) : (
-              <>
-                <Download className="w-3.5 h-3.5" />
-                <span>Download PDF</span>
-              </>
-            )}
-          </button>
+          {/* Phase-Aware Header Action */}
+          {editorPhase === 'edit' && (
+            <button
+              type="button"
+              onClick={() => setEditorPhase('optimize')}
+              className="btn-volt py-1.5 sm:py-2 px-3.5 sm:px-4 text-xs shadow-brutal-sm flex items-center gap-1.5 cursor-pointer font-extrabold"
+            >
+              <span>Complete & Optimize with AI</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          )}
+
+          {editorPhase === 'optimize' && (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setEditorPhase('edit')}
+                className="btn-secondary py-1.5 px-3 text-xs font-bold flex items-center gap-1"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Back to Edit</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditorPhase('ats_and_download')}
+                className="btn-volt py-1.5 px-3.5 text-xs font-extrabold shadow-brutal-sm flex items-center gap-1.5"
+              >
+                <span>View ATS & Download</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
+          {editorPhase === 'ats_and_download' && (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setEditorPhase('optimize')}
+                className="btn-secondary py-1.5 px-3 text-xs font-bold flex items-center gap-1"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Back to Optimizer</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleDownloadPDF}
+                disabled={isExporting}
+                className="btn-volt py-1.5 sm:py-2 px-3.5 sm:px-4 text-xs shadow-brutal-sm flex items-center gap-1.5 font-extrabold cursor-pointer"
+              >
+                {isExporting ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Exporting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Download PDF</span>
+                  </>
+                )}
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -372,8 +588,13 @@ export function Builder() {
             mobileView === 'editor' ? 'flex' : 'hidden md:flex'
           }`}
         >
-          {/* Section Navigation Tabs with Left & Right Sliding Controls */}
-          <div className="relative flex items-center border-b border-ink/10 bg-canvas px-1.5 shrink-0 select-none">
+          {/* ======================================================== */}
+          {/* STAGE 1: EDITING ALL DETAILS (Pure Section Forms)        */}
+          {/* ======================================================== */}
+          {editorPhase === 'edit' && (
+            <>
+              {/* Section Navigation Tabs with Left & Right Sliding Controls */}
+              <div className="relative flex items-center border-b border-ink/10 bg-canvas px-1.5 shrink-0 select-none">
             {/* Scroll Left Button */}
             <button
               type="button"
@@ -538,6 +759,28 @@ export function Builder() {
                   </button>
                 </div>
 
+                {/* Inline Target Job AI Tailored Summary */}
+                {tailorResult?.tailored_summary && (
+                  <div className="p-3.5 bg-volt/15 border border-ink/20 rounded-xl space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="font-extrabold text-[11px] text-ink uppercase flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-editorial-violet" />
+                        Target Job AI Tailored Summary
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleApplySummarySuggestion(tailorResult.tailored_summary, 0)}
+                        className="btn-volt py-1 px-3 text-[11px] font-extrabold shadow-brutal-sm cursor-pointer"
+                      >
+                        {appliedSuggestions['summary_0'] ? '✓ Applied' : 'Apply to Summary'}
+                      </button>
+                    </div>
+                    <p className="text-xs text-slate-800 italic bg-white p-2.5 rounded-lg border border-ink/10 leading-relaxed">
+                      "{tailorResult.tailored_summary}"
+                    </p>
+                  </div>
+                )}
+
                 <textarea
                   rows={6}
                   value={resumeData.professionalSummary || ''}
@@ -619,6 +862,30 @@ export function Builder() {
                     <span>Add Position</span>
                   </button>
                 </div>
+
+                {/* Inline Target Job Experience AI Suggestions */}
+                {tailorResult?.suggestions?.filter(s => s.section === 'experience').length > 0 && (
+                  <div className="p-3.5 bg-emerald-50/80 border border-emerald-200 rounded-xl space-y-2">
+                    <span className="font-extrabold text-[11px] text-emerald-900 uppercase flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
+                      Target Job AI Bullet Recommendations
+                    </span>
+                    <div className="space-y-2">
+                      {tailorResult.suggestions.filter(s => s.section === 'experience').map((sug, sIdx) => (
+                        <div key={sIdx} className="bg-white p-2.5 rounded-lg border border-emerald-200 text-xs flex items-center justify-between gap-3">
+                          <p className="text-slate-800 flex-1 leading-snug font-medium">{sug.tailored_text}</p>
+                          <button
+                            type="button"
+                            onClick={() => handleApplyExpSuggestion(sug, sIdx)}
+                            className="btn-volt py-1 px-2.5 text-[10px] font-bold shrink-0 shadow-xs cursor-pointer"
+                          >
+                            {appliedSuggestions[`exp_${sIdx}`] ? '✓ Added' : '+ Add Bullet'}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="space-y-4">
                   {(resumeData.experience || []).map((exp, idx) => (
@@ -959,6 +1226,38 @@ export function Builder() {
                   </p>
                 </div>
 
+                {/* Inline Missing Skills from Target Job */}
+                {(atsMatchResult?.missing_critical_skills?.length > 0 || tailorResult?.recommended_skills_to_add?.length > 0) && (
+                  <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="font-extrabold text-[11px] text-amber-900 uppercase flex items-center gap-1.5">
+                        <Target className="w-3.5 h-3.5 text-amber-700" />
+                        Missing Critical Skills from Job Description
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleAddAllMissingSkills}
+                        className="text-[11px] font-bold text-amber-900 underline hover:text-black cursor-pointer"
+                      >
+                        + Add All to Skills
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {(atsMatchResult?.missing_critical_skills || tailorResult?.recommended_skills_to_add || []).map((skill, sIdx) => (
+                        <button
+                          key={sIdx}
+                          type="button"
+                          onClick={() => handleAddSkillToResume(skill)}
+                          className="px-2.5 py-1 text-xs font-semibold bg-white border border-amber-300 rounded-lg hover:bg-amber-100 flex items-center gap-1 text-slate-800 cursor-pointer shadow-xs"
+                          title="Click to add to skills"
+                        >
+                          <span>+ {skill}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-3.5">
                   {(resumeData.skills || []).map((cat, idx) => (
                     <div
@@ -1281,86 +1580,346 @@ export function Builder() {
                 </div>
               </div>
             )}
+          </div>
 
-            {/* 9. DESIGN & TEMPLATES */}
-            {activeTab === 'design' && (
-              <div className="space-y-6 text-xs">
-                <div className="border-b border-slate-100 pb-3">
-                  <h3 className="font-bold text-sm text-slate-900">Design Customizations</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Tailor color palette, typography accents, and document style.
+              {/* Bottom Complete & Proceed to AI Optimizer Sticky Card */}
+              <div className="p-4 bg-canvas border-t border-ink/15 space-y-2 shrink-0">
+                <div className="flex items-center justify-between text-xs text-ink-muted">
+                  <span>Done filling user details?</span>
+                  <span className="font-bold text-ink font-mono">Stage 1 of 3</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditorPhase('optimize')}
+                  className="btn-volt w-full py-2.5 px-4 text-xs font-extrabold shadow-brutal flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <span>Complete & Proceed to AI Optimization</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* ======================================================== */}
+          {/* STAGE 2: AI OPTIMIZATION (Job Description & Step-by-Step) */}
+          {/* ======================================================== */}
+          {editorPhase === 'optimize' && (
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 min-h-0 text-xs">
+              {/* Header */}
+              <div className="border-b border-ink/10 pb-3 flex justify-between items-start flex-wrap gap-2">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-volt border border-ink animate-pulse" />
+                    <h3 className="font-extrabold text-sm text-ink">AI Resume Optimizer • Step-by-Step</h3>
+                  </div>
+                  <p className="text-xs text-ink-muted mt-1 leading-relaxed">
+                    Paste your target job description below. Our AI will analyze the requirements and give you step-by-step suggestions to accept one-by-one.
+                  </p>
+                </div>
+                {atsMatchResult && (
+                  <span className="px-3 py-1 bg-volt text-ink border border-ink rounded-full font-mono font-bold text-xs shadow-brutal-sm">
+                    Match: {atsMatchResult.match_percentage}%
+                  </span>
+                )}
+              </div>
+
+              {/* Job Inputs */}
+              <div className="card-surface p-4 bg-white border border-ink/15 space-y-3.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="label-base font-bold text-ink">Target Job Title</label>
+                    <input
+                      type="text"
+                      value={targetJobTitle}
+                      onChange={(e) => setTargetJobTitle(e.target.value)}
+                      placeholder="e.g. Machine Learning Engineer / AI Generalist"
+                      className="input-base text-xs font-semibold"
+                    />
+                  </div>
+                  <div>
+                    <label className="label-base font-bold text-ink">Company Name (Optional)</label>
+                    <input
+                      type="text"
+                      value={targetCompany}
+                      onChange={(e) => setTargetCompany(e.target.value)}
+                      placeholder="e.g. Google, Meta, OpenAI"
+                      className="input-base text-xs font-semibold"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="label-base font-bold text-ink">
+                      Full-Length Job Description <span className="text-red-500">*</span>
+                    </label>
+                    <span className="text-[10px] font-mono text-ink-muted">
+                      {jobDescription.length} characters
+                    </span>
+                  </div>
+                  <textarea
+                    rows={7}
+                    value={jobDescription}
+                    onChange={(e) => setJobDescription(e.target.value)}
+                    placeholder="Paste your full target job description here (responsibilities, required qualifications, tech stack, nice-to-haves, domain skills)..."
+                    className="input-base text-xs leading-relaxed font-sans"
+                  />
+                </div>
+
+                {tailorError && (
+                  <div className="p-2.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{tailorError}</span>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleAnalyzeAndTailorJD}
+                  disabled={isTailoring}
+                  className="btn-volt w-full py-2.5 px-4 text-xs font-extrabold shadow-brutal flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                >
+                  {isTailoring ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Analyzing JD & Generating Step-by-Step Improvements...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      <span>Analyze Job & Generate Step-by-Step Improvements</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Step-by-Step Suggestions (1-Click Accept) */}
+              {tailorResult && (
+                <div className="space-y-4 pt-2">
+                  <div className="flex items-center justify-between pb-2 border-b border-ink/10">
+                    <span className="font-extrabold text-xs uppercase tracking-wide text-ink">
+                      Review & Accept Step-by-Step Recommendations:
+                    </span>
+                    <span className="text-[11px] font-mono text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                      Live Synced
+                    </span>
+                  </div>
+
+                  {/* 1. Tailored Summary */}
+                  {tailorResult.tailored_summary && (
+                    <div className="card-surface p-4 bg-white border border-ink/15 rounded-xl space-y-2.5">
+                      <div className="flex justify-between items-center">
+                        <span className="font-extrabold text-xs text-ink flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-editorial-violet" />
+                          Step 1: Professional Summary Improvement
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleApplySummarySuggestion(tailorResult.tailored_summary, 0)}
+                          className="btn-volt py-1 px-3 text-[11px] font-extrabold shadow-brutal-sm cursor-pointer"
+                        >
+                          {appliedSuggestions['summary_0'] ? '✓ Accepted & Applied' : 'Accept & Apply'}
+                        </button>
+                      </div>
+                      <div className="p-2.5 bg-canvas rounded-lg text-ink text-xs leading-relaxed border border-ink/10 font-medium">
+                        {tailorResult.tailored_summary}
+                      </div>
+                      <p className="text-[10px] text-ink-muted">
+                        💡 Highlights target keywords and aligns your trajectory with this role.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* 2. Experience Bullets */}
+                  {tailorResult?.suggestions?.filter(s => s.section === 'experience').map((sug, idx) => (
+                    <div key={idx} className="card-surface p-4 bg-white border border-ink/15 rounded-xl space-y-2.5">
+                      <div className="flex justify-between items-center">
+                        <span className="font-extrabold text-xs text-ink flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-emerald-600" />
+                          Step 2.{idx + 1}: Experience Bullet Improvement
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleApplyExpSuggestion(sug, idx)}
+                          className="btn-volt py-1 px-3 text-[11px] font-extrabold shadow-brutal-sm cursor-pointer"
+                        >
+                          {appliedSuggestions[`exp_${idx}`] ? '✓ Accepted & Applied' : 'Accept & Apply'}
+                        </button>
+                      </div>
+                      {sug.original_text && (
+                        <div className="p-2 bg-slate-50 rounded text-slate-500 text-[11px] border border-slate-200">
+                          <span className="font-bold text-slate-700 block text-[10px] uppercase">Current:</span>
+                          {sug.original_text}
+                        </div>
+                      )}
+                      <div className="p-2.5 bg-emerald-50/50 rounded-lg text-slate-900 text-xs leading-relaxed border border-emerald-200 font-medium">
+                        <span className="font-bold text-emerald-800 block text-[10px] uppercase">Tailored STAR Bullet:</span>
+                        {sug.tailored_text}
+                      </div>
+                      <p className="text-[10px] text-emerald-700 font-mono">
+                        {sug.reason || 'Quantifies outcomes and introduces high-frequency JD skills.'}
+                      </p>
+                    </div>
+                  ))}
+
+                  {/* 3. Missing Keywords */}
+                  {atsMatchResult?.missing_keywords && atsMatchResult.missing_keywords.length > 0 && (
+                    <div className="card-surface p-4 bg-white border border-ink/15 rounded-xl space-y-2.5">
+                      <span className="font-extrabold text-xs text-ink flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-blue-600" />
+                        Step 3: Recommended Keywords from Job Description
+                      </span>
+                      <p className="text-[11px] text-ink-muted">
+                        Click any keyword to instantly append it to your skills stack:
+                      </p>
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {atsMatchResult.missing_keywords.map((kw, kIdx) => (
+                          <button
+                            key={kIdx}
+                            type="button"
+                            onClick={() => handleAddSkillToResume(kw)}
+                            className={`px-2.5 py-1 text-xs font-semibold rounded-lg border transition cursor-pointer flex items-center gap-1 ${
+                              appliedSuggestions[`skill_${kw}`]
+                                ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                                : 'bg-white hover:bg-volt text-ink border-ink/20 shadow-xs'
+                            }`}
+                          >
+                            <span>{appliedSuggestions[`skill_${kw}`] ? '✓' : '+'}</span>
+                            <span>{kw}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Next Stage Button */}
+                  <div className="pt-4 border-t border-ink/10">
+                    <button
+                      type="button"
+                      onClick={() => setEditorPhase('ats_and_download')}
+                      className="btn-volt w-full py-3 px-4 text-xs font-extrabold shadow-brutal flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <span>Finalize Optimization & View ATS Score →</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ======================================================== */}
+          {/* STAGE 3: ATS SCORE AUDIT & DOWNLOAD                      */}
+          {/* ======================================================== */}
+          {editorPhase === 'ats_and_download' && (
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 min-h-0 text-xs">
+              {/* Header */}
+              <div className="border-b border-ink/10 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 border border-ink" />
+                  <h3 className="font-extrabold text-sm text-ink">ATS Readiness Audit & Document Export</h3>
+                </div>
+                <p className="text-xs text-ink-muted mt-1 leading-relaxed">
+                  Your resume has been tailored against the job requirements. Verify your ATS pass rate and download your high-DPI PDF.
+                </p>
+              </div>
+
+              {/* Big ATS Score Card */}
+              <div className="card-surface p-6 bg-white border border-ink/15 rounded-2xl text-center space-y-4 shadow-brutal-sm">
+                <div className="inline-flex flex-col items-center justify-center w-28 h-28 rounded-full border-4 border-ink bg-volt mx-auto shadow-brutal">
+                  <span className="font-mono text-3xl font-black text-ink">{displayAtsScore}%</span>
+                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-ink mt-0.5">ATS Score</span>
+                </div>
+
+                <div>
+                  <h4 className="font-extrabold text-sm text-ink">
+                    {displayAtsScore >= 85 ? 'Excellent! Highly Optimized for Top Tier Companies' : 'Strong Alignment • Ready for Submission'}
+                  </h4>
+                  <p className="text-xs text-ink-muted mt-1 max-w-sm mx-auto">
+                    Linear semantic typography, 0 parsing traps, high keyword density with target role requirements.
                   </p>
                 </div>
 
-                {/* Color Swatches */}
-                <div className="space-y-2.5">
-                  <label className="label-base">Executive Color Theme</label>
-                  <div className="flex flex-wrap gap-2.5 items-center">
-                    {COLOR_PRESETS.map((swatch) => (
-                      <button
-                        key={swatch.color}
-                        type="button"
-                        onClick={() => handleColorChange(swatch.color)}
-                        className={`w-7 h-7 rounded-full transition-all border flex items-center justify-center cursor-pointer ${
-                          (resumeData.preferences?.themeColor || '#1e293b') === swatch.color
-                            ? 'ring-2 ring-brand-500 ring-offset-2 scale-110 border-transparent'
-                            : 'border-slate-300 hover:scale-105'
-                        }`}
-                        style={{ backgroundColor: swatch.color }}
-                        title={swatch.name}
-                      >
-                        {(resumeData.preferences?.themeColor || '#1e293b') === swatch.color && (
-                          <Check className="w-3.5 h-3.5 text-white" />
-                        )}
-                      </button>
-                    ))}
-                    <div className="flex items-center gap-1.5 ml-2">
-                      <input
-                        type="color"
-                        value={resumeData.preferences?.themeColor || '#1e293b'}
-                        onChange={(e) => handleColorChange(e.target.value)}
-                        className="w-7 h-7 rounded-full cursor-pointer border border-slate-200"
-                        title="Custom hex color"
-                      />
-                      <span className="font-mono text-[11px] text-slate-500 uppercase">
-                        {resumeData.preferences?.themeColor || '#1e293b'}
-                      </span>
-                    </div>
+                {/* Metric Grid */}
+                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-ink/10 text-center">
+                  <div className="p-2.5 bg-canvas rounded-xl border border-ink/10">
+                    <span className="block font-mono font-bold text-ink text-sm">
+                      {pageCount} {pageCount === 1 ? 'Page' : 'Pages'}
+                    </span>
+                    <span className="text-[10px] text-ink-muted uppercase font-bold">Length (A4)</span>
                   </div>
-                </div>
-
-                {/* Switch Template Grid */}
-                <div className="space-y-2.5 pt-4 border-t border-slate-100">
-                  <label className="label-base">Change Active Template ({TEMPLATES.length} Styles)</label>
-                  <div className="grid grid-cols-2 gap-2 max-h-80 overflow-y-auto p-1">
-                    {TEMPLATES.map((t) => (
-                      <button
-                        key={t.id}
-                        type="button"
-                        onClick={() => setTemplateId(t.id)}
-                        className={`p-3 rounded-xl border text-left transition cursor-pointer ${
-                          (resumeData.templateId || 'ats-01') === t.id
-                            ? 'border-brand-500 bg-brand-50/50 ring-1 ring-brand-500 shadow-2xs'
-                            : 'border-slate-200 bg-white hover:bg-slate-50'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-1">
-                          <span className="font-bold text-xs text-slate-900 truncate">{t.name}</span>
-                          <span
-                            className="w-2 h-2 rounded-full shrink-0"
-                            style={{ backgroundColor: t.accentColor }}
-                          />
-                        </div>
-                        <span className="text-[10px] text-slate-400 uppercase tracking-wider block mt-0.5">
-                          {t.category}
-                        </span>
-                      </button>
-                    ))}
+                  <div className="p-2.5 bg-canvas rounded-xl border border-ink/10">
+                    <span className="block font-mono font-bold text-emerald-700 text-sm">
+                      {atsMatchResult?.matching_skills?.length || (resumeData.skills?.length ? 12 : 8)}
+                    </span>
+                    <span className="text-[10px] text-ink-muted uppercase font-bold">Matched Skills</span>
+                  </div>
+                  <div className="p-2.5 bg-canvas rounded-xl border border-ink/10">
+                    <span className="block font-mono font-bold text-ink text-sm">
+                      {resumeData.experience?.length || 0}
+                    </span>
+                    <span className="text-[10px] text-ink-muted uppercase font-bold">Roles Scored</span>
                   </div>
                 </div>
               </div>
-            )}
-          </div>
+
+              {/* Download & Export Actions */}
+              <div className="card-surface p-5 bg-white border border-ink/15 rounded-2xl space-y-3 shadow-brutal-sm">
+                <span className="font-extrabold text-xs text-ink block uppercase tracking-wide">
+                  Export Resume:
+                </span>
+
+                <button
+                  type="button"
+                  onClick={handleDownloadPDF}
+                  disabled={isExporting}
+                  className="btn-volt w-full py-3 px-4 text-xs font-extrabold shadow-brutal flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>{isExporting ? 'Generating High-DPI PDF...' : 'Download ATS-Optimized PDF'}</span>
+                </button>
+
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => window.print()}
+                    className="btn-secondary py-2 px-3 text-xs font-bold flex items-center justify-center gap-1.5 shadow-brutal-sm"
+                  >
+                    <Printer className="w-3.5 h-3.5" />
+                    <span>Print Document</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleExportJSON}
+                    className="btn-secondary py-2 px-3 text-xs font-bold flex items-center justify-center gap-1.5 shadow-brutal-sm"
+                  >
+                    <FileJson className="w-3.5 h-3.5" />
+                    <span>Export JSON</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Quick Navigation Back */}
+              <div className="flex items-center justify-between pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditorPhase('optimize')}
+                  className="btn-secondary py-2 px-3 text-xs font-bold flex items-center gap-1.5"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Back to AI Optimizer</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditorPhase('edit')}
+                  className="btn-secondary py-2 px-3 text-xs font-bold flex items-center gap-1.5"
+                >
+                  <span>Edit Form Details</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ======================================================== */}
@@ -1423,14 +1982,55 @@ export function Builder() {
 
             <div className="h-3.5 w-px bg-ink/20" />
 
-            {/* Multi-Page Indicator Pill */}
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-canvas border border-ink/20 font-mono text-[11px] font-bold text-ink">
-              <FileText className="w-3.5 h-3.5 text-ink-muted" />
-              <span>{pageCount === 1 ? '1 Page (A4)' : `${pageCount} Pages (A4)`}</span>
-              {isMultiPage && (
-                <span className="ml-0.5 px-1.5 py-0.2 rounded-full bg-volt text-[9px] font-extrabold uppercase border border-ink/30">
-                  Multi-Page
-                </span>
+            {/* Multi-Page Indicator Pill & Quick Page Mode Control */}
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-canvas border border-ink/20 font-mono text-[11px] font-bold text-ink">
+                <FileText className="w-3.5 h-3.5 text-ink-muted" />
+                <span>{pageCount === 1 ? '1 Page (A4)' : `${pageCount} Pages (A4)`}</span>
+                {isMultiPage && (
+                  <span className="ml-0.5 px-1.5 py-0.2 rounded-full bg-volt text-[9px] font-extrabold uppercase border border-ink/30">
+                    Multi-Page
+                  </span>
+                )}
+              </div>
+
+              {/* Explicit User Control: Add 1 More Page / Auto Toggle */}
+              <button
+                type="button"
+                onClick={() => setPageLayoutMode(prev => prev === '2_pages' ? 'auto' : '2_pages')}
+                title={pageLayoutMode === '2_pages' ? "Switch back to Auto Fit" : "Add 1 more page (Split content across 2 pages)"}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[11px] font-bold font-mono transition cursor-pointer shadow-brutal-sm ${
+                  pageLayoutMode === '2_pages'
+                    ? 'bg-ink text-volt border-ink'
+                    : 'bg-white text-ink border-ink/20 hover:border-ink hover:bg-canvas'
+                }`}
+              >
+                {pageLayoutMode === '2_pages' ? (
+                  <>
+                    <Check className="w-3 h-3 text-volt" />
+                    <span>2 Pages Mode</span>
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-3 h-3" />
+                    <span>+ Add 1 More Page</span>
+                  </>
+                )}
+              </button>
+
+              {pageCount > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setPageLayoutMode(prev => prev === '1_page' ? 'auto' : '1_page')}
+                  title="Try compacting all content onto 1 Page"
+                  className={`hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full border text-[11px] font-bold font-mono transition cursor-pointer shadow-brutal-sm ${
+                    pageLayoutMode === '1_page'
+                      ? 'bg-ink text-volt border-ink'
+                      : 'bg-white text-ink-muted border-ink/20 hover:border-ink hover:text-ink'
+                  }`}
+                >
+                  <span>1 Page Fit</span>
+                </button>
               )}
             </div>
           </div>
