@@ -4,6 +4,7 @@ import os
 from fastapi import APIRouter, UploadFile, File
 from app.core.security import validate_uploaded_file, sanitize_filename
 from app.utils.file_utils import temporary_upload_file
+from app.services.document_extractor import DocumentExtractor
 from app.services.resume_parser import (
     extract_text_from_pdf, extract_text_from_docx, parse_resume_document_pipeline
 )
@@ -25,10 +26,16 @@ async def parse_resume(file: UploadFile = File(...)):
     suffix = os.path.splitext(clean_name)[1].lower()
 
     with temporary_upload_file(content, suffix=suffix) as temp_path:
-        if suffix == ".pdf":
-            raw_text, warnings, layout = extract_text_from_pdf(temp_path)
-        else:
-            raw_text, warnings, layout = extract_text_from_docx(temp_path)
+        extraction_res = DocumentExtractor.extract_document(temp_path, filename=clean_name)
+        raw_text = extraction_res.get("text", "")
+        warnings = extraction_res.get("warnings", [])
+        layout = {
+            "page_count": extraction_res.get("page_count", 1),
+            "is_scanned": extraction_res.get("is_scanned", False),
+            "layout": extraction_res.get("layout", "single_column"),
+            "pages": extraction_res.get("pages", []),
+            "links": extraction_res.get("links", [])
+        }
 
     resume_data, validation = await parse_resume_document_pipeline(raw_text, layout)
     all_warnings = warnings + validation.get("warnings", [])

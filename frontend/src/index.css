@@ -668,13 +668,14 @@
   }
 }
 
-/* Print styling for exact A4 rendering */
+/* Print styling for pixel-perfect physical document rendering */
 @media print {
   @page {
-    size: A4 portrait;
-    margin: 0;
+    size: auto;
+    margin: 0mm;
   }
 
+  html,
   body {
     background: white !important;
     margin: 0 !important;
@@ -705,65 +706,46 @@
   }
 
   .resume-a4-page {
-    width: 210mm !important;
-    min-height: 297mm !important;
-    max-height: 297mm !important;
     box-shadow: none !important;
     border: none !important;
-    margin: 0 !important;
-    padding: 18mm !important;
+    margin: 0 auto !important;
     page-break-after: always;
     break-after: page;
-  }
-
-  .resume-a4-page.one-page-fit-active {
-    padding: 10mm 12mm !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   .resume-a4-page:last-child {
     page-break-after: auto;
     break-after: auto;
   }
+
+  .resume-section {
+    break-inside: auto;
+  }
+
+  .resume-section-heading {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  .resume-entry {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .resume-bullet {
+    overflow-wrap: anywhere;
+  }
 }
 
 /* -------------------------------------------------------------
  * 1-Page Fit Optimization Engine
- * When 1-Page Fit is active, automatically compact whitespace, 
- * reduce margins, and ensure zero text cut-off on a single A4 page.
+ * When 1-Page Fit is active, compact spacing cleanly without
+ * destroying template-level typography or inline margins.
  * ------------------------------------------------------------- */
 .one-page-fit-active {
-  padding: 10mm 12mm !important;
-}
-
-.one-page-fit-active h1 {
-  font-size: 1.35rem !important;
-  line-height: 1.15 !important;
-}
-
-.one-page-fit-active h2 {
-  font-size: 0.85rem !important;
-  margin-top: 0.35rem !important;
-  margin-bottom: 0.2rem !important;
-}
-
-.one-page-fit-active h3 {
-  font-size: 0.8rem !important;
-  margin-bottom: 0.1rem !important;
-}
-
-.one-page-fit-active p,
-.one-page-fit-active li,
-.one-page-fit-active span {
-  line-height: 1.25 !important;
-}
-
-.one-page-fit-active ul {
-  margin-top: 0.15rem !important;
-  margin-bottom: 0.15rem !important;
-}
-
-.one-page-fit-active li {
-  margin-bottom: 0.15rem !important;
+  box-sizing: border-box;
 }
 
 .one-page-fit-active .mb-4,

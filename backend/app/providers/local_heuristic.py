@@ -419,10 +419,16 @@ class LocalHeuristicProvider(BaseAIProvider):
         if not candidate_name and lines:
             candidate_name = lines[0][:40]
 
-        # Professional Title heuristic
+        # Professional Title heuristic (Multi-industry: tech, medical, legal, finance, education, marketing, etc.)
         prof_title = ""
         role_regex = re.compile(
-            r'\b(engineer|developer|manager|architect|lead|specialist|designer|analyst|consultant|generalist|scientist|interns?|administrator|researcher|coordinator)\b',
+            r'\b(engineer|developer|manager|architect|lead|specialist|designer|analyst|consultant|generalist|scientist|interns?|administrator|researcher|coordinator|'
+            r'doctor|physician|nurse|surgeon|pharmacist|therapist|practitioner|clinician|'
+            r'accountant|auditor|banker|actuary|controller|bookkeeper|financial|'
+            r'attorney|lawyer|counsel|paralegal|solicitor|'
+            r'teacher|professor|instructor|educator|lecturer|principal|tutor|'
+            r'executive|officer|director|vp|vice\s+president|president|founder|partner|associate|supervisor|'
+            r'writer|editor|producer|journalist|photographer|artist|marketer|sales|representative)\b',
             re.IGNORECASE
         )
         for line in lines[:8]:
@@ -444,14 +450,17 @@ class LocalHeuristicProvider(BaseAIProvider):
                 prof_title = line_clean
                 break
 
-        # 2. Section Segmentation
+        # 2. Section Segmentation (Universal multi-industry semantic headings)
         section_patterns = {
-            "summary": re.compile(r'^(?:professional\s+summary|summary|profile|about\s+me|career\s+objective|objective|focus)\b', re.IGNORECASE),
-            "experience": re.compile(r'^(?:work\s+experience|professional\s+experience|employment\s+history|experience|work\s+history|engineering\s+experience|career\s+history|relevant\s+experience)\b', re.IGNORECASE),
-            "education": re.compile(r'^(?:education\s*(?:&|and)\s*academics|education\s*(?:&|and)\s*training|education|academic\s+background|academics|qualifications|educational\s+qualifications)\b', re.IGNORECASE),
-            "projects": re.compile(r'^(?:(?:featured|key|technical|personal|academic|selected|notable|major|relevant|independent|open\s+source)?\s*projects|project\s+experience|project\s+work|portfolio\s+&\s+projects|architectures\s+&\s+systems)\b', re.IGNORECASE),
-            "skills": re.compile(r'^(?:(?:core\s+)?technical\s+skills|core\s+skills|technical\s+competencies|technical\s+expertise|skills\s*(?:&|and)\s*competencies|skills\s*(?:&|and)\s*tools|skills|technologies|proficiencies|tools\s*(?:&|and)\s*technologies|core\s+competencies|key\s+skills)\b', re.IGNORECASE),
-            "certifications": re.compile(r'^(?:certifications|certificates|licenses|courses|credentials|workshops|training|trainings|accreditations)\b', re.IGNORECASE),
+            "summary": re.compile(r'^(?:professional\s+summary|summary|profile|about\s+me|career\s+objective|objective|focus|personal\s+statement)\b', re.IGNORECASE),
+            "experience": re.compile(r'^(?:work\s+experience|professional\s+experience|employment\s+history|experience|work\s+history|engineering\s+experience|career\s+history|relevant\s+experience|clinical\s+experience|teaching\s+experience|professional\s+background)\b', re.IGNORECASE),
+            "education": re.compile(r'^(?:education\s*(?:&|and)\s*academics|education\s*(?:&|and)\s*training|education|academic\s+background|academics|qualifications|educational\s+qualifications|degrees|academic\s+credentials)\b', re.IGNORECASE),
+            "projects": re.compile(r'^(?:(?:featured|key|technical|personal|academic|selected|notable|major|relevant|independent|open\s+source)?\s*projects|project\s+experience|project\s+work|portfolio\s+&\s+projects|architectures\s+&\s+systems|case\s+studies)\b', re.IGNORECASE),
+            "skills": re.compile(r'^(?:(?:core\s+)?technical\s+skills|core\s+skills|technical\s+competencies|technical\s+expertise|skills\s*(?:&|and)\s*competencies|skills\s*(?:&|and)\s*tools|skills|technologies|proficiencies|tools\s*(?:&|and)\s*technologies|core\s+competencies|key\s+skills|areas\s+of\s+expertise)\b', re.IGNORECASE),
+            "certifications": re.compile(r'^(?:certifications|certificates|licenses|courses|credentials|workshops|training|trainings|accreditations|bar\s+admissions)\b', re.IGNORECASE),
+            "internships": re.compile(r'^(?:internships?|internship\s+experience|practical\s+training|practicum|clerkship|residency)\b', re.IGNORECASE),
+            "publications": re.compile(r'^(?:publications?|research\s+papers|articles|whitepapers|patents|published\s+works)\b', re.IGNORECASE),
+            "volunteer": re.compile(r'^(?:volunteer\s+experience|volunteering|community\s+service|social\s+work|extracurricular\s+activities)\b', re.IGNORECASE),
             "leadership": re.compile(r'^(?:leaderships?(?:\s*(?:&|and|interpersonal)?\s*skills)?|leadership\s+activities|interpersonal\s+skills|soft\s+skills)\b', re.IGNORECASE),
             "languages": re.compile(r'^(?:languages|language\s+proficiency)\b', re.IGNORECASE),
             "achievements": re.compile(r'^(?:achievements|awards|honors|honours|accomplishments)\b', re.IGNORECASE)
@@ -459,7 +468,8 @@ class LocalHeuristicProvider(BaseAIProvider):
 
         sections: Dict[str, List[str]] = {
             "header": [], "summary": [], "experience": [], "education": [], "projects": [],
-            "skills": [], "certifications": [], "leadership": [], "languages": [], "achievements": [], "other": []
+            "skills": [], "certifications": [], "internships": [], "publications": [], "volunteer": [],
+            "leadership": [], "languages": [], "achievements": [], "other": []
         }
 
         date_pattern = re.compile(
@@ -1124,14 +1134,57 @@ class LocalHeuristicProvider(BaseAIProvider):
             if re.search(r'\b' + kl + r'\b', cleaned_text, re.IGNORECASE):
                 languages.append({"name": kl, "proficiency": "Proficient"})
 
-        # Final title fallback if still blank
+        # 10. Parse Internships
+        internship_items = []
+        for line in sections.get("internships", []):
+            clean_l = re.sub(r'^[#*\-•\s]+', '', line).strip()
+            if clean_l and len(clean_l) > 5:
+                internship_items.append({
+                    "id": str(uuid.uuid4())[:8],
+                    "role": clean_l[:50],
+                    "organization": "Internship",
+                    "duration": "",
+                    "responsibilities": [clean_l],
+                    "technologies": []
+                })
+
+        # 11. Parse Publications
+        publication_items = []
+        for line in sections.get("publications", []):
+            clean_l = re.sub(r'^[#*\-•\s]+', '', line).strip()
+            if clean_l and len(clean_l) > 5:
+                publication_items.append({
+                    "id": str(uuid.uuid4())[:8],
+                    "title": clean_l,
+                    "publisher": "",
+                    "date": "",
+                    "url": ""
+                })
+
+        # 12. Parse Volunteer Experience
+        volunteer_items = []
+        for line in sections.get("volunteer", []):
+            clean_l = re.sub(r'^[#*\-•\s]+', '', line).strip()
+            if clean_l and len(clean_l) > 5:
+                volunteer_items.append({
+                    "id": str(uuid.uuid4())[:8],
+                    "role": clean_l[:50],
+                    "organization": "Volunteer",
+                    "startDate": "",
+                    "endDate": "",
+                    "description": clean_l
+                })
+
+        # Final title fallback: never default to software engineer for non-tech roles
         if not prof_title:
             if experience_items and experience_items[0].get("position"):
                 prof_title = experience_items[0]["position"]
+            elif internship_items and internship_items[0].get("role"):
+                prof_title = internship_items[0]["role"]
             elif education_items and education_items[0].get("fieldOfStudy"):
-                prof_title = f"{education_items[0]['fieldOfStudy']} Engineer"
+                prof_title = education_items[0]["fieldOfStudy"]
             else:
-                prof_title = "Software Engineer"
+                prof_title = "Professional"
 
         return {
             "personalInfo": {
@@ -1148,14 +1201,14 @@ class LocalHeuristicProvider(BaseAIProvider):
             "professionalSummary": summary_text,
             "education": education_items,
             "experience": experience_items,
-            "internships": [],
+            "internships": internship_items,
             "projects": project_items,
             "skills": skill_categories,
             "certifications": certifications,
             "achievements": [],
             "languages": languages,
-            "publications": [],
-            "volunteerExperience": [],
+            "publications": publication_items,
+            "volunteerExperience": volunteer_items,
             "customSections": []
         }
 

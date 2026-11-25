@@ -33,9 +33,13 @@ export function ContactList({ personalInfo = {}, className = "", iconClass = "w-
       {items.map((item, idx) => {
         const Icon = item.icon;
         const content = (
-          <span className="inline-flex items-center gap-1">
-            {showIcons && Icon && <Icon className={iconClass} />}
-            <span>{item.text}</span>
+          <span className="inline-flex items-center gap-1.5 leading-none">
+            {showIcons && Icon && (
+              <span className="inline-flex items-center justify-center shrink-0" style={{ width: '14px', height: '14px' }}>
+                <Icon className={iconClass} style={{ width: '13px', height: '13px', strokeWidth: 2, display: 'block' }} />
+              </span>
+            )}
+            <span className="leading-tight">{item.text}</span>
           </span>
         );
 
@@ -47,7 +51,7 @@ export function ContactList({ personalInfo = {}, className = "", iconClass = "w-
                 href={item.href}
                 target="_blank"
                 rel="noreferrer"
-                className="hover:underline hover:text-slate-900 transition-colors"
+                className="hover:underline hover:text-slate-900 transition-colors inline-flex items-center"
               >
                 {content}
               </a>
@@ -63,7 +67,7 @@ export function ContactList({ personalInfo = {}, className = "", iconClass = "w-
 
 export function ContinuationHeader({ personalInfo = {}, color = "#1e293b", pageNumber = 2, totalPages = 2, className = "" }) {
   return (
-    <div className={`pb-2 mb-3.5 border-b-2 flex justify-between items-baseline select-none ${className}`} style={{ borderColor: color }}>
+    <div className={`pb-2 mb-3.5 border-b-2 flex justify-between items-baseline select-none ${className}`} style={{ borderColor: color, boxSizing: 'border-box' }}>
       <div>
         <span className="text-base sm:text-lg font-bold tracking-tight uppercase text-slate-900">
           {personalInfo.fullName || "Resume"}
@@ -86,18 +90,18 @@ export function SectionHeading({ title, variant = "underline", color = "#0284c7"
 
   if (variant === "bar") {
     return (
-      <div className={`flex items-center gap-1.5 mb-1.5 pb-0.5 border-b border-slate-200 ${className}`}>
-        <span className="w-1.5 h-3.5 rounded-full" style={{ backgroundColor: color }}></span>
-        <h2 className="text-xs sm:text-sm font-bold tracking-wider uppercase text-slate-900">{title}</h2>
+      <div className={`flex items-center gap-1.5 mb-2 pb-1 border-b border-slate-200 ${className}`} style={{ boxSizing: 'border-box' }}>
+        <span className="w-1.5 h-3.5 rounded-full shrink-0" style={{ backgroundColor: color }}></span>
+        <h2 className="text-xs sm:text-sm font-bold tracking-wider uppercase text-slate-900 leading-normal">{title}</h2>
       </div>
     );
   }
 
   if (variant === "badge") {
     return (
-      <div className={`mb-1.5 ${className}`}>
+      <div className={`mb-2 ${className}`}>
         <span
-          className="inline-block px-2 py-0.5 text-xs font-bold uppercase tracking-wider rounded text-white"
+          className="inline-block px-2 py-0.5 text-xs font-bold uppercase tracking-wider rounded text-white leading-normal"
           style={{ backgroundColor: color }}
         >
           {title}
@@ -108,26 +112,30 @@ export function SectionHeading({ title, variant = "underline", color = "#0284c7"
 
   if (variant === "minimal") {
     return (
-      <div className={`mb-1 pt-0.5 border-t border-slate-200 ${className}`}>
-        <h2 className="text-xs font-bold tracking-widest uppercase text-slate-700">{title}</h2>
+      <div className={`mb-1.5 pt-1 border-t border-slate-200 ${className}`} style={{ boxSizing: 'border-box' }}>
+        <h2 className="text-xs font-bold tracking-widest uppercase text-slate-700 leading-normal">{title}</h2>
       </div>
     );
   }
 
   if (variant === "serif") {
     return (
-      <div className={`mb-1.5 pb-0.5 border-b-2 ${className}`} style={{ borderColor: color }}>
-        <h2 className="font-serif text-xs sm:text-sm font-bold tracking-wide uppercase text-slate-900">{title}</h2>
+      <div className={`mb-2 pb-1.5 border-b-2 ${className}`} style={{ borderColor: color, boxSizing: 'border-box' }}>
+        <h2 className="font-serif text-xs sm:text-sm font-bold tracking-wide uppercase text-slate-900 leading-normal">{title}</h2>
       </div>
     );
   }
 
   // Default: underline with custom accent color
+  // High-precision padding (pb-1.5 / 6px) guarantees horizontal border NEVER collides or slices into letter baselines
   return (
-    <div className={`mb-1.5 pb-0.5 border-b ${className}`} style={{ borderColor: color }}>
+    <div
+      className={`mb-2 pb-1.5 border-b ${className}`}
+      style={{ borderColor: color, boxSizing: 'border-box' }}
+    >
       <h2
-        className="text-xs font-bold tracking-wider uppercase"
-        style={{ color: color }}
+        className="text-xs font-bold tracking-wider uppercase leading-normal"
+        style={{ color: color, display: 'block', margin: 0, padding: 0 }}
       >
         {title}
       </h2>

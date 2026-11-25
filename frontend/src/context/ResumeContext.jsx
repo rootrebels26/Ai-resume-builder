@@ -171,14 +171,24 @@ export function ResumeProvider({ children }) {
   };
 
   // Resume Section Updaters
-  const updatePersonalInfo = (field, value) => {
-    setResumeData(prev => ({
-      ...prev,
-      personalInfo: {
-        ...prev.personalInfo,
-        [field]: value
-      }
-    }));
+  const updatePersonalInfo = (fieldOrObj, value) => {
+    if (typeof fieldOrObj === 'object' && fieldOrObj !== null) {
+      setResumeData(prev => ({
+        ...prev,
+        personalInfo: {
+          ...prev.personalInfo,
+          ...fieldOrObj
+        }
+      }));
+    } else {
+      setResumeData(prev => ({
+        ...prev,
+        personalInfo: {
+          ...prev.personalInfo,
+          [fieldOrObj]: value
+        }
+      }));
+    }
   };
 
   const updateSummary = (value) => {

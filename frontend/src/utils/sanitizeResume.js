@@ -78,7 +78,8 @@ export function sanitizeResumeData(data) {
   }
 
   // Universal fallback for projects: if 0 projects but experience exists, derive key systems
-  if (cleaned.projects.length === 0 && Array.isArray(cleaned.experience) && cleaned.experience.length > 0) {
+  // (Guard: NEVER re-derive on continuation pages Page 2+ to prevent duplicating sections)
+  if (!cleaned.isContinuation && cleaned.projects.length === 0 && Array.isArray(cleaned.experience) && cleaned.experience.length > 0) {
     const actionWords = ['architected', 'designed', 'developed', 'engineered', 'built', 'created', 'implemented', 'orchestrated', 'automated'];
     const derived = [];
     for (const exp of cleaned.experience) {

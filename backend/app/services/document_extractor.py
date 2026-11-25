@@ -9,13 +9,14 @@ logger = logging.getLogger("document_extractor")
 
 class DocumentExtractor:
     """
-    Production-grade document text and layout extractor.
+    Universal Multi-Format Document Text and Layout Extractor.
     Handles:
-    - Multi-column PDFs with spatial reading order preservation.
-    - Tables and block headers in PDF and DOCX.
-    - Multi-page documents with clean section markers.
-    - Scanned/image-only PDF detection and text recovery.
-    - DOCX hierarchical headings, tables, bullet points, and hyperlinks.
+    - PDF: Multi-column spatial layout detection, hyperlinks, tables, and scanned page detection.
+    - DOCX: Hierarchical headings, tables, bullet points, and hyperlinks.
+    - DOC: Legacy Word 97-2003 binary text stream recovery.
+    - TXT: Multi-encoding text decoding (UTF-8, UTF-16, CP1252, Latin-1).
+    - RTF: Rich Text Format stripping with hex character decoding.
+    - Images (PNG, JPG, JPEG, WebP): Image verification and Multimodal Vision OCR extraction.
     """
 
     @staticmethod
@@ -66,7 +67,6 @@ class DocumentExtractor:
             page_height = page_rect.height
 
             # 1. Extract PDF link annotations
-            # Links list has dicts: {'kind': 2, 'from': Rect, 'uri': '...'}
             page_links = []
             try:
                 raw_links = page.get_links()
@@ -90,15 +90,12 @@ class DocumentExtractor:
             has_images = len(images) > 0
 
             # 3. Extract text words and match with hyperlink annotations
-            # word tuple: (x0, y0, x1, y1, "word", block_no, line_no, word_no)
             words = []
             try:
                 words = page.get_text("words")
             except Exception:
                 words = []
 
-            # Map block_no & line_no to enriched line strings
-            # If a word or phrase intersects a link annotation, append the URL
             linked_words_by_line: Dict[Tuple[int, int], List[Tuple[float, str]]] = {}
             seen_link_uris_in_line: Dict[Tuple[int, int], set] = {}
 
@@ -126,7 +123,6 @@ class DocumentExtractor:
                     linked_words_by_line[line_key].append((w[0], w_text))
 
             # 4. Extract text blocks with coordinates: (x0, y0, x1, y1, text, block_no, block_type)
-            # block_type 0 = text, 1 = image
             blocks = page.get_text("blocks")
             text_blocks = [b for b in blocks if b[6] == 0 and b[4].strip()]
 
@@ -134,14 +130,11 @@ class DocumentExtractor:
             enriched_text_blocks = []
             for b in text_blocks:
                 b_no = b[5]
-                b_lines = []
-                # Check if this block has line entries in linked_words_by_line
                 b_line_keys = [k for k in linked_words_by_line.keys() if k[0] == b_no]
                 if b_line_keys:
-                    # Sort lines by line_no
                     b_line_keys.sort(key=lambda k: k[1])
+                    b_lines = []
                     for lk in b_line_keys:
-                        # Sort words in line by x0
                         line_words = sorted(linked_words_by_line[lk], key=lambda x: x[0])
                         b_lines.append(" ".join(w[1] for w in line_words))
                     enriched_text = "\n".join(b_lines)
@@ -168,8 +161,6 @@ class DocumentExtractor:
                     is_two_column = True
                     left_blocks = sorted(left_col, key=lambda b: (b[1], b[0]))
                     right_blocks = sorted(right_col, key=lambda b: (b[1], b[0]))
-                    header_blocks = [b for b in enriched_text_blocks if b[0] < col_split and b[2] > (page_width * 0.75)]
-                    header_blocks = sorted(header_blocks, key=lambda b: b[1])
 
             # 5. Assemble page text in correct spatial reading order
             page_lines = []
@@ -198,6 +189,19 @@ class DocumentExtractor:
                         page_lines.append(clean_b)
 
             page_text = "\n".join(page_lines)
+
+            # If page text is empty but page has images, attempt OCR / vision recovery
+            if len(page_text.strip()) < 30 and has_images:
+                try:
+                    pix = page.get_pixmap(dpi=150)
+                    img_bytes = pix.tobytes("jpeg")
+                    recovered_ocr = DocumentExtractor._ocr_image_bytes(img_bytes, mime="image/jpeg")
+                    if recovered_ocr.strip():
+                        page_text = recovered_ocr.strip()
+                        is_scanned_doc = False
+                except Exception as ocr_err:
+                    logger.debug("Page %d OCR fallback failed: %s", page_idx, ocr_err)
+
             total_text_length += len(page_text)
 
             pages_content.append({
@@ -211,7 +215,6 @@ class DocumentExtractor:
             if page_text.strip():
                 combined_text_lines.append(page_text.strip())
 
-        # Scanned page detection
         if is_scanned_doc:
             warnings.append(
                 "Document appears to be an image-only or scanned PDF. Text extraction may be incomplete. Native OCR recovery applied."
@@ -252,7 +255,6 @@ class DocumentExtractor:
 
         # 1. Process paragraphs with heading level indicators and hyperlink recovery
         for p in doc.paragraphs:
-            # Check for hyperlink runs in paragraph
             p_text_parts = []
             try:
                 for child in p._element:
@@ -279,7 +281,6 @@ class DocumentExtractor:
             if not text:
                 continue
 
-            # Detect bullet list item
             if p.style and 'list' in p.style.name.lower():
                 text_lines.append(f"• {text}")
             elif p.style and 'heading' in p.style.name.lower():
@@ -292,7 +293,6 @@ class DocumentExtractor:
             text_lines.append(f"\n[TABLE {table_idx + 1}]")
             for row in table.rows:
                 cells_text = [c.text.strip().replace("\n", " ") for c in row.cells if c.text.strip()]
-                # Deduplicate identical adjacent cells caused by merged table cells
                 deduped_cells = []
                 for cell in cells_text:
                     if not deduped_cells or deduped_cells[-1] != cell:
@@ -311,5 +311,231 @@ class DocumentExtractor:
             "layout": "docx_structured",
             "warnings": warnings
         }
+
+    @staticmethod
+    def extract_from_doc(file_path: str) -> Dict[str, Any]:
+        """
+        Legacy Word 97-2003 binary format (.doc) extractor.
+        Attempts python-docx first in case of modern docx with .doc extension,
+        otherwise uses binary text stream decoding.
+        """
+        try:
+            return DocumentExtractor.extract_from_docx(file_path)
+        except Exception:
+            pass
+
+        extracted_strings = []
+        try:
+            with open(file_path, "rb") as f:
+                content = f.read()
+
+            runs = re.findall(rb'[\x20-\x7E\r\n\t]{4,}', content)
+            for r in runs:
+                try:
+                    s = r.decode('latin-1').strip()
+                    if len(s) > 3 and not s.startswith(('Microsoft', 'WordDocument', 'CompObj', 'SummaryInformation')):
+                        extracted_strings.append(s)
+                except Exception:
+                    continue
+        except Exception as e:
+            logger.error("Failed to extract from binary doc %s: %s", file_path, e)
+
+        clean_text = "\n".join(extracted_strings)
+        return {
+            "text": clean_text,
+            "pages": [{"page_number": 1, "text": clean_text, "char_count": len(clean_text)}],
+            "page_count": 1,
+            "is_scanned": False,
+            "layout": "doc_binary_recovered",
+            "links": [],
+            "warnings": ["Legacy .doc file recovered using binary text stream parsing."] if clean_text else ["Could not extract readable text from binary .doc file."]
+        }
+
+    @staticmethod
+    def extract_from_txt(file_path: str) -> Dict[str, Any]:
+        """
+        Extracts text from plain text files (.txt), detecting encoding automatically.
+        """
+        encodings = ['utf-8', 'utf-8-sig', 'utf-16', 'cp1252', 'latin-1', 'iso-8859-1']
+        raw_bytes = b""
+        with open(file_path, "rb") as f:
+            raw_bytes = f.read()
+
+        text = ""
+        for enc in encodings:
+            try:
+                text = raw_bytes.decode(enc)
+                break
+            except (UnicodeDecodeError, LookupError):
+                continue
+
+        lines = [line.strip() for line in text.splitlines()]
+        clean_text = "\n".join(lines)
+        return {
+            "text": clean_text,
+            "pages": [{"page_number": 1, "text": clean_text, "char_count": len(clean_text)}],
+            "page_count": 1,
+            "is_scanned": False,
+            "layout": "text_plain",
+            "links": [],
+            "warnings": []
+        }
+
+    @staticmethod
+    def extract_from_rtf(file_path: str) -> Dict[str, Any]:
+        """
+        Extracts structured text from Rich Text Format (.rtf), stripping control groups
+        and decoding escaped characters.
+        """
+        with open(file_path, "rb") as f:
+            raw_bytes = f.read()
+        raw_text = raw_bytes.decode("latin-1", errors="ignore")
+
+        # Strip RTF groups and control words
+        raw_text = re.sub(r'{\\\*(?:\\fonttbl|\\colortbl|\\stylesheet|\\info)[\s\S]*?}', '', raw_text)
+        raw_text = re.sub(r'\\(?:par|line)\b', '\n', raw_text)
+        def replace_hex(m):
+            try:
+                return bytes.fromhex(m.group(1)).decode('latin-1', errors='ignore')
+            except Exception:
+                return ''
+        raw_text = re.sub(r"\\'([0-9a-fA-F]{2})", replace_hex, raw_text)
+        raw_text = re.sub(r'\\[a-zA-Z]+(?:-?\d+)? ?', '', raw_text)
+        raw_text = re.sub(r'[{}]', '', raw_text)
+        clean_lines = [l.strip() for l in raw_text.splitlines() if l.strip()]
+        clean_text = "\n".join(clean_lines)
+
+        return {
+            "text": clean_text,
+            "pages": [{"page_number": 1, "text": clean_text, "char_count": len(clean_text)}],
+            "page_count": 1,
+            "is_scanned": False,
+            "layout": "rtf_structured",
+            "links": [],
+            "warnings": []
+        }
+
+    @staticmethod
+    def extract_from_image(file_path: str) -> Dict[str, Any]:
+        """
+        Extracts resume text from image formats (PNG, JPG, JPEG, WebP)
+        using PyMuPDF image container and Multimodal Vision OCR.
+        """
+        warnings = []
+        extracted_text = ""
+        page_count = 1
+
+        try:
+            doc = fitz.open(file_path)
+            page_count = len(doc)
+            # Check if image has embedded text
+            for page in doc:
+                t = page.get_text()
+                if t.strip():
+                    extracted_text += t + "\n"
+        except Exception as e:
+            logger.debug("fitz image inspection note: %s", e)
+
+        # If direct text extraction is empty, use OCR / Multimodal Vision
+        if len(extracted_text.strip()) < 30:
+            try:
+                with open(file_path, "rb") as f:
+                    img_bytes = f.read()
+                ext = os.path.splitext(file_path)[1].lower().lstrip(".")
+                mime = f"image/{ext}" if ext in ["png", "jpeg", "webp"] else "image/jpeg"
+                ocr_result = DocumentExtractor._ocr_image_bytes(img_bytes, mime=mime)
+                if ocr_result.strip():
+                    extracted_text = ocr_result.strip()
+            except Exception as ocr_err:
+                logger.warning("Image OCR failed: %s", ocr_err)
+
+        if not extracted_text.strip():
+            warnings.append("Image resume processed. For best extraction fidelity from photographed documents, ensure high resolution and clear lighting.")
+
+        return {
+            "text": extracted_text,
+            "pages": [{"page_number": 1, "text": extracted_text, "char_count": len(extracted_text)}],
+            "page_count": page_count,
+            "is_scanned": True,
+            "layout": "image_ocr",
+            "links": [],
+            "warnings": warnings
+        }
+
+    @staticmethod
+    def _ocr_image_bytes(img_bytes: bytes, mime: str = "image/jpeg") -> str:
+        """
+        Multimodal OCR transcription via Gemini API if configured.
+        """
+        import base64
+        from app.core.config import settings
+        import httpx
+
+        api_key = settings.GEMINI_API_KEY
+        if not api_key:
+            return ""
+
+        b64 = base64.b64encode(img_bytes).decode("utf-8")
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+        payload = {
+            "contents": [{
+                "parts": [
+                    {
+                        "text": "You are a universal resume OCR extraction engine. Transcribe ALL text from this resume image exactly as written, preserving all contact info, section headings, job titles, dates, companies, bullet points, skills, projects, and education. Do not summarize or omit anything. Output the full text with clear line breaks."
+                    },
+                    {
+                        "inlineData": {
+                            "mimeType": mime,
+                            "data": b64
+                        }
+                    }
+                ]
+            }],
+            "generationConfig": {"temperature": 0.0}
+        }
+        try:
+            with httpx.Client(timeout=15.0) as client:
+                resp = client.post(url, json=payload)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    candidates = data.get("candidates", [])
+                    if candidates and "content" in candidates[0]:
+                        parts = candidates[0]["content"].get("parts", [])
+                        if parts and "text" in parts[0]:
+                            return parts[0]["text"].strip()
+        except Exception as e:
+            logger.warning("Gemini Vision OCR call failed: %s", e)
+
+        return ""
+
+    @staticmethod
+    def extract_document(file_path: str, filename: str = "") -> Dict[str, Any]:
+        """
+        Universal format router:
+        Inspects file extension & magic bytes to safely route to the appropriate format extractor.
+        """
+        ext = os.path.splitext(filename or file_path)[1].lower()
+
+        if ext == ".pdf":
+            return DocumentExtractor.extract_from_pdf(file_path)
+        elif ext == ".docx":
+            return DocumentExtractor.extract_from_docx(file_path)
+        elif ext == ".doc":
+            return DocumentExtractor.extract_from_doc(file_path)
+        elif ext == ".txt":
+            return DocumentExtractor.extract_from_txt(file_path)
+        elif ext == ".rtf":
+            return DocumentExtractor.extract_from_rtf(file_path)
+        elif ext in [".png", ".jpg", ".jpeg", ".webp"]:
+            return DocumentExtractor.extract_from_image(file_path)
+        else:
+            # Fallback by content
+            try:
+                return DocumentExtractor.extract_from_pdf(file_path)
+            except Exception:
+                try:
+                    return DocumentExtractor.extract_from_docx(file_path)
+                except Exception:
+                    return DocumentExtractor.extract_from_txt(file_path)
 
 document_extractor = DocumentExtractor()

@@ -18,6 +18,7 @@ import { aiService } from '../services/aiService';
 import { resumeService } from '../services/resumeService';
 import { docxService } from '../services/docxService';
 import { useResumePagination } from '../utils/resumePaginator';
+import { PhotoUploadModal } from '../components/templates/PhotoUploadModal';
 
 const COLOR_PRESETS = [
   { name: 'Classic Slate', color: '#1e293b' },
@@ -57,10 +58,12 @@ export function Builder() {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState(null); // { type: 'summary'|'bullet'|'skills', options: [...] }
   const [isExporting, setIsExporting] = useState(false);
+  const [exportProgressText, setExportProgressText] = useState('Exporting...');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [docTitle, setDocTitle] = useState(
     resumeData?.personalInfo?.fullName ? `${resumeData.personalInfo.fullName}'s Resume` : 'My Resume'
   );
+  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
 
   // Target Job Description & Section-by-Section AI Tailor State
   const [jobDescription, setJobDescription] = useState(
@@ -693,18 +696,28 @@ export function Builder() {
   const handleDownloadPDF = async () => {
     if (!previewRef.current) return;
     setIsExporting(true);
+    setExportProgressText('Preparing document...');
     try {
       const candidate = (resumeData.personalInfo?.fullName || 'Resume').replace(/\s+/g, '_');
       const role = (resumeData.personalInfo?.professionalTitle || 'CV').replace(/\s+/g, '_');
       const filename = `${candidate}_${role}.pdf`;
       await pdfService.exportToPDF(previewRef.current, filename, {
-        format: resumeData?.preferences?.paperFormat || 'a4'
+        format: resumeData?.preferences?.paperFormat || 'a4',
+        onProgress: (status) => setExportProgressText(status)
       });
     } catch (e) {
       console.error('PDF export error:', e);
     } finally {
       setIsExporting(false);
+      setExportProgressText('Exporting...');
     }
+  };
+
+  const handlePrintVectorPDF = async () => {
+    if (!previewRef.current) return;
+    await pdfService.printVectorPDF(previewRef.current, {
+      format: resumeData?.preferences?.paperFormat || 'a4'
+    });
   };
 
   // JSON Import & Export
@@ -971,12 +984,13 @@ export function Builder() {
                 type="button"
                 onClick={handleDownloadPDF}
                 disabled={isExporting}
+                title="Direct PDF Download (300+ DPI High Resolution)"
                 className="btn-volt py-1.5 sm:py-2 px-3.5 sm:px-4 text-xs shadow-brutal-sm flex items-center gap-1.5 font-extrabold cursor-pointer"
               >
                 {isExporting ? (
                   <>
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Exporting...</span>
+                    <span>{exportProgressText}</span>
                   </>
                 ) : (
                   <>
@@ -984,6 +998,16 @@ export function Builder() {
                     <span>Download PDF</span>
                   </>
                 )}
+              </button>
+              <button
+                type="button"
+                onClick={handlePrintVectorPDF}
+                disabled={isExporting}
+                title="Print or Save via Browser Native Engine (100% Vector Text & Icons)"
+                className="btn-secondary py-1.5 sm:py-2 px-3 text-xs shadow-brutal-sm hidden lg:flex items-center gap-1.5 font-bold cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print / Vector</span>
               </button>
             </div>
           )}
@@ -1073,6 +1097,55 @@ export function Builder() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
+                  {/* Profile Photo Uploader */}
+                  <div className="sm:col-span-2 flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                    {resumeData.personalInfo?.photo ? (
+                      <div className="flex items-center gap-3 w-full justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <img
+                            src={resumeData.personalInfo.photo}
+                            alt="Profile"
+                            className="w-10 h-10 rounded-full object-cover border border-slate-300"
+                          />
+                          <div>
+                            <span className="text-xs font-bold text-slate-800">Profile Photo Uploaded</span>
+                            <p className="text-[10px] text-slate-500">Visible on photo-supported template headers</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setIsPhotoModalOpen(true)}
+                            className="px-2.5 py-1 text-[11px] font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 cursor-pointer"
+                          >
+                            Change Photo
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => updatePersonalInfo('photo', '')}
+                            className="px-2 py-1 text-[11px] font-semibold text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between w-full">
+                        <div>
+                          <span className="text-xs font-semibold text-slate-700">Profile Photo</span>
+                          <p className="text-[10px] text-slate-500">Optional for ATS resumes, required for Executive & Creative templates</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setIsPhotoModalOpen(true)}
+                          className="px-3 py-1.5 text-xs font-bold bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 rounded-xl shadow-xs transition cursor-pointer"
+                        >
+                          Upload Photo
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
                   <div>
                     <label className="label-base">Full Name</label>
                     <input
@@ -2919,6 +2992,15 @@ export function Builder() {
           </div>
         )}
       </div>
+
+      {/* Profile Photo Upload Modal */}
+      <PhotoUploadModal
+        isOpen={isPhotoModalOpen}
+        onClose={() => setIsPhotoModalOpen(false)}
+        onConfirm={(url) => updatePersonalInfo('photo', url)}
+        currentPhoto={resumeData.personalInfo?.photo}
+        templateName={resumeData.templateId || 'Active Template'}
+      />
     </div>
   );
 }

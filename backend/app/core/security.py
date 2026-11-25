@@ -4,12 +4,22 @@ from fastapi import UploadFile
 from app.core.config import settings
 from app.core.exceptions import FileValidationError
 
-ALLOWED_EXTENSIONS = {".pdf", ".docx"}
+ALLOWED_EXTENSIONS = {
+    ".pdf", ".docx", ".doc", ".txt", ".rtf",
+    ".png", ".jpg", ".jpeg", ".webp"
+}
 ALLOWED_MIME_TYPES = {
     "application/pdf",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     "application/msword",
-    "application/octet-stream"
+    "application/octet-stream",
+    "text/plain",
+    "text/rtf",
+    "application/rtf",
+    "image/png",
+    "image/jpeg",
+    "image/jpg",
+    "image/webp"
 }
 
 def sanitize_filename(filename: str) -> str:
@@ -25,7 +35,7 @@ def validate_uploaded_file(file: UploadFile, content: bytes) -> None:
     ext = os.path.splitext(file.filename)[1].lower()
     if ext not in ALLOWED_EXTENSIONS:
         raise FileValidationError(
-            f"Unsupported file format '{ext}'. Only PDF and DOCX files are allowed.",
+            f"Unsupported file format '{ext}'. Allowed formats: PDF, DOCX, DOC, TXT, RTF, PNG, JPG, JPEG, and WebP.",
             details={"allowed_extensions": list(ALLOWED_EXTENSIONS)}
         )
     

@@ -150,6 +150,19 @@ export function paginateResume(rawResumeData, options = {}) {
     pages.push(currentPage);
     currentPage = {
       ...resumeData,
+      personalInfo: {
+        ...personalInfo,
+        fullName: '',
+        professionalTitle: '',
+        phone: '',
+        email: '',
+        location: '',
+        linkedin: '',
+        github: '',
+        website: '',
+        portfolio: '',
+        photo: null,
+      },
       professionalSummary: '',
       experience: [],
       education: [],
@@ -161,7 +174,7 @@ export function paginateResume(rawResumeData, options = {}) {
       isContinuation: true,
       pageNumber: pages.length + 1
     };
-    currentHeight = 45; // Height of compact ContinuationHeader
+    currentHeight = 0; // Header is completely omitted on continuation pages (Page 2+), giving full height to sections
     currentLimit = PAGE_CONT_MAX;
   };
 
@@ -172,12 +185,9 @@ export function paginateResume(rawResumeData, options = {}) {
 
   // Section Adder Functions
   const addSummary = () => {
-    if (summaryH > 0) {
+    // Professional summary MUST ONLY ever appear on Page 1
+    if (summaryH > 0 && pages.length === 0) {
       if (currentHeight + summaryH <= currentLimit) {
-        currentPage.professionalSummary = professionalSummary;
-        currentHeight += summaryH;
-      } else {
-        advancePage();
         currentPage.professionalSummary = professionalSummary;
         currentHeight += summaryH;
       }

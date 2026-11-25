@@ -1,2034 +1,6502 @@
 /**
- * RESUME STUDIO — 100 ROLE-SPECIFIC CANVA-STYLE TEMPLATE REGISTRY
+ * RESUME STUDIO — 100 CANVA-INSPIRED ROLE-WISE TEMPLATE REGISTRY
  *
- * 100% Photo-Free, Typographic-First, ATS-Calibrated Resume Templates.
- * Designed across 9 professional categories:
- * - 10 ATS Professional
- * - 10 Modern Professional
- * - 10 Minimalist
- * - 10 Student & Fresher
- * - 16 Technology & Data
- * - 12 Executive & Leadership
- * - 10 Academic & Research
- * - 12 Creative & Portfolio (Zero Photo)
- * - 10 Finance & Business
+ * Exactly 100 unique templates partitioned across 10 specialized categories (10 each):
+ * 1. ATS-Friendly / Traditional (10)
+ * 2. Software Developer / IT (10)
+ * 3. Data Science / AI / ML (10)
+ * 4. Business / Management (10)
+ * 5. Finance / Accounting (10)
+ * 6. Marketing / Sales (10)
+ * 7. Engineering / Technical (10)
+ * 8. Student / Fresher / Internship (10)
+ * 9. Healthcare / Education / Research (10)
+ * 10. Creative / Designer / Media (10)
  *
- * Total: 100 Genuinely Distinct Templates
+ * Total: Exactly 100 Genuinely Distinct Templates.
  */
 
 export const TEMPLATE_CATEGORIES = [
-  { id: "all", name: "All Templates", count: 100, icon: "Layers" },
-  { id: "ats", name: "ATS Professional", count: 10, icon: "ShieldCheck" },
-  { id: "modern", name: "Modern Professional", count: 10, icon: "Sparkles" },
-  { id: "minimalist", name: "Minimalist", count: 10, icon: "Minus" },
-  { id: "student", name: "Student & Fresher", count: 10, icon: "GraduationCap" },
-  { id: "technology", name: "Technology & Data", count: 16, icon: "Code" },
-  { id: "executive", name: "Executive & Leadership", count: 12, icon: "Briefcase" },
-  { id: "academic", name: "Academic & Research", count: 10, icon: "BookOpen" },
-  { id: "creative", name: "Creative & Portfolio", count: 12, icon: "Palette" },
-  { id: "finance", name: "Finance & Business", count: 10, icon: "TrendingUp" }
-];
-
-export const EXPERIENCE_LEVELS = [
-  { id: "all", label: "All Experience Levels" },
-  { id: "student", label: "Student / Campus" },
-  { id: "fresher", label: "Fresher / Entry-Level" },
-  { id: "junior", label: "Junior (1-3 yrs)" },
-  { id: "mid", label: "Mid-Level (3-6 yrs)" },
-  { id: "senior", label: "Senior Professional (6-10 yrs)" },
-  { id: "lead", label: "Team Lead / Staff" },
-  { id: "manager", label: "Manager / Director" },
-  { id: "executive", label: "Executive (VP, C-Suite)" },
-  { id: "career_changer", label: "Career Changer" },
-  { id: "freelancer", label: "Freelancer / Consultant" },
-  { id: "academic", label: "Academic / Researcher" }
-];
-
-export const INDUSTRIES = [
-  { id: "all", label: "All Industries" },
-  { id: "technology", label: "Technology & Software" },
-  { id: "data_ai", label: "Data Science & AI/ML" },
-  { id: "business", label: "Business & Management" },
-  { id: "finance", label: "Finance & Banking" },
-  { id: "marketing", label: "Marketing & Growth" },
-  { id: "engineering", label: "Core Engineering" },
-  { id: "healthcare", label: "Healthcare & Life Sciences" },
-  { id: "academic", label: "Education & Research" },
-  { id: "creative", label: "Creative & Design" },
-  { id: "government", label: "Government & Public Policy" }
-];
-
-export const FONTS_CATALOG = [
-  { id: "inter", name: "Inter (Modern Sans)", family: "'Inter', sans-serif", type: "sans" },
-  { id: "roboto", name: "Roboto (Clean Tech)", family: "'Roboto', sans-serif", type: "sans" },
-  { id: "plus-jakarta", name: "Plus Jakarta Sans (Executive)", family: "'Plus Jakarta Sans', sans-serif", type: "sans" },
-  { id: "outfit", name: "Outfit (Geometric)", family: "'Outfit', sans-serif", type: "sans" },
-  { id: "space-grotesk", name: "Space Grotesk (Tech Accent)", family: "'Space Grotesk', sans-serif", type: "sans" },
-  { id: "merriweather", name: "Merriweather (Classic Editorial)", family: "'Merriweather', serif", type: "serif" },
-  { id: "playfair", name: "Playfair Display (Luxury Serif)", family: "'Playfair Display', serif", type: "serif" },
-  { id: "garamond", name: "EB Garamond (Ivy League Academic)", family: "'EB Garamond', serif", type: "serif" },
-  { id: "georgia", name: "Georgia (Traditional Serif)", family: "Georgia, serif", type: "serif" },
-  { id: "cinzel", name: "Cinzel (Executive Classical)", family: "'Cinzel', serif", type: "serif" },
-  { id: "fira-code", name: "Fira Code (Developer Mono)", family: "'Fira Code', monospace", type: "mono" },
-  { id: "calibri", name: "Calibri (Standard Corporate)", family: "Calibri, sans-serif", type: "sans" },
-  { id: "montserrat", name: "Montserrat (Bold Contemporary)", family: "'Montserrat', sans-serif", type: "sans" },
-  { id: "lato", name: "Lato (Balanced Humanist)", family: "'Lato', sans-serif", type: "sans" }
-];
-
-export const PALETTES_CATALOG = [
-  { id: "slate", name: "Executive Slate", primary: "#0f172a", accent: "#0284c7", background: "#ffffff", text: "#0f172a", muted: "#64748b", border: "#e2e8f0" },
-  { id: "navy", name: "Oxford Navy", primary: "#1e3a8a", accent: "#2563eb", background: "#ffffff", text: "#172554", muted: "#475569", border: "#cbd5e1" },
-  { id: "emerald", name: "Nordic Emerald", primary: "#064e3b", accent: "#059669", background: "#ffffff", text: "#022c22", muted: "#4b5563", border: "#d1fae5" },
-  { id: "monochrome", name: "Pure Monochrome", primary: "#18181b", accent: "#27272a", background: "#ffffff", text: "#09090b", muted: "#71717a", border: "#e4e4e7" },
-  { id: "crimson", name: "Harvard Crimson", primary: "#7f1d1d", accent: "#dc2626", background: "#ffffff", text: "#450a0a", muted: "#57534e", border: "#fee2e2" },
-  { id: "cyan", name: "Cyberpunk Cyan", primary: "#083344", accent: "#0891b2", background: "#ffffff", text: "#082f49", muted: "#64748b", border: "#cffafe" },
-  { id: "violet", name: "Fintech Violet", primary: "#3b0764", accent: "#7c3aed", background: "#ffffff", text: "#2e1065", muted: "#6b7280", border: "#ede9fe" },
-  { id: "amber", name: "Editorial Amber", primary: "#451a03", accent: "#d97706", background: "#ffffff", text: "#292524", muted: "#78716c", border: "#fef3c7" },
-  { id: "charcoal", name: "Midnight Charcoal", primary: "#111827", accent: "#38bdf8", background: "#0b0f19", text: "#f3f4f6", muted: "#9ca3af", border: "#1f2937" },
-  { id: "burgundy", name: "Imperial Burgundy", primary: "#500724", accent: "#be123c", background: "#ffffff", text: "#380415", muted: "#706e66", border: "#fce7f3" }
-];
-
-export const TEMPLATES = [
-  // =========================================================================
-  // 1. ATS PROFESSIONAL (10 Templates) — Single Column, 100% Machine Parsable
-  // =========================================================================
   {
-    id: "ats-classic",
-    name: "Classic ATS Linear",
-    category: "ats",
-    categoryName: "ATS Professional",
-    description: "Battle-tested linear standard that scores 98%+ across Workday, Greenhouse, and Taleo parsers with zero layout shifts.",
-    industry: "all",
-    roles: ["Software Engineer", "Project Manager", "Business Analyst", "Data Analyst", "Accountant"],
-    experienceLevels: ["entry", "mid", "senior", "lead", "manager"],
-    atsScore: 99,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "calibri",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "line",
-    bulletStyle: "disc",
-    rating: 4.95,
-    downloads: 14200
+    "id": "all",
+    "name": "All Templates",
+    "count": 100,
+    "icon": "Layers"
   },
   {
-    id: "ats-stanford",
-    name: "Stanford Single Column",
-    category: "ats",
-    categoryName: "ATS Professional",
-    description: "Strict Stanford Career Center specification: crisp heading hierarchy, bold dates, and high-impact metrics.",
-    industry: "technology",
-    roles: ["Software Engineer", "Full Stack Developer", "Backend Developer", "DevOps Engineer"],
-    experienceLevels: ["fresher", "mid", "senior", "lead"],
-    atsScore: 99,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "inter",
-    palette: PALETTES_CATALOG[1],
-    dividerStyle: "bar",
-    bulletStyle: "disc",
-    rating: 4.98,
-    downloads: 18450
+    "id": "ats",
+    "name": "ATS-Friendly / Traditional",
+    "count": 10,
+    "icon": "ShieldCheck"
   },
   {
-    id: "ats-oxford",
-    name: "Oxford Linear Chronological",
-    category: "ats",
-    categoryName: "ATS Professional",
-    description: "Traditional British university layout with clean horizontal rules and emphasized institution/employer names.",
-    industry: "business",
-    roles: ["Management Consultant", "Business Analyst", "Strategy Analyst", "Operations Manager"],
-    experienceLevels: ["mid", "senior", "executive"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "garamond",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "line",
-    bulletStyle: "dash",
-    rating: 4.91,
-    downloads: 9800
+    "id": "software",
+    "name": "Software Developer / IT",
+    "count": 10,
+    "icon": "Code"
   },
   {
-    id: "ats-executive",
-    name: "Executive ATS Gatekeeper",
-    category: "ats",
-    categoryName: "ATS Professional",
-    description: "Executive hierarchy that highlights board-level P&L outcomes, leadership scope, and career velocity.",
-    industry: "business",
-    roles: ["VP of Engineering", "Chief Technology Officer", "Product Manager", "Operations Director"],
-    experienceLevels: ["senior", "lead", "manager", "executive"],
-    atsScore: 97,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "plus-jakarta",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "bar",
-    bulletStyle: "disc",
-    rating: 4.93,
-    downloads: 11200
+    "id": "datascience",
+    "name": "Data Science / AI / ML",
+    "count": 10,
+    "icon": "Cpu"
   },
   {
-    id: "ats-ivy-league",
-    name: "Ivy League Chronological",
-    category: "ats",
-    categoryName: "ATS Professional",
-    description: "Timeless East-Coast academic/corporate standard. Uses balanced Georgia serif with generous margins.",
-    industry: "finance",
-    roles: ["Investment Analyst", "Financial Analyst", "Corporate Lawyer", "Risk Analyst"],
-    experienceLevels: ["fresher", "junior", "mid", "senior"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "georgia",
-    palette: PALETTES_CATALOG[4],
-    dividerStyle: "line",
-    bulletStyle: "disc",
-    rating: 4.92,
-    downloads: 8700
+    "id": "business",
+    "name": "Business / Management",
+    "count": 10,
+    "icon": "Briefcase"
   },
   {
-    id: "ats-functional-hybrid",
-    name: "Hybrid Functional ATS",
-    category: "ats",
-    categoryName: "ATS Professional",
-    description: "Front-loads core technical proficiencies before chronological history — ideal for career changers and contract architects.",
-    industry: "technology",
-    roles: ["Full Stack Developer", "Cloud Engineer", "Solutions Architect", "Data Scientist"],
-    experienceLevels: ["career_changer", "mid", "senior"],
-    atsScore: 96,
-    atsTier: "high",
-    layout: "single-column",
-    fontFamily: "roboto",
-    palette: PALETTES_CATALOG[1],
-    dividerStyle: "bar",
-    bulletStyle: "square",
-    rating: 4.88,
-    downloads: 7300
+    "id": "finance",
+    "name": "Finance / Accounting",
+    "count": 10,
+    "icon": "TrendingUp"
   },
   {
-    id: "ats-technical-compact",
-    name: "Technical Compact Linear",
-    category: "ats",
-    categoryName: "ATS Professional",
-    description: "High-density 1-page engineering format. Fits 10+ skills, 3 roles, and 3 projects without any text clipping.",
-    industry: "technology",
-    roles: ["Frontend Developer", "Backend Developer", "DevOps Engineer", "AI Engineer"],
-    experienceLevels: ["student", "fresher", "junior", "mid"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "fira-code",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "line",
-    bulletStyle: "dash",
-    rating: 4.94,
-    downloads: 16100
+    "id": "marketing",
+    "name": "Marketing / Sales",
+    "count": 10,
+    "icon": "Target"
   },
   {
-    id: "ats-compliance-legal",
-    name: "Corporate Compliance & Risk",
-    category: "ats",
-    categoryName: "ATS Professional",
-    description: "Calibrated for highly regulated sectors (banking, healthcare, defense) requiring transparent verification markers.",
-    industry: "finance",
-    roles: ["Compliance Officer", "Risk Analyst", "Internal Auditor", "Tax Consultant"],
-    experienceLevels: ["mid", "senior", "lead"],
-    atsScore: 99,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "merriweather",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "line",
-    bulletStyle: "disc",
-    rating: 4.89,
-    downloads: 6400
+    "id": "engineering",
+    "name": "Engineering / Technical",
+    "count": 10,
+    "icon": "Wrench"
   },
   {
-    id: "ats-healthcare-clinical",
-    name: "Clinical Healthcare ATS",
-    category: "ats",
-    categoryName: "ATS Professional",
-    description: "Emphasizes clinical credentials, board certifications, patient outcomes, and medical licensing numbers.",
-    industry: "healthcare",
-    roles: ["Registered Nurse", "Clinical Researcher", "Pharmacist", "Medical Assistant"],
-    experienceLevels: ["fresher", "junior", "mid", "senior"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "lato",
-    palette: PALETTES_CATALOG[2],
-    dividerStyle: "bar",
-    bulletStyle: "disc",
-    rating: 4.90,
-    downloads: 5900
+    "id": "student",
+    "name": "Student / Fresher / Internship",
+    "count": 10,
+    "icon": "GraduationCap"
   },
   {
-    id: "ats-federal-gov",
-    name: "Public Sector & Federal Linear",
-    category: "ats",
-    categoryName: "ATS Professional",
-    description: "Engineered for government job portals (USAJOBS, public sector recruitment) where thorough detail and clear headings are mandatory.",
-    industry: "government",
-    roles: ["Government Job Applicant", "Policy Analyst", "Public Administrator", "Defense Contractor"],
-    experienceLevels: ["mid", "senior", "lead", "executive"],
-    atsScore: 99,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "calibri",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "line",
-    bulletStyle: "disc",
-    rating: 4.87,
-    downloads: 5100
+    "id": "healthcare",
+    "name": "Healthcare / Education / Research",
+    "count": 10,
+    "icon": "BookOpen"
   },
-
-  // =========================================================================
-  // 2. MODERN PROFESSIONAL (10 Templates) — Clean, Contemporary & Balanced
-  // =========================================================================
   {
-    id: "modern-silicon-valley",
-    name: "Silicon Valley Linear",
-    category: "modern",
-    categoryName: "Modern Professional",
-    description: "Polished tech startup aesthetic: high contrast header, clean tag badges, and crisp bullet alignments.",
-    industry: "technology",
-    roles: ["Full Stack Developer", "Product Manager", "Frontend Developer", "AI Engineer"],
-    experienceLevels: ["junior", "mid", "senior"],
-    atsScore: 96,
-    atsTier: "high",
-    layout: "single-column",
-    fontFamily: "plus-jakarta",
-    palette: PALETTES_CATALOG[1],
-    dividerStyle: "bar",
-    bulletStyle: "arrow",
-    rating: 4.97,
-    downloads: 24500
-  },
-  {
-    id: "modern-fintech-matrix",
-    name: "Fintech Horizon",
-    category: "modern",
-    categoryName: "Modern Professional",
-    description: "Tailored for high-growth fintech and modern banking firms: deep navy accents with crisp typography.",
-    industry: "finance",
-    roles: ["Financial Analyst", "Quantitative Analyst", "Product Manager", "Backend Developer"],
-    experienceLevels: ["mid", "senior", "lead"],
-    atsScore: 95,
-    atsTier: "high",
-    layout: "single-column",
-    fontFamily: "inter",
-    palette: PALETTES_CATALOG[6],
-    dividerStyle: "bar",
-    bulletStyle: "square",
-    rating: 4.92,
-    downloads: 13900
-  },
-  {
-    id: "modern-nordic-clean",
-    name: "Nordic Minimalist",
-    category: "modern",
-    categoryName: "Modern Professional",
-    description: "Scandinavian-inspired layout with generous whitespace, subtle sage borders, and serene readability.",
-    industry: "all",
-    roles: ["UI/UX Designer", "Product Designer", "Content Strategist", "Human Resources"],
-    experienceLevels: ["junior", "mid", "senior"],
-    atsScore: 95,
-    atsTier: "high",
-    layout: "single-column",
-    fontFamily: "outfit",
-    palette: PALETTES_CATALOG[2],
-    dividerStyle: "line",
-    bulletStyle: "disc",
-    rating: 4.93,
-    downloads: 15800
-  },
-  {
-    id: "modern-consulting-grid",
-    name: "McKinsey Style Strategy",
-    category: "modern",
-    categoryName: "Modern Professional",
-    description: "Sharp, structured narrative format created for strategy consultants and corporate business analysts.",
-    industry: "business",
-    roles: ["Management Consultant", "Business Analyst", "Strategy Analyst", "Operations Manager"],
-    experienceLevels: ["mid", "senior", "manager"],
-    atsScore: 97,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "merriweather",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "line",
-    bulletStyle: "disc",
-    rating: 4.96,
-    downloads: 18200
-  },
-  {
-    id: "modern-venture-growth",
-    name: "Venture-Backed Operator",
-    category: "modern",
-    categoryName: "Modern Professional",
-    description: "Designed for Series A–C operators showing 0-to-1 ARR milestones, user growth metrics, and cross-functional teams.",
-    industry: "business",
-    roles: ["Product Manager", "Growth Lead", "Marketing Manager", "Business Development Executive"],
-    experienceLevels: ["mid", "senior", "lead"],
-    atsScore: 94,
-    atsTier: "high",
-    layout: "two-column",
-    fontFamily: "plus-jakarta",
-    palette: PALETTES_CATALOG[1],
-    dividerStyle: "bar",
-    bulletStyle: "arrow",
-    rating: 4.91,
-    downloads: 12400
-  },
-  {
-    id: "modern-corporate-accent",
-    name: "Enterprise Global",
-    category: "modern",
-    categoryName: "Modern Professional",
-    description: "Balanced corporate aesthetic for multinational leaders managing multi-geography initiatives.",
-    industry: "business",
-    roles: ["Project Manager", "Operations Manager", "HR Manager", "Commercial Director"],
-    experienceLevels: ["senior", "manager", "director"],
-    atsScore: 96,
-    atsTier: "high",
-    layout: "single-column",
-    fontFamily: "inter",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "bar",
-    bulletStyle: "disc",
-    rating: 4.88,
-    downloads: 9100
-  },
-  {
-    id: "modern-two-tone",
-    name: "Dual Column Precision",
-    category: "modern",
-    categoryName: "Modern Professional",
-    description: "Balanced 65/35 layout: main track for detailed achievements; right side for competencies and rapid scanning.",
-    industry: "technology",
-    roles: ["Full Stack Developer", "Data Scientist", "Cybersecurity Analyst", "Solutions Architect"],
-    experienceLevels: ["mid", "senior"],
-    atsScore: 92,
-    atsTier: "medium",
-    layout: "two-column",
-    fontFamily: "inter",
-    palette: PALETTES_CATALOG[1],
-    dividerStyle: "line",
-    bulletStyle: "square",
-    rating: 4.89,
-    downloads: 14700
-  },
-  {
-    id: "modern-apex-linear",
-    name: "Apex Engineering",
-    category: "modern",
-    categoryName: "Modern Professional",
-    description: "Sleek blue accent bar with bold position titles and inline technologies tags for immediate recruiter attraction.",
-    industry: "technology",
-    roles: ["Backend Developer", "Software Engineer", "Cloud Engineer", "Site Reliability Engineer"],
-    experienceLevels: ["mid", "senior", "lead"],
-    atsScore: 97,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "roboto",
-    palette: PALETTES_CATALOG[1],
-    dividerStyle: "bar",
-    bulletStyle: "disc",
-    rating: 4.95,
-    downloads: 17300
-  },
-  {
-    id: "modern-warm-editorial",
-    name: "Editorial Contemporary",
-    category: "modern",
-    categoryName: "Modern Professional",
-    description: "Warm amber tones and elegant serif headings for thought leaders, writers, and brand executives.",
-    industry: "marketing",
-    roles: ["Content Strategist", "Brand Manager", "Creative Director", "Communications Lead"],
-    experienceLevels: ["mid", "senior", "lead"],
-    atsScore: 95,
-    atsTier: "high",
-    layout: "single-column",
-    fontFamily: "playfair",
-    palette: PALETTES_CATALOG[7],
-    dividerStyle: "line",
-    bulletStyle: "dash",
-    rating: 4.90,
-    downloads: 8200
-  },
-  {
-    id: "modern-hybrid-compact",
-    name: "Hybrid Executive Sprint",
-    category: "modern",
-    categoryName: "Modern Professional",
-    description: "High efficiency layout featuring a dynamic executive summary block and modular skills matrix.",
-    industry: "technology",
-    roles: ["Engineering Manager", "Technical Director", "Staff Software Engineer", "Product Lead"],
-    experienceLevels: ["senior", "lead", "manager"],
-    atsScore: 96,
-    atsTier: "high",
-    layout: "single-column",
-    fontFamily: "plus-jakarta",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "bar",
-    bulletStyle: "disc",
-    rating: 4.94,
-    downloads: 13600
-  },
-
-  // =========================================================================
-  // 3. MINIMALIST (10 Templates) — Typography, White Space & Pure Clarity
-  // =========================================================================
-  {
-    id: "minimal-swiss",
-    name: "Swiss Typographic Grid",
-    category: "minimalist",
-    categoryName: "Minimalist",
-    description: "Rooted in 1950s International Typographic Style: strict grid alignment, asymmetric white space, zero decoration.",
-    industry: "all",
-    roles: ["UI/UX Designer", "Software Engineer", "Architect", "Product Strategist"],
-    experienceLevels: ["fresher", "junior", "mid", "senior"],
-    atsScore: 99,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "inter",
-    palette: PALETTES_CATALOG[3],
-    dividerStyle: "none",
-    bulletStyle: "dash",
-    rating: 4.96,
-    downloads: 19800
-  },
-  {
-    id: "minimal-monospace",
-    name: "Pure Monospace Terminal",
-    category: "minimalist",
-    categoryName: "Minimalist",
-    description: "Clean monospace type reminiscent of Unix documentation and developer markdown files.",
-    industry: "technology",
-    roles: ["Backend Developer", "DevOps Engineer", "Linux Systems Administrator", "Security Researcher"],
-    experienceLevels: ["fresher", "junior", "mid", "senior"],
-    atsScore: 99,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "fira-code",
-    palette: PALETTES_CATALOG[3],
-    dividerStyle: "line",
-    bulletStyle: "dash",
-    rating: 4.93,
-    downloads: 16500
-  },
-  {
-    id: "minimal-editorial",
-    name: "New Yorker Editorial",
-    category: "minimalist",
-    categoryName: "Minimalist",
-    description: "Subtle serif typography with centered header and literary paragraph pacing for researchers and writers.",
-    industry: "academic",
-    roles: ["Research Scientist", "Journalist", "Content Strategist", "Professor"],
-    experienceLevels: ["mid", "senior", "academic"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "merriweather",
-    palette: PALETTES_CATALOG[3],
-    dividerStyle: "line",
-    bulletStyle: "disc",
-    rating: 4.91,
-    downloads: 7900
-  },
-  {
-    id: "minimal-kyoto",
-    name: "Kyoto Zen Margin",
-    category: "minimalist",
-    categoryName: "Minimalist",
-    description: "Maximum negative space and elegant understated line rules for effortless scanning by hiring managers.",
-    industry: "all",
-    roles: ["Frontend Developer", "Product Designer", "Architect", "Consultant"],
-    experienceLevels: ["junior", "mid", "senior"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "outfit",
-    palette: PALETTES_CATALOG[3],
-    dividerStyle: "line",
-    bulletStyle: "disc",
-    rating: 4.94,
-    downloads: 11400
-  },
-  {
-    id: "minimal-bauhaus",
-    name: "Bauhaus Geometric",
-    category: "minimalist",
-    categoryName: "Minimalist",
-    description: "Form follows function: bold lowercase section accents with high readability across all screen sizes.",
-    industry: "creative",
-    roles: ["Graphic Designer", "Product Designer", "UI/UX Designer", "Creative Technologist"],
-    experienceLevels: ["junior", "mid", "senior"],
-    atsScore: 95,
-    atsTier: "high",
-    layout: "single-column",
-    fontFamily: "space-grotesk",
-    palette: PALETTES_CATALOG[3],
-    dividerStyle: "none",
-    bulletStyle: "square",
-    rating: 4.89,
-    downloads: 8900
-  },
-  {
-    id: "minimal-clean-line",
-    name: "Ultralight Wireframe",
-    category: "minimalist",
-    categoryName: "Minimalist",
-    description: "Subtle 0.5px hairline dividers and muted dates for candidates who let their numbers speak for themselves.",
-    industry: "finance",
-    roles: ["Financial Analyst", "Quantitative Analyst", "Software Engineer", "Economist"],
-    experienceLevels: ["mid", "senior", "lead"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "inter",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "line",
-    bulletStyle: "dash",
-    rating: 4.92,
-    downloads: 10200
-  },
-  {
-    id: "minimal-typewriter",
-    name: "Classic Typewriter Linear",
-    category: "minimalist",
-    categoryName: "Minimalist",
-    description: "Raw courier/monospace aesthetic with bracketed dates and retro-modern developer flair.",
-    industry: "technology",
-    roles: ["Cybersecurity Analyst", "Open Source Developer", "Systems Programmer", "DevOps Engineer"],
-    experienceLevels: ["junior", "mid", "senior"],
-    atsScore: 99,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "fira-code",
-    palette: PALETTES_CATALOG[3],
-    dividerStyle: "none",
-    bulletStyle: "dash",
-    rating: 4.90,
-    downloads: 9300
-  },
-  {
-    id: "minimal-architect",
-    name: "Architectural Blueprint",
-    category: "minimalist",
-    categoryName: "Minimalist",
-    description: "Precise letter-spacing, uppercase section headers, and structured columnar metadata.",
-    industry: "engineering",
-    roles: ["Civil Engineer", "Mechanical Engineer", "Architect", "Industrial Designer"],
-    experienceLevels: ["mid", "senior", "lead"],
-    atsScore: 97,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "outfit",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "bar",
-    bulletStyle: "square",
-    rating: 4.91,
-    downloads: 7800
-  },
-  {
-    id: "minimal-tokyo",
-    name: "Tokyo Metro Linear",
-    category: "minimalist",
-    categoryName: "Minimalist",
-    description: "Ultra-compact vertical pacing with clean pill-style skill lists and structured company dates.",
-    industry: "technology",
-    roles: ["Frontend Developer", "Mobile Developer", "Full Stack Developer", "Data Analyst"],
-    experienceLevels: ["fresher", "junior", "mid"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "inter",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "line",
-    bulletStyle: "disc",
-    rating: 4.95,
-    downloads: 13100
-  },
-  {
-    id: "minimal-slate-pure",
-    name: "Pure Carbon White",
-    category: "minimalist",
-    categoryName: "Minimalist",
-    description: "Crisp black typography on pure white background, completely void of unnecessary ornamentation.",
-    industry: "all",
-    roles: ["Software Engineer", "Consultant", "Product Manager", "Lawyer"],
-    experienceLevels: ["entry", "mid", "senior", "executive"],
-    atsScore: 99,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "calibri",
-    palette: PALETTES_CATALOG[3],
-    dividerStyle: "line",
-    bulletStyle: "disc",
-    rating: 4.97,
-    downloads: 21300
-  },
-
-  // =========================================================================
-  // 4. STUDENT & FRESHER (10 Templates) — Education & Project Forward
-  // =========================================================================
-  {
-    id: "student-campus-hire",
-    name: "Campus Accelerator",
-    category: "student",
-    categoryName: "Student & Fresher",
-    description: "Education and academic projects positioned immediately below contact info for college placements.",
-    industry: "technology",
-    roles: ["Software Engineer Intern", "Graduate Engineer Trainee", "Junior Developer", "Data Analyst"],
-    experienceLevels: ["student", "fresher"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "plus-jakarta",
-    palette: PALETTES_CATALOG[1],
-    dividerStyle: "bar",
-    bulletStyle: "disc",
-    rating: 4.97,
-    downloads: 32400
-  },
-  {
-    id: "student-stem-honors",
-    name: "STEM Honors Scholar",
-    category: "student",
-    categoryName: "Student & Fresher",
-    description: "Highlights high CGPA, Dean's List honors, relevant coursework, and hackathon victories.",
-    industry: "engineering",
-    roles: ["Computer Science Student", "Electrical Engineer", "Mechanical Engineer", "Biomedical Student"],
-    experienceLevels: ["student", "fresher"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "roboto",
-    palette: PALETTES_CATALOG[1],
-    dividerStyle: "bar",
-    bulletStyle: "square",
-    rating: 4.94,
-    downloads: 19100
-  },
-  {
-    id: "student-bootcamp-grad",
-    name: "Coding Bootcamp Grad",
-    category: "student",
-    categoryName: "Student & Fresher",
-    description: "Emphasizes hands-on production web applications, GitHub repos, and live deployments over degree prestige.",
-    industry: "technology",
-    roles: ["Frontend Developer", "Full Stack Developer", "Junior Backend Engineer", "Web Developer"],
-    experienceLevels: ["fresher", "career_changer"],
-    atsScore: 97,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "inter",
-    palette: PALETTES_CATALOG[5],
-    dividerStyle: "bar",
-    bulletStyle: "arrow",
-    rating: 4.95,
-    downloads: 23800
-  },
-  {
-    id: "student-internship-first",
-    name: "Internship & Co-Op Linear",
-    category: "student",
-    categoryName: "Student & Fresher",
-    description: "Designed for candidates with 2-3 significant internships or co-op experiences during university.",
-    industry: "technology",
-    roles: ["Software Engineering Intern", "Product Intern", "Business Analyst Intern", "Marketing Intern"],
-    experienceLevels: ["student", "fresher", "junior"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "inter",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "line",
-    bulletStyle: "disc",
-    rating: 4.91,
-    downloads: 14500
-  },
-  {
-    id: "student-research-apprentice",
-    name: "Undergraduate Researcher",
-    category: "student",
-    categoryName: "Student & Fresher",
-    description: "Highlights laboratory research, professor recommendations, pre-prints, and poster presentations.",
-    industry: "academic",
-    roles: ["Research Assistant", "PhD Applicant", "Laboratory Trainee", "Clinical Study Student"],
-    experienceLevels: ["student", "academic"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "merriweather",
-    palette: PALETTES_CATALOG[4],
-    dividerStyle: "line",
-    bulletStyle: "disc",
-    rating: 4.89,
-    downloads: 8700
-  },
-  {
-    id: "student-business-fellow",
-    name: "BBA / Commerce Graduate",
-    category: "student",
-    categoryName: "Student & Fresher",
-    description: "Polished corporate layout for business administration, finance, and marketing fresh graduates.",
-    industry: "business",
-    roles: ["Management Trainee", "Business Development Executive", "Junior Financial Analyst", "Marketing Associate"],
-    experienceLevels: ["student", "fresher"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "plus-jakarta",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "bar",
-    bulletStyle: "disc",
-    rating: 4.92,
-    downloads: 11900
-  },
-  {
-    id: "student-hackathon-builder",
-    name: "Hackathon Champion",
-    category: "student",
-    categoryName: "Student & Fresher",
-    description: "Showcases hackathon wins, open source pull requests, and rapid prototype deployments.",
-    industry: "technology",
-    roles: ["AI/ML Student", "Full Stack Developer", "Junior AI Engineer", "Mobile Developer"],
-    experienceLevels: ["student", "fresher"],
-    atsScore: 96,
-    atsTier: "high",
-    layout: "single-column",
-    fontFamily: "space-grotesk",
-    palette: PALETTES_CATALOG[6],
-    dividerStyle: "bar",
-    bulletStyle: "arrow",
-    rating: 4.96,
-    downloads: 17200
-  },
-  {
-    id: "student-liberal-arts",
-    name: "Humanities & Social Sciences",
-    category: "student",
-    categoryName: "Student & Fresher",
-    description: "Designed for literature, economics, and psychology graduates with strong writing and analytical skills.",
-    industry: "academic",
-    roles: ["Content Strategist", "Editorial Assistant", "HR Specialist", "Communications Associate"],
-    experienceLevels: ["student", "fresher"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "georgia",
-    palette: PALETTES_CATALOG[7],
-    dividerStyle: "line",
-    bulletStyle: "dash",
-    rating: 4.88,
-    downloads: 6900
-  },
-  {
-    id: "student-polytechnic",
-    name: "Polytechnic & Diploma Entry",
-    category: "student",
-    categoryName: "Student & Fresher",
-    description: "Structured presentation of hands-on technical labs, equipment certifications, and apprenticeship workshops.",
-    industry: "engineering",
-    roles: ["Junior Technician", "Quality Inspector", "Electronics Technician", "Field Engineer"],
-    experienceLevels: ["fresher", "junior"],
-    atsScore: 99,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "calibri",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "line",
-    bulletStyle: "disc",
-    rating: 4.87,
-    downloads: 8100
-  },
-  {
-    id: "student-first-job-starter",
-    name: "First Career Starter",
-    category: "student",
-    categoryName: "Student & Fresher",
-    description: "Confidence-building single page that turns class projects, volunteer work, and soft skills into recruiter gold.",
-    industry: "all",
-    roles: ["Entry Level Associate", "Customer Support", "Office Coordinator", "Sales Representative"],
-    experienceLevels: ["fresher"],
-    atsScore: 99,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "inter",
-    palette: PALETTES_CATALOG[1],
-    dividerStyle: "bar",
-    bulletStyle: "disc",
-    rating: 4.94,
-    downloads: 27500
-  },
-
-  // =========================================================================
-  // 5. TECHNOLOGY & DATA (16 Templates) — Deep Engineering & Metrics
-  // =========================================================================
-  {
-    id: "tech-google-l5",
-    name: "Google L5 Senior SWE",
-    category: "technology",
-    categoryName: "Technology & Data",
-    description: "Strictly calibrated to Google hiring committee standards: XYZ impact metrics, clean single-column hierarchy, zero noise.",
-    industry: "technology",
-    roles: ["Senior Software Engineer", "Backend Developer", "Staff Software Engineer", "Full Stack Developer"],
-    experienceLevels: ["senior", "lead"],
-    atsScore: 99,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "roboto",
-    palette: PALETTES_CATALOG[1],
-    dividerStyle: "bar",
-    bulletStyle: "disc",
-    rating: 4.99,
-    downloads: 38900
-  },
-  {
-    id: "tech-meta-e5",
-    name: "Meta E5 Production Lead",
-    category: "technology",
-    categoryName: "Technology & Data",
-    description: "Built for high-concurrency systems, GraphQL/React architecture, fast release velocity, and scale.",
-    industry: "technology",
-    roles: ["Full Stack Developer", "Frontend Developer", "Engineering Manager", "Production Engineer"],
-    experienceLevels: ["senior", "lead"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "inter",
-    palette: PALETTES_CATALOG[1],
-    dividerStyle: "bar",
-    bulletStyle: "disc",
-    rating: 4.96,
-    downloads: 31200
-  },
-  {
-    id: "tech-amazon-sde",
-    name: "Amazon Bar-Raiser SDE",
-    category: "technology",
-    categoryName: "Technology & Data",
-    description: "Reflects Amazon Leadership Principles: Customer Obsession, Ownership, Bias for Action, and Deliver Results.",
-    industry: "technology",
-    roles: ["Software Engineer", "Backend Developer", "Distributed Systems Engineer", "Cloud Architect"],
-    experienceLevels: ["mid", "senior", "lead"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "inter",
-    palette: PALETTES_CATALOG[7],
-    dividerStyle: "bar",
-    bulletStyle: "disc",
-    rating: 4.95,
-    downloads: 29800
-  },
-  {
-    id: "tech-fullstack-systems",
-    name: "Full Stack Systems Architect",
-    category: "technology",
-    categoryName: "Technology & Data",
-    description: "Clean dual separation of Frontend (React/Vue/TypeScript) and Backend (Python/Go/PostgreSQL/Docker).",
-    industry: "technology",
-    roles: ["Full Stack Developer", "Software Engineer", "Frontend Developer", "Backend Developer"],
-    experienceLevels: ["junior", "mid", "senior"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "plus-jakarta",
-    palette: PALETTES_CATALOG[1],
-    dividerStyle: "bar",
-    bulletStyle: "arrow",
-    rating: 4.97,
-    downloads: 34100
-  },
-  {
-    id: "tech-backend-distributed",
-    name: "Distributed Backend & Microservices",
-    category: "technology",
-    categoryName: "Technology & Data",
-    description: "Emphasizes throughput (QPS), p99 latency reduction, Kafka event brokers, and database indexing.",
-    industry: "technology",
-    roles: ["Backend Developer", "Systems Programmer", "Distributed Systems Engineer", "Database Administrator"],
-    experienceLevels: ["mid", "senior", "lead"],
-    atsScore: 99,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "roboto",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "line",
-    bulletStyle: "square",
-    rating: 4.96,
-    downloads: 22400
-  },
-  {
-    id: "tech-ai-genai",
-    name: "GenAI & LLM Solutions Engineer",
-    category: "technology",
-    categoryName: "Technology & Data",
-    description: "Tailored for AI engineers building LangChain, RAG pipelines, fine-tuned models, and inference APIs.",
-    industry: "data_ai",
-    roles: ["AI Engineer", "Machine Learning Engineer", "GenAI Specialist", "Deep Learning Researcher"],
-    experienceLevels: ["mid", "senior", "lead"],
-    atsScore: 97,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "space-grotesk",
-    palette: PALETTES_CATALOG[6],
-    dividerStyle: "bar",
-    bulletStyle: "arrow",
-    rating: 4.98,
-    downloads: 36700
-  },
-  {
-    id: "tech-data-architect",
-    name: "Data Platform & Medallion Architect",
-    category: "technology",
-    categoryName: "Technology & Data",
-    description: "Calibrated for Databricks, Microsoft Fabric, Snowflake, and ADLS Gen2 enterprise lakehouse architectures.",
-    industry: "data_ai",
-    roles: ["Data Solution Architect", "Data Engineer", "Data Platform Lead", "Big Data Developer"],
-    experienceLevels: ["senior", "lead", "manager"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "plus-jakarta",
-    palette: PALETTES_CATALOG[1],
-    dividerStyle: "bar",
-    bulletStyle: "disc",
-    rating: 4.97,
-    downloads: 25100
-  },
-  {
-    id: "tech-data-scientist",
-    name: "Applied Data Scientist",
-    category: "technology",
-    categoryName: "Technology & Data",
-    description: "Highlights predictive modeling, statistical rigor, A/B experiment design, and business conversion lift.",
-    industry: "data_ai",
-    roles: ["Data Scientist", "Machine Learning Engineer", "Quantitative Researcher", "AI Scientist"],
-    experienceLevels: ["mid", "senior", "lead"],
-    atsScore: 97,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "inter",
-    palette: PALETTES_CATALOG[2],
-    dividerStyle: "line",
-    bulletStyle: "disc",
-    rating: 4.94,
-    downloads: 21800
-  },
-  {
-    id: "tech-data-analyst",
-    name: "BI & Analytics Specialist",
-    category: "technology",
-    categoryName: "Technology & Data",
-    description: "Focuses on SQL queries, Power BI / Tableau dashboards, ETL data pipelines, and executive insights.",
-    industry: "data_ai",
-    roles: ["Data Analyst", "Business Intelligence Developer", "Analytics Engineer", "Operations Analyst"],
-    experienceLevels: ["entry", "mid", "senior"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "lato",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "bar",
-    bulletStyle: "disc",
-    rating: 4.93,
-    downloads: 28400
-  },
-  {
-    id: "tech-cloud-devops",
-    name: "Cloud Infrastructure & SRE",
-    category: "technology",
-    categoryName: "Technology & Data",
-    description: "Highlights Kubernetes clusters, Terraform IaC, AWS/Azure multi-region resilience, and zero downtime deployments.",
-    industry: "technology",
-    roles: ["DevOps Engineer", "Cloud Engineer", "Site Reliability Engineer", "Platform Engineer"],
-    experienceLevels: ["mid", "senior", "lead"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "roboto",
-    palette: PALETTES_CATALOG[5],
-    dividerStyle: "bar",
-    bulletStyle: "square",
-    rating: 4.95,
-    downloads: 27900
-  },
-  {
-    id: "tech-cybersecurity",
-    name: "Cybersecurity & SOC Defense",
-    category: "technology",
-    categoryName: "Technology & Data",
-    description: "Focuses on threat modeling, SIEM analysis, penetration testing, compliance (SOC2/ISO), and incident triage.",
-    industry: "technology",
-    roles: ["Cybersecurity Analyst", "Security Engineer", "SOC Analyst", "Penetration Tester"],
-    experienceLevels: ["junior", "mid", "senior"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "fira-code",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "line",
-    bulletStyle: "dash",
-    rating: 4.92,
-    downloads: 18300
-  },
-  {
-    id: "tech-mobile-engineer",
-    name: "Mobile App Engineer (iOS/Android)",
-    category: "technology",
-    categoryName: "Technology & Data",
-    description: "Showcases App Store ratings, monthly active users, offline sync, Swift/Kotlin, and React Native builds.",
-    industry: "technology",
-    roles: ["Mobile Developer", "iOS Engineer", "Android Engineer", "React Native Developer"],
-    experienceLevels: ["junior", "mid", "senior"],
-    atsScore: 97,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "outfit",
-    palette: PALETTES_CATALOG[1],
-    dividerStyle: "bar",
-    bulletStyle: "arrow",
-    rating: 4.91,
-    downloads: 15400
-  },
-  {
-    id: "tech-qa-automation",
-    name: "SDET & QA Automation Lead",
-    category: "technology",
-    categoryName: "Technology & Data",
-    description: "Emphasizes end-to-end Cypress/Playwright suites, regression test coverage, and automated release gates.",
-    industry: "technology",
-    roles: ["QA Automation Engineer", "SDET", "Quality Assurance Lead", "Test Automation Architect"],
-    experienceLevels: ["mid", "senior", "lead"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "inter",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "line",
-    bulletStyle: "disc",
-    rating: 4.90,
-    downloads: 14200
-  },
-  {
-    id: "tech-database-admin",
-    name: "Database Administrator & DBA",
-    category: "technology",
-    categoryName: "Technology & Data",
-    description: "Highlights high availability replication, sharding, query optimization, and petabyte-scale storage.",
-    industry: "technology",
-    roles: ["Database Administrator", "SQL Developer", "Data Warehouse Engineer", "DBA Lead"],
-    experienceLevels: ["senior", "lead"],
-    atsScore: 99,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "calibri",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "line",
-    bulletStyle: "disc",
-    rating: 4.89,
-    downloads: 11100
-  },
-  {
-    id: "tech-embedded-firmware",
-    name: "Embedded & IoT Firmware",
-    category: "technology",
-    categoryName: "Technology & Data",
-    description: "Focuses on C/C++, RTOS, hardware communication protocols (SPI, I2C, CAN), and low-power microcontrollers.",
-    industry: "engineering",
-    roles: ["Embedded Software Engineer", "Firmware Engineer", "IoT Systems Developer", "Hardware-Software Integrator"],
-    experienceLevels: ["mid", "senior", "lead"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "fira-code",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "line",
-    bulletStyle: "square",
-    rating: 4.91,
-    downloads: 9700
-  },
-  {
-    id: "tech-platform-architect",
-    name: "Principal Platform Architect",
-    category: "technology",
-    categoryName: "Technology & Data",
-    description: "Calibrated for Staff & Principal engineers leading organization-wide developer velocity and platform foundations.",
-    industry: "technology",
-    roles: ["Principal Engineer", "Staff Software Engineer", "Platform Architect", "Chief Architect"],
-    experienceLevels: ["lead", "executive"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "plus-jakarta",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "bar",
-    bulletStyle: "disc",
-    rating: 4.98,
-    downloads: 21900
-  },
-
-  // =========================================================================
-  // 6. EXECUTIVE & LEADERSHIP (12 Templates) — Strategic Impact & Governance
-  // =========================================================================
-  {
-    id: "exec-cto-scale",
-    name: "Chief Technology Officer (CTO)",
-    category: "executive",
-    categoryName: "Executive & Leadership",
-    description: "Built for technology visionaries managing 100+ engineers, multi-million dollar tech budgets, and tech roadmaps.",
-    industry: "technology",
-    roles: ["Chief Technology Officer", "VP of Engineering", "Head of Engineering", "Technical Co-Founder"],
-    experienceLevels: ["executive"],
-    atsScore: 97,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "plus-jakarta",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "bar",
-    bulletStyle: "disc",
-    rating: 4.99,
-    downloads: 16800
-  },
-  {
-    id: "exec-vp-engineering",
-    name: "VP of Engineering",
-    category: "executive",
-    categoryName: "Executive & Leadership",
-    description: "Emphasizes engineering org design, hiring velocity, retention, SDLC acceleration, and board reporting.",
-    industry: "technology",
-    roles: ["VP of Engineering", "Director of Engineering", "Engineering Manager", "Head of Software"],
-    experienceLevels: ["lead", "manager", "executive"],
-    atsScore: 97,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "inter",
-    palette: PALETTES_CATALOG[1],
-    dividerStyle: "bar",
-    bulletStyle: "disc",
-    rating: 4.96,
-    downloads: 14200
-  },
-  {
-    id: "exec-cpo-product",
-    name: "Chief Product Officer (CPO)",
-    category: "executive",
-    categoryName: "Executive & Leadership",
-    description: "Highlights product strategy, user retention, ARR expansion, product-led growth, and roadmap execution.",
-    industry: "business",
-    roles: ["Chief Product Officer", "VP of Product", "Head of Product", "Group Product Manager"],
-    experienceLevels: ["manager", "director", "executive"],
-    atsScore: 96,
-    atsTier: "high",
-    layout: "single-column",
-    fontFamily: "outfit",
-    palette: PALETTES_CATALOG[1],
-    dividerStyle: "bar",
-    bulletStyle: "arrow",
-    rating: 4.94,
-    downloads: 12900
-  },
-  {
-    id: "exec-coo-operations",
-    name: "Chief Operating Officer (COO)",
-    category: "executive",
-    categoryName: "Executive & Leadership",
-    description: "Designed for operations executives managing supply chain, global logistics, cost optimization, and margin expansion.",
-    industry: "business",
-    roles: ["Chief Operating Officer", "VP of Operations", "General Manager", "Operations Director"],
-    experienceLevels: ["executive"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "merriweather",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "line",
-    bulletStyle: "disc",
-    rating: 4.92,
-    downloads: 9800
-  },
-  {
-    id: "exec-cro-revenue",
-    name: "Chief Revenue Officer (CRO)",
-    category: "executive",
-    categoryName: "Executive & Leadership",
-    description: "Showcases quota over-achievement, enterprise sales cycles ($500k+ ACV), partner ecosystems, and expansion.",
-    industry: "marketing",
-    roles: ["Chief Revenue Officer", "VP of Global Sales", "Commercial Director", "Head of Enterprise Sales"],
-    experienceLevels: ["director", "executive"],
-    atsScore: 96,
-    atsTier: "high",
-    layout: "single-column",
-    fontFamily: "plus-jakarta",
-    palette: PALETTES_CATALOG[4],
-    dividerStyle: "bar",
-    bulletStyle: "disc",
-    rating: 4.93,
-    downloads: 8700
-  },
-  {
-    id: "exec-managing-director",
-    name: "Managing Director & Partner",
-    category: "executive",
-    categoryName: "Executive & Leadership",
-    description: "Authoritative boardroom aesthetic with distinguished serif headers for private equity and consulting partners.",
-    industry: "finance",
-    roles: ["Managing Director", "Senior Partner", "Board Member", "Principal Advisor"],
-    experienceLevels: ["executive"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "cinzel",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "line",
-    bulletStyle: "disc",
-    rating: 4.95,
-    downloads: 7900
-  },
-  {
-    id: "exec-general-manager",
-    name: "General Manager & P&L Owner",
-    category: "executive",
-    categoryName: "Executive & Leadership",
-    description: "Highlights cross-functional P&L stewardship, operational turnarounds, margin improvements, and market entry.",
-    industry: "business",
-    roles: ["General Manager", "Country Manager", "Business Unit Head", "Managing Director"],
-    experienceLevels: ["director", "executive"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "inter",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "bar",
-    bulletStyle: "disc",
-    rating: 4.90,
-    downloads: 9100
-  },
-  {
-    id: "exec-program-director",
-    name: "Enterprise Transformation Director",
-    category: "executive",
-    categoryName: "Executive & Leadership",
-    description: "Specialized for leaders spearheading multi-year ERP, cloud migration, and agile organizational transformation.",
-    industry: "technology",
-    roles: ["Program Director", "Transformation Lead", "VP of IT", "Head of Business Systems"],
-    experienceLevels: ["director", "executive"],
-    atsScore: 97,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "roboto",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "bar",
-    bulletStyle: "square",
-    rating: 4.91,
-    downloads: 8300
-  },
-  {
-    id: "exec-hr-chief",
-    name: "Chief People Officer (CHRO)",
-    category: "executive",
-    categoryName: "Executive & Leadership",
-    description: "Emphasizes employer branding, organizational health, compensation benchmarking, and talent retention.",
-    industry: "business",
-    roles: ["Chief People Officer", "VP of Human Resources", "Head of Talent", "People Operations Director"],
-    experienceLevels: ["director", "executive"],
-    atsScore: 97,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "outfit",
-    palette: PALETTES_CATALOG[2],
-    dividerStyle: "bar",
-    bulletStyle: "disc",
-    rating: 4.92,
-    downloads: 7600
-  },
-  {
-    id: "exec-boardroom-advisor",
-    name: "Board Member & Senior Advisor",
-    category: "executive",
-    categoryName: "Executive & Leadership",
-    description: "Minimalist, distinguished presentation of governance committee roles, audit leadership, and strategic advisory.",
-    industry: "business",
-    roles: ["Independent Director", "Board Advisor", "Non-Executive Director", "Venture Partner"],
-    experienceLevels: ["executive"],
-    atsScore: 99,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "garamond",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "line",
-    bulletStyle: "disc",
-    rating: 4.94,
-    downloads: 6200
-  },
-  {
-    id: "exec-engineering-director",
-    name: "Director of Software Engineering",
-    category: "executive",
-    categoryName: "Executive & Leadership",
-    description: "Bridges executive strategy with hands-on technical architecture and engineering managers leadership.",
-    industry: "technology",
-    roles: ["Director of Engineering", "Engineering Manager", "Senior Director of Technology"],
-    experienceLevels: ["manager", "director"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "inter",
-    palette: PALETTES_CATALOG[1],
-    dividerStyle: "bar",
-    bulletStyle: "disc",
-    rating: 4.95,
-    downloads: 13800
-  },
-  {
-    id: "exec-strategic-partner",
-    name: "Strategic Alliance & Ecosystem Lead",
-    category: "executive",
-    categoryName: "Executive & Leadership",
-    description: "Showcases multi-million dollar co-sell partnerships (AWS, Microsoft, Google Cloud), channel growth, and ISV alliances.",
-    industry: "business",
-    roles: ["Head of Partnerships", "VP of Alliances", "Global Ecosystem Lead", "Business Development Director"],
-    experienceLevels: ["director", "executive"],
-    atsScore: 97,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "plus-jakarta",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "bar",
-    bulletStyle: "arrow",
-    rating: 4.91,
-    downloads: 8100
-  },
-
-  // =========================================================================
-  // 7. ACADEMIC & RESEARCH (10 Templates) — Publications, Teaching & Grants
-  // =========================================================================
-  {
-    id: "academic-phd-curriculum",
-    name: "Doctoral Dissertation Fellow",
-    category: "academic",
-    categoryName: "Academic & Research",
-    description: "Detailed scholarly curriculum vitae formatting for PhD graduates, fellowship applications, and postdocs.",
-    industry: "academic",
-    roles: ["PhD Candidate", "Postdoctoral Researcher", "Research Fellow", "Graduate Assistant"],
-    experienceLevels: ["academic", "student"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "garamond",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "line",
-    bulletStyle: "disc",
-    rating: 4.97,
-    downloads: 12400
-  },
-  {
-    id: "academic-professorship",
-    name: "Tenure-Track Faculty CV",
-    category: "academic",
-    categoryName: "Academic & Research",
-    description: "Prioritizes peer-reviewed publications, teaching pedagogy, NSF/NIH grant funding, and conference proceedings.",
-    industry: "academic",
-    roles: ["Assistant Professor", "Associate Professor", "University Lecturer", "Department Chair"],
-    experienceLevels: ["academic"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "merriweather",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "line",
-    bulletStyle: "disc",
-    rating: 4.95,
-    downloads: 10800
-  },
-  {
-    id: "academic-clinical-scientist",
-    name: "Clinical Investigator & MD/PhD",
-    category: "academic",
-    categoryName: "Academic & Research",
-    description: "Structured for medical researchers, clinical trial directors, and bio-pharmaceutical scientists.",
-    industry: "healthcare",
-    roles: ["Clinical Researcher", "Medical Scientist", "Pharmacologist", "Principal Investigator"],
-    experienceLevels: ["mid", "senior", "academic"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "lato",
-    palette: PALETTES_CATALOG[2],
-    dividerStyle: "bar",
-    bulletStyle: "disc",
-    rating: 4.91,
-    downloads: 7400
-  },
-  {
-    id: "academic-ai-researcher",
-    name: "NeurIPS / ICML AI Research Scientist",
-    category: "academic",
-    categoryName: "Academic & Research",
-    description: "Highlights published papers in top ML venues (NeurIPS, ICML, CVPR, ICLR), patents, and open-source models.",
-    industry: "data_ai",
-    roles: ["Research Scientist", "AI Researcher", "Machine Learning Scientist", "Postdoc Researcher"],
-    experienceLevels: ["mid", "senior", "academic"],
-    atsScore: 97,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "roboto",
-    palette: PALETTES_CATALOG[5],
-    dividerStyle: "bar",
-    bulletStyle: "square",
-    rating: 4.99,
-    downloads: 19600
-  },
-  {
-    id: "academic-postdoc-fellow",
-    name: "Postdoctoral Research Associate",
-    category: "academic",
-    categoryName: "Academic & Research",
-    description: "Focuses on grant contributions, laboratory apparatus expertise, and cross-institutional collaboration.",
-    industry: "academic",
-    roles: ["Postdoc Fellow", "Staff Scientist", "Lab Manager", "Senior Research Associate"],
-    experienceLevels: ["academic"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "inter",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "line",
-    bulletStyle: "disc",
-    rating: 4.90,
-    downloads: 8200
-  },
-  {
-    id: "academic-university-lecturer",
-    name: "University Lecturer & Educator",
-    category: "academic",
-    categoryName: "Academic & Research",
-    description: "Highlights curriculum design, student mentorship evaluations, university committee service, and lecture series.",
-    industry: "academic",
-    roles: ["Lecturer", "Adjunct Professor", "Teaching Fellow", "Academic Coordinator"],
-    experienceLevels: ["mid", "senior", "academic"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "georgia",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "line",
-    bulletStyle: "disc",
-    rating: 4.89,
-    downloads: 6800
-  },
-  {
-    id: "academic-stem-lab-director",
-    name: "Laboratory Director & PI",
-    category: "academic",
-    categoryName: "Academic & Research",
-    description: "Emphasizes multi-million dollar lab equipment management, safety protocols, and student advising.",
-    industry: "engineering",
-    roles: ["Principal Investigator", "Lab Director", "Scientific Director", "Senior Research Fellow"],
-    experienceLevels: ["senior", "academic"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "plus-jakarta",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "bar",
-    bulletStyle: "square",
-    rating: 4.92,
-    downloads: 5900
-  },
-  {
-    id: "academic-grant-scholar",
-    name: "Grant & Fellowship Scholar",
-    category: "academic",
-    categoryName: "Academic & Research",
-    description: "Specially ordered to feature research grants, awarded fellowships, travel stipends, and keynote addresses.",
-    industry: "academic",
-    roles: ["Fulbright Scholar", "Visiting Fellow", "Grant Recipient", "Independent Scholar"],
-    experienceLevels: ["mid", "academic"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "merriweather",
-    palette: PALETTES_CATALOG[4],
-    dividerStyle: "line",
-    bulletStyle: "disc",
-    rating: 4.90,
-    downloads: 5200
-  },
-  {
-    id: "academic-social-sciences",
-    name: "Social Science Field Researcher",
-    category: "academic",
-    categoryName: "Academic & Research",
-    description: "Formatted for qualitative/quantitative field research, ethics board approvals, and public policy monographs.",
-    industry: "academic",
-    roles: ["Policy Researcher", "Sociologist", "Anthropologist", "Public Health Analyst"],
-    experienceLevels: ["mid", "senior", "academic"],
-    atsScore: 99,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "georgia",
-    palette: PALETTES_CATALOG[7],
-    dividerStyle: "line",
-    bulletStyle: "dash",
-    rating: 4.88,
-    downloads: 4700
-  },
-  {
-    id: "academic-peer-review",
-    name: "Peer Review Journal Editor",
-    category: "academic",
-    categoryName: "Academic & Research",
-    description: "Highlights editorial board appointments, journal referee contributions, and indexation milestones.",
-    industry: "academic",
-    roles: ["Journal Editor", "Senior Reviewer", "Editorial Board Member", "Professor Emeritus"],
-    experienceLevels: ["senior", "academic"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "garamond",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "line",
-    bulletStyle: "disc",
-    rating: 4.87,
-    downloads: 4100
-  },
-
-  // =========================================================================
-  // 8. CREATIVE & PORTFOLIO (12 Templates) — Zero Photo, 100% Typographic
-  // =========================================================================
-  {
-    id: "creative-design-systems",
-    name: "Design Systems Architect",
-    category: "creative",
-    categoryName: "Creative & Portfolio",
-    description: "Clean typographic structure showcasing component libraries, token governance, and accessibility (WCAG).",
-    industry: "creative",
-    roles: ["Design Systems Lead", "Product Designer", "UI/UX Designer", "Design Technologist"],
-    experienceLevels: ["mid", "senior", "lead"],
-    atsScore: 96,
-    atsTier: "high",
-    layout: "single-column",
-    fontFamily: "space-grotesk",
-    palette: PALETTES_CATALOG[6],
-    dividerStyle: "bar",
-    bulletStyle: "arrow",
-    rating: 4.98,
-    downloads: 26300
-  },
-  {
-    id: "creative-ux-researcher",
-    name: "UX Research & Information Architect",
-    category: "creative",
-    categoryName: "Creative & Portfolio",
-    description: "Focuses on user interviews, usability benchmarking, task completion rates, and qualitative insights.",
-    industry: "creative",
-    roles: ["UX Researcher", "User Experience Analyst", "Product Strategist", "Information Architect"],
-    experienceLevels: ["junior", "mid", "senior"],
-    atsScore: 97,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "outfit",
-    palette: PALETTES_CATALOG[1],
-    dividerStyle: "bar",
-    bulletStyle: "disc",
-    rating: 4.94,
-    downloads: 18200
-  },
-  {
-    id: "creative-lead-director",
-    name: "Creative Director (Typographic)",
-    category: "creative",
-    categoryName: "Creative & Portfolio",
-    description: "High-contrast editorial layout using Cinzel serif headers and refined project metadata without photos.",
-    industry: "creative",
-    roles: ["Creative Director", "Art Director", "Brand Strategist", "Executive Producer"],
-    experienceLevels: ["senior", "lead", "director"],
-    atsScore: 95,
-    atsTier: "high",
-    layout: "single-column",
-    fontFamily: "cinzel",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "line",
-    bulletStyle: "dash",
-    rating: 4.96,
-    downloads: 15400
-  },
-  {
-    id: "creative-brand-designer",
-    name: "Brand & Visual Identity Designer",
-    category: "creative",
-    categoryName: "Creative & Portfolio",
-    description: "Emphasizes brand redesigns, packaging guidelines, typography suites, and portfolio case study URLs.",
-    industry: "creative",
-    roles: ["Brand Designer", "Visual Designer", "Graphic Designer", "Marketing Designer"],
-    experienceLevels: ["junior", "mid", "senior"],
-    atsScore: 96,
-    atsTier: "high",
-    layout: "single-column",
-    fontFamily: "plus-jakarta",
-    palette: PALETTES_CATALOG[7],
-    dividerStyle: "bar",
-    bulletStyle: "square",
-    rating: 4.91,
-    downloads: 14700
-  },
-  {
-    id: "creative-product-designer",
-    name: "Senior Product Designer",
-    category: "creative",
-    categoryName: "Creative & Portfolio",
-    description: "Harmonizes product metrics (conversion, engagement, churn reduction) with live Figma/portfolio links.",
-    industry: "creative",
-    roles: ["Senior Product Designer", "Lead UI/UX Designer", "Product Design Manager"],
-    experienceLevels: ["mid", "senior", "lead"],
-    atsScore: 97,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "inter",
-    palette: PALETTES_CATALOG[1],
-    dividerStyle: "bar",
-    bulletStyle: "arrow",
-    rating: 4.97,
-    downloads: 28900
-  },
-  {
-    id: "creative-motion-artist",
-    name: "Motion & 3D Technical Artist",
-    category: "creative",
-    categoryName: "Creative & Portfolio",
-    description: "Focuses on 3D pipelines (Blender, Cinema4D, Unreal Engine), real-time rendering, and showreel links.",
-    industry: "creative",
-    roles: ["3D Artist", "Motion Designer", "VFX Artist", "Technical Animator"],
-    experienceLevels: ["junior", "mid", "senior"],
-    atsScore: 96,
-    atsTier: "high",
-    layout: "single-column",
-    fontFamily: "space-grotesk",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "line",
-    bulletStyle: "square",
-    rating: 4.90,
-    downloads: 11200
-  },
-  {
-    id: "creative-game-designer",
-    name: "Game Systems & Level Designer",
-    category: "creative",
-    categoryName: "Creative & Portfolio",
-    description: "Emphasizes player economy balance, core game loop retention, Steam releases, and Unity/C# projects.",
-    industry: "creative",
-    roles: ["Game Designer", "Level Designer", "Game Programmer", "Narrative Designer"],
-    experienceLevels: ["junior", "mid", "senior"],
-    atsScore: 96,
-    atsTier: "high",
-    layout: "single-column",
-    fontFamily: "fira-code",
-    palette: PALETTES_CATALOG[5],
-    dividerStyle: "bar",
-    bulletStyle: "arrow",
-    rating: 4.93,
-    downloads: 13500
-  },
-  {
-    id: "creative-content-creator",
-    name: "Digital Media Producer & Editor",
-    category: "creative",
-    categoryName: "Creative & Portfolio",
-    description: "Highlights audience reach (1M+ views), Premiere/DaVinci workflows, retention rates, and channel growth.",
-    industry: "creative",
-    roles: ["Video Editor", "Content Creator", "YouTube Producer", "Podcast Producer"],
-    experienceLevels: ["junior", "mid", "senior"],
-    atsScore: 97,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "outfit",
-    palette: PALETTES_CATALOG[1],
-    dividerStyle: "bar",
-    bulletStyle: "disc",
-    rating: 4.89,
-    downloads: 12100
-  },
-  {
-    id: "creative-copywriter",
-    name: "Senior Copywriter & Strategist",
-    category: "creative",
-    categoryName: "Creative & Portfolio",
-    description: "Presents campaign taglines, billboard copy, high-converting email sequences, and Cannes/D&AD honors.",
-    industry: "marketing",
-    roles: ["Copywriter", "Content Strategist", "Creative Writer", "Brand Narrative Lead"],
-    experienceLevels: ["mid", "senior", "lead"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "playfair",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "line",
-    bulletStyle: "dash",
-    rating: 4.92,
-    downloads: 9400
-  },
-  {
-    id: "creative-typographer",
-    name: "Editorial & Publication Typographer",
-    category: "creative",
-    categoryName: "Creative & Portfolio",
-    description: "Showcases book layout, bespoke type design, glyph spacing, and high-end magazine production.",
-    industry: "creative",
-    roles: ["Book Designer", "Typographer", "Print Production Lead", "Layout Artist"],
-    experienceLevels: ["mid", "senior"],
-    atsScore: 97,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "merriweather",
-    palette: PALETTES_CATALOG[3],
-    dividerStyle: "line",
-    bulletStyle: "disc",
-    rating: 4.88,
-    downloads: 6700
-  },
-  {
-    id: "creative-spatial-design",
-    name: "Spatial & Exhibition Designer",
-    category: "creative",
-    categoryName: "Creative & Portfolio",
-    description: "Focuses on museum installations, architectural trade booths, spatial wayfinding, and CAD specs.",
-    industry: "creative",
-    roles: ["Exhibition Designer", "Spatial Designer", "Wayfinding Specialist", "Set Designer"],
-    experienceLevels: ["mid", "senior", "lead"],
-    atsScore: 97,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "outfit",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "bar",
-    bulletStyle: "square",
-    rating: 4.89,
-    downloads: 5800
-  },
-  {
-    id: "creative-design-research",
-    name: "Design Technologist & Prototyper",
-    category: "creative",
-    categoryName: "Creative & Portfolio",
-    description: "Blends creative vision with front-end code: micro-interactions, three.js canvas, and React prototypes.",
-    industry: "technology",
-    roles: ["Design Technologist", "Creative Coder", "Front-End Prototyper", "Interaction Designer"],
-    experienceLevels: ["mid", "senior"],
-    atsScore: 97,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "space-grotesk",
-    palette: PALETTES_CATALOG[6],
-    dividerStyle: "bar",
-    bulletStyle: "arrow",
-    rating: 4.95,
-    downloads: 14200
-  },
-
-  // =========================================================================
-  // 9. FINANCE & BUSINESS (10 Templates) — Quantitative, Compliance & P&L
-  // =========================================================================
-  {
-    id: "finance-wall-street",
-    name: "Wall Street Investment Banker",
-    category: "finance",
-    categoryName: "Finance & Business",
-    description: "Strict Goldman Sachs / Morgan Stanley standard: M&A transaction values ($100M+), DCF models, and pitch books.",
-    industry: "finance",
-    roles: ["Investment Banking Analyst", "M&A Associate", "Vice President Investment Banking", "Private Equity Analyst"],
-    experienceLevels: ["junior", "mid", "senior"],
-    atsScore: 99,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "calibri",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "line",
-    bulletStyle: "disc",
-    rating: 4.99,
-    downloads: 31200
-  },
-  {
-    id: "finance-quant-analyst",
-    name: "Quantitative Trader & Hedge Fund",
-    category: "finance",
-    categoryName: "Finance & Business",
-    description: "Highlights Sharpe ratios, algorithmic trading alpha, Python/C++ numerical modeling, and risk factors.",
-    industry: "finance",
-    roles: ["Quantitative Analyst", "Quant Trader", "Risk Modeler", "Financial Engineer"],
-    experienceLevels: ["mid", "senior", "lead"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "fira-code",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "line",
-    bulletStyle: "dash",
-    rating: 4.97,
-    downloads: 21400
-  },
-  {
-    id: "finance-big-four-audit",
-    name: "Big Four Assurance & Audit",
-    category: "finance",
-    categoryName: "Finance & Business",
-    description: "Calibrated for PwC, Deloitte, EY, and KPMG standards: US GAAP, IFRS compliance, and SOX internal controls.",
-    industry: "finance",
-    roles: ["Auditor", "Senior Accountant", "Audit Manager", "Assurance Associate"],
-    experienceLevels: ["junior", "mid", "senior", "manager"],
-    atsScore: 99,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "merriweather",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "line",
-    bulletStyle: "disc",
-    rating: 4.94,
-    downloads: 19800
-  },
-  {
-    id: "finance-corporate-fpa",
-    name: "Corporate FP&A Director",
-    category: "finance",
-    categoryName: "Finance & Business",
-    description: "Focuses on annual budgeting, rolling forecasts, variance analysis, unit economics, and cash burn runway.",
-    industry: "finance",
-    roles: ["FP&A Manager", "Financial Analyst", "Director of Finance", "Head of FP&A"],
-    experienceLevels: ["mid", "senior", "manager"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "inter",
-    palette: PALETTES_CATALOG[1],
-    dividerStyle: "bar",
-    bulletStyle: "disc",
-    rating: 4.93,
-    downloads: 17600
-  },
-  {
-    id: "finance-private-equity",
-    name: "Private Equity & LBO Associate",
-    category: "finance",
-    categoryName: "Finance & Business",
-    description: "Showcases leveraged buyout underwriting, portfolio company EBITDA expansion, and due diligence memos.",
-    industry: "finance",
-    roles: ["Private Equity Associate", "Investment Principal", "Venture Capital Associate", "Portfolio Manager"],
-    experienceLevels: ["mid", "senior", "lead"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "georgia",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "line",
-    bulletStyle: "disc",
-    rating: 4.96,
-    downloads: 15300
-  },
-  {
-    id: "finance-tax-advisory",
-    name: "CPA & Tax Advisory Specialist",
-    category: "finance",
-    categoryName: "Finance & Business",
-    description: "Emphasizes CPA licensing, corporate tax structuring, transfer pricing, and cross-border tax treaty filing.",
-    industry: "finance",
-    roles: ["Tax Consultant", "Certified Public Accountant", "Tax Manager", "International Tax Advisor"],
-    experienceLevels: ["mid", "senior", "manager"],
-    atsScore: 99,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "calibri",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "line",
-    bulletStyle: "disc",
-    rating: 4.90,
-    downloads: 11400
-  },
-  {
-    id: "finance-commercial-banking",
-    name: "Commercial & Corporate Banking",
-    category: "finance",
-    categoryName: "Finance & Business",
-    description: "Focuses on syndicated credit facilities, working capital loans, relationship banking, and underwriting approval.",
-    industry: "finance",
-    roles: ["Commercial Banker", "Relationship Manager", "Credit Underwriter", "Corporate Lending Lead"],
-    experienceLevels: ["mid", "senior", "manager"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "plus-jakarta",
-    palette: PALETTES_CATALOG[1],
-    dividerStyle: "bar",
-    bulletStyle: "disc",
-    rating: 4.91,
-    downloads: 12200
-  },
-  {
-    id: "finance-treasury-risk",
-    name: "Treasury & Liquidity Manager",
-    category: "finance",
-    categoryName: "Finance & Business",
-    description: "Highlights foreign exchange (FX) hedging, liquidity buffers, cash sweep optimization, and money market yields.",
-    industry: "finance",
-    roles: ["Treasury Manager", "Liquidity Risk Officer", "Cash Manager", "Corporate Treasurer"],
-    experienceLevels: ["senior", "lead", "manager"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "roboto",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "line",
-    bulletStyle: "square",
-    rating: 4.89,
-    downloads: 9300
-  },
-  {
-    id: "finance-management-consultant",
-    name: "Bain & BCG Strategy Consultant",
-    category: "business",
-    categoryName: "Finance & Business",
-    description: "Structured around hypothesis-driven problem solving, market sizing, MECE frameworks, and client deliverables.",
-    industry: "business",
-    roles: ["Management Consultant", "Engagement Manager", "Strategy Consultant", "Associate Partner"],
-    experienceLevels: ["mid", "senior", "manager"],
-    atsScore: 98,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "merriweather",
-    palette: PALETTES_CATALOG[0],
-    dividerStyle: "line",
-    bulletStyle: "disc",
-    rating: 4.97,
-    downloads: 24600
-  },
-  {
-    id: "finance-business-dev",
-    name: "Enterprise B2B Business Development",
-    category: "business",
-    categoryName: "Finance & Business",
-    description: "Demonstrates pipeline generation ($10M+), strategic RFP wins, C-level executive selling, and partnership agreements.",
-    industry: "business",
-    roles: ["Business Development Executive", "Director of Business Development", "Strategic Account Executive", "Sales Manager"],
-    experienceLevels: ["mid", "senior", "lead"],
-    atsScore: 97,
-    atsTier: "strict",
-    layout: "single-column",
-    fontFamily: "inter",
-    palette: PALETTES_CATALOG[1],
-    dividerStyle: "bar",
-    bulletStyle: "arrow",
-    rating: 4.93,
-    downloads: 16900
+    "id": "creative",
+    "name": "Creative / Designer / Media",
+    "count": 10,
+    "icon": "Palette"
   }
 ];
 
-export const TEMPLATE_REGISTRY = TEMPLATES;
-export const TOTAL_TEMPLATES_COUNT = TEMPLATES.length;
+export const EXPERIENCE_LEVELS = [
+  {
+    "id": "all",
+    "label": "All Experience Levels"
+  },
+  {
+    "id": "student",
+    "label": "Student / Campus"
+  },
+  {
+    "id": "fresher",
+    "label": "Fresher / Entry-Level"
+  },
+  {
+    "id": "junior",
+    "label": "Junior (1-3 yrs)"
+  },
+  {
+    "id": "mid",
+    "label": "Mid-Level (3-6 yrs)"
+  },
+  {
+    "id": "senior",
+    "label": "Senior Professional (6-10 yrs)"
+  },
+  {
+    "id": "lead",
+    "label": "Team Lead / Staff"
+  },
+  {
+    "id": "executive",
+    "label": "Executive (VP, C-Suite, Director)"
+  },
+  {
+    "id": "academic",
+    "label": "Academic / Researcher"
+  }
+];
+
+export const INDUSTRIES = [
+  {
+    "id": "all",
+    "label": "All Industries"
+  },
+  {
+    "id": "technology",
+    "label": "Technology & Software"
+  },
+  {
+    "id": "data_ai",
+    "label": "Data Science & AI/ML"
+  },
+  {
+    "id": "finance",
+    "label": "Finance, Banking & Accounting"
+  },
+  {
+    "id": "business",
+    "label": "Business, Strategy & Management"
+  },
+  {
+    "id": "marketing",
+    "label": "Marketing, Sales & Growth"
+  },
+  {
+    "id": "engineering",
+    "label": "Engineering & Technical Operations"
+  },
+  {
+    "id": "healthcare",
+    "label": "Healthcare, Medicine & Bio"
+  },
+  {
+    "id": "education",
+    "label": "Education, Academia & Research"
+  },
+  {
+    "id": "creative",
+    "label": "Design, Media & Creative Arts"
+  }
+];
+
+export const TOTAL_TEMPLATES_COUNT = 100;
+
+export const TEMPLATE_REGISTRY = [
+  {
+    "id": "ats-classic",
+    "name": "Traditional ATS Classic",
+    "category": "ATS-Friendly / Traditional",
+    "categoryId": "ats",
+    "categoryName": "ATS-Friendly / Traditional",
+    "roles": [
+      "All Roles",
+      "Corporate Professional",
+      "Generalist"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "monochrome",
+      "name": "Pure Monochrome",
+      "primary": "#18181b",
+      "secondary": "#27272a",
+      "accent": "#27272a",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#09090b",
+      "muted": "#71717a",
+      "border": "#e4e4e7"
+    },
+    "colors": {
+      "primary": "#18181b",
+      "secondary": "#27272a",
+      "accent": "#27272a",
+      "text": "#09090b",
+      "bg": "#ffffff",
+      "border": "#e4e4e7"
+    },
+    "typography": {
+      "heading": "Inter",
+      "body": "Inter, sans-serif",
+      "headingFont": "Inter, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Inter, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "100% linear pass-through certified for Workday, Taleo, and Greenhouse ATS engines.",
+    "rating": 4.9,
+    "industry": "ATS-Friendly / Traditional"
+  },
+  {
+    "id": "ats-executive",
+    "name": "Clean ATS Executive",
+    "category": "ATS-Friendly / Traditional",
+    "categoryId": "ats",
+    "categoryName": "ATS-Friendly / Traditional",
+    "roles": [
+      "VP",
+      "Director",
+      "Executive"
+    ],
+    "experienceLevels": [
+      "senior",
+      "executive"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "navy",
+      "name": "Oxford Navy",
+      "primary": "#1e3a8a",
+      "secondary": "#2563eb",
+      "accent": "#2563eb",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#172554",
+      "muted": "#475569",
+      "border": "#cbd5e1"
+    },
+    "colors": {
+      "primary": "#1e3a8a",
+      "secondary": "#2563eb",
+      "accent": "#2563eb",
+      "text": "#172554",
+      "bg": "#ffffff",
+      "border": "#cbd5e1"
+    },
+    "typography": {
+      "heading": "Playfair Display",
+      "body": "Inter, sans-serif",
+      "headingFont": "Playfair Display, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Playfair Display, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "square",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Understated serif headers with linear corporate hierarchy.",
+    "rating": 4.9,
+    "industry": "ATS-Friendly / Traditional"
+  },
+  {
+    "id": "ats-minimal",
+    "name": "Modern Minimal ATS",
+    "category": "ATS-Friendly / Traditional",
+    "categoryId": "ats",
+    "categoryName": "ATS-Friendly / Traditional",
+    "roles": [
+      "Analyst",
+      "Associate",
+      "Coordinator"
+    ],
+    "experienceLevels": [
+      "junior",
+      "mid"
+    ],
+    "atsFriendly": true,
+    "atsScore": 98,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "slate",
+      "name": "Executive Slate",
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#0f172a",
+      "muted": "#64748b",
+      "border": "#e2e8f0"
+    },
+    "colors": {
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "text": "#0f172a",
+      "bg": "#ffffff",
+      "border": "#e2e8f0"
+    },
+    "typography": {
+      "heading": "Inter",
+      "body": "Inter, sans-serif",
+      "headingFont": "Inter, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Inter, sans-serif",
+    "dividerStyle": "minimal",
+    "bulletStyle": "dash",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Clean borderless sections with high information density.",
+    "rating": 4.9,
+    "industry": "ATS-Friendly / Traditional"
+  },
+  {
+    "id": "ats-corporate",
+    "name": "Corporate Standard ATS",
+    "category": "ATS-Friendly / Traditional",
+    "categoryId": "ats",
+    "categoryName": "ATS-Friendly / Traditional",
+    "roles": [
+      "Operations Manager",
+      "General Manager"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "slate",
+      "name": "Executive Slate",
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#0f172a",
+      "muted": "#64748b",
+      "border": "#e2e8f0"
+    },
+    "colors": {
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "text": "#0f172a",
+      "bg": "#ffffff",
+      "border": "#e2e8f0"
+    },
+    "typography": {
+      "heading": "Roboto",
+      "body": "Inter, sans-serif",
+      "headingFont": "Roboto, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Roboto, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Classic Fortune 500 format with bold metadata tags.",
+    "rating": 4.9,
+    "industry": "ATS-Friendly / Traditional"
+  },
+  {
+    "id": "ats-compact",
+    "name": "Compact High-Density ATS",
+    "category": "ATS-Friendly / Traditional",
+    "categoryId": "ats",
+    "categoryName": "ATS-Friendly / Traditional",
+    "roles": [
+      "Specialist",
+      "Consultant"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 98,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "monochrome",
+      "name": "Pure Monochrome",
+      "primary": "#18181b",
+      "secondary": "#27272a",
+      "accent": "#27272a",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#09090b",
+      "muted": "#71717a",
+      "border": "#e4e4e7"
+    },
+    "colors": {
+      "primary": "#18181b",
+      "secondary": "#27272a",
+      "accent": "#27272a",
+      "text": "#09090b",
+      "bg": "#ffffff",
+      "border": "#e4e4e7"
+    },
+    "typography": {
+      "heading": "Lato",
+      "body": "Inter, sans-serif",
+      "headingFont": "Lato, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Lato, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Ultra space-efficient layout fitting maximum experience cleanly.",
+    "rating": 4.9,
+    "industry": "ATS-Friendly / Traditional"
+  },
+  {
+    "id": "ats-federal",
+    "name": "Government & Federal ATS",
+    "category": "ATS-Friendly / Traditional",
+    "categoryId": "ats",
+    "categoryName": "ATS-Friendly / Traditional",
+    "roles": [
+      "Civil Service",
+      "Federal Officer",
+      "Public Sector"
+    ],
+    "experienceLevels": [
+      "senior",
+      "lead"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "navy",
+      "name": "Oxford Navy",
+      "primary": "#1e3a8a",
+      "secondary": "#2563eb",
+      "accent": "#2563eb",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#172554",
+      "muted": "#475569",
+      "border": "#cbd5e1"
+    },
+    "colors": {
+      "primary": "#1e3a8a",
+      "secondary": "#2563eb",
+      "accent": "#2563eb",
+      "text": "#172554",
+      "bg": "#ffffff",
+      "border": "#cbd5e1"
+    },
+    "typography": {
+      "heading": "Merriweather",
+      "body": "Inter, sans-serif",
+      "headingFont": "Merriweather, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Merriweather, sans-serif",
+    "dividerStyle": "double",
+    "bulletStyle": "square",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Formal multi-level compliance structure with verified security clearance tags.",
+    "rating": 4.9,
+    "industry": "ATS-Friendly / Traditional"
+  },
+  {
+    "id": "ats-consulting",
+    "name": "Management Consulting ATS",
+    "category": "ATS-Friendly / Traditional",
+    "categoryId": "ats",
+    "categoryName": "ATS-Friendly / Traditional",
+    "roles": [
+      "Management Consultant",
+      "Engagement Manager"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "slate",
+      "name": "Executive Slate",
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#0f172a",
+      "muted": "#64748b",
+      "border": "#e2e8f0"
+    },
+    "colors": {
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "text": "#0f172a",
+      "bg": "#ffffff",
+      "border": "#e2e8f0"
+    },
+    "typography": {
+      "heading": "Plus Jakarta Sans",
+      "body": "Inter, sans-serif",
+      "headingFont": "Plus Jakarta Sans, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Plus Jakarta Sans, sans-serif",
+    "dividerStyle": "bar",
+    "bulletStyle": "arrow",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Structured metrics-first bullet styling tailored for MBB recruiters.",
+    "rating": 4.9,
+    "industry": "ATS-Friendly / Traditional"
+  },
+  {
+    "id": "ats-banking",
+    "name": "Wall Street Traditional ATS",
+    "category": "ATS-Friendly / Traditional",
+    "categoryId": "ats",
+    "categoryName": "ATS-Friendly / Traditional",
+    "roles": [
+      "Financial Analyst",
+      "Associate Banker"
+    ],
+    "experienceLevels": [
+      "junior",
+      "mid"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "monochrome",
+      "name": "Pure Monochrome",
+      "primary": "#18181b",
+      "secondary": "#27272a",
+      "accent": "#27272a",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#09090b",
+      "muted": "#71717a",
+      "border": "#e4e4e7"
+    },
+    "colors": {
+      "primary": "#18181b",
+      "secondary": "#27272a",
+      "accent": "#27272a",
+      "text": "#09090b",
+      "bg": "#ffffff",
+      "border": "#e4e4e7"
+    },
+    "typography": {
+      "heading": "Playfair Display",
+      "body": "Inter, sans-serif",
+      "headingFont": "Playfair Display, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Playfair Display, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Rigorous Wall Street single-column format with strict chronological priority.",
+    "rating": 4.9,
+    "industry": "ATS-Friendly / Traditional"
+  },
+  {
+    "id": "ats-legal",
+    "name": "Legal & Compliance ATS",
+    "category": "ATS-Friendly / Traditional",
+    "categoryId": "ats",
+    "categoryName": "ATS-Friendly / Traditional",
+    "roles": [
+      "Legal Counsel",
+      "Compliance Officer",
+      "Attorney"
+    ],
+    "experienceLevels": [
+      "senior",
+      "lead"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "burgundy",
+      "name": "Imperial Burgundy",
+      "primary": "#500724",
+      "secondary": "#be123c",
+      "accent": "#be123c",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#380415",
+      "muted": "#706e66",
+      "border": "#fce7f3"
+    },
+    "colors": {
+      "primary": "#500724",
+      "secondary": "#be123c",
+      "accent": "#be123c",
+      "text": "#380415",
+      "bg": "#ffffff",
+      "border": "#fce7f3"
+    },
+    "typography": {
+      "heading": "Lora",
+      "body": "Inter, sans-serif",
+      "headingFont": "Lora, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Lora, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Formal bar-admissions structure with academic distinction.",
+    "rating": 4.9,
+    "industry": "ATS-Friendly / Traditional"
+  },
+  {
+    "id": "ats-certified",
+    "name": "Certified Professional ATS",
+    "category": "ATS-Friendly / Traditional",
+    "categoryId": "ats",
+    "categoryName": "ATS-Friendly / Traditional",
+    "roles": [
+      "Project Manager",
+      "Scrum Master",
+      "PMP"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 98,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "emerald",
+      "name": "Nordic Emerald",
+      "primary": "#064e3b",
+      "secondary": "#059669",
+      "accent": "#059669",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#022c22",
+      "muted": "#4b5563",
+      "border": "#d1fae5"
+    },
+    "colors": {
+      "primary": "#064e3b",
+      "secondary": "#059669",
+      "accent": "#059669",
+      "text": "#022c22",
+      "bg": "#ffffff",
+      "border": "#d1fae5"
+    },
+    "typography": {
+      "heading": "Inter",
+      "body": "Inter, sans-serif",
+      "headingFont": "Inter, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Inter, sans-serif",
+    "dividerStyle": "bar",
+    "bulletStyle": "check",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Prominent credential bar highlighting PMP, CISSP, and AWS certifications.",
+    "rating": 4.9,
+    "industry": "ATS-Friendly / Traditional"
+  },
+  {
+    "id": "dev-senior-swe",
+    "name": "Google L5/L6 Senior SWE",
+    "category": "Software Developer / IT",
+    "categoryId": "software",
+    "categoryName": "Software Developer / IT",
+    "roles": [
+      "Senior SWE",
+      "Staff Engineer",
+      "Backend Developer"
+    ],
+    "experienceLevels": [
+      "senior",
+      "lead"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "slate",
+      "name": "Executive Slate",
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#0f172a",
+      "muted": "#64748b",
+      "border": "#e2e8f0"
+    },
+    "colors": {
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "text": "#0f172a",
+      "bg": "#ffffff",
+      "border": "#e2e8f0"
+    },
+    "typography": {
+      "heading": "Inter",
+      "body": "Inter, sans-serif",
+      "headingFont": "Inter, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Inter, sans-serif",
+    "dividerStyle": "bar",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Calibrated to Google, Meta, and Stripe engineering hiring bars.",
+    "rating": 4.9,
+    "industry": "Software Developer / IT"
+  },
+  {
+    "id": "dev-fullstack",
+    "name": "Full Stack Systems Architect",
+    "category": "Software Developer / IT",
+    "categoryId": "software",
+    "categoryName": "Software Developer / IT",
+    "roles": [
+      "Full Stack Engineer",
+      "Solutions Architect"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 98,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "two-column",
+    "sidebar": "right",
+    "palette": {
+      "id": "indigo",
+      "name": "Electric Indigo",
+      "primary": "#312e81",
+      "secondary": "#4f46e5",
+      "accent": "#4f46e5",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#1e1b4b",
+      "muted": "#64748b",
+      "border": "#e0e7ff"
+    },
+    "colors": {
+      "primary": "#312e81",
+      "secondary": "#4f46e5",
+      "accent": "#4f46e5",
+      "text": "#1e1b4b",
+      "bg": "#ffffff",
+      "border": "#e0e7ff"
+    },
+    "typography": {
+      "heading": "JetBrains Mono",
+      "body": "Inter, sans-serif",
+      "headingFont": "JetBrains Mono, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "JetBrains Mono, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "arrow",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Dual separation of client-side frameworks and distributed backend services.",
+    "rating": 4.9,
+    "industry": "Software Developer / IT"
+  },
+  {
+    "id": "dev-cloud-devops",
+    "name": "Cloud Platform & DevOps Engineer",
+    "category": "Software Developer / IT",
+    "categoryId": "software",
+    "categoryName": "Software Developer / IT",
+    "roles": [
+      "DevOps Engineer",
+      "Cloud Architect",
+      "SRE"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 98,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "sidebar-left",
+    "sidebar": "left",
+    "palette": {
+      "id": "cyan",
+      "name": "Cyberpunk Cyan",
+      "primary": "#083344",
+      "secondary": "#0891b2",
+      "accent": "#0891b2",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#082f49",
+      "muted": "#64748b",
+      "border": "#cffafe"
+    },
+    "colors": {
+      "primary": "#083344",
+      "secondary": "#0891b2",
+      "accent": "#0891b2",
+      "text": "#082f49",
+      "bg": "#ffffff",
+      "border": "#cffafe"
+    },
+    "typography": {
+      "heading": "Fira Code",
+      "body": "Inter, sans-serif",
+      "headingFont": "Fira Code, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Fira Code, sans-serif",
+    "dividerStyle": "bar",
+    "bulletStyle": "square",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Dedicated infrastructure matrix for Kubernetes, Terraform, and AWS.",
+    "rating": 4.9,
+    "industry": "Software Developer / IT"
+  },
+  {
+    "id": "dev-backend-go",
+    "name": "High-Concurrency Backend Engineer",
+    "category": "Software Developer / IT",
+    "categoryId": "software",
+    "categoryName": "Software Developer / IT",
+    "roles": [
+      "Go Developer",
+      "Distributed Systems Engineer"
+    ],
+    "experienceLevels": [
+      "senior",
+      "lead"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "monochrome",
+      "name": "Pure Monochrome",
+      "primary": "#18181b",
+      "secondary": "#27272a",
+      "accent": "#27272a",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#09090b",
+      "muted": "#71717a",
+      "border": "#e4e4e7"
+    },
+    "colors": {
+      "primary": "#18181b",
+      "secondary": "#27272a",
+      "accent": "#27272a",
+      "text": "#09090b",
+      "bg": "#ffffff",
+      "border": "#e4e4e7"
+    },
+    "typography": {
+      "heading": "JetBrains Mono",
+      "body": "Inter, sans-serif",
+      "headingFont": "JetBrains Mono, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "JetBrains Mono, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "dash",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Focus on throughput, micro-benchmarks, and low-latency architectures.",
+    "rating": 4.9,
+    "industry": "Software Developer / IT"
+  },
+  {
+    "id": "dev-frontend-react",
+    "name": "Modern Frontend & UI Architect",
+    "category": "Software Developer / IT",
+    "categoryId": "software",
+    "categoryName": "Software Developer / IT",
+    "roles": [
+      "Frontend Engineer",
+      "React Developer",
+      "UI Architect"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 97,
+    "photoPolicy": "optional",
+    "photoRequired": false,
+    "layout": "two-column",
+    "sidebar": "right",
+    "palette": {
+      "id": "violet",
+      "name": "Fintech Violet",
+      "primary": "#3b0764",
+      "secondary": "#7c3aed",
+      "accent": "#7c3aed",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#2e1065",
+      "muted": "#6b7280",
+      "border": "#ede9fe"
+    },
+    "colors": {
+      "primary": "#3b0764",
+      "secondary": "#7c3aed",
+      "accent": "#7c3aed",
+      "text": "#2e1065",
+      "bg": "#ffffff",
+      "border": "#ede9fe"
+    },
+    "typography": {
+      "heading": "Plus Jakarta Sans",
+      "body": "Inter, sans-serif",
+      "headingFont": "Plus Jakarta Sans, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Plus Jakarta Sans, sans-serif",
+    "dividerStyle": "bar",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Showcases web performance metrics, Design Systems, and Core Web Vitals.",
+    "rating": 4.9,
+    "industry": "Software Developer / IT"
+  },
+  {
+    "id": "dev-mobile-ios",
+    "name": "iOS & Mobile Systems Engineer",
+    "category": "Software Developer / IT",
+    "categoryId": "software",
+    "categoryName": "Software Developer / IT",
+    "roles": [
+      "iOS Developer",
+      "Android Engineer",
+      "Mobile Lead"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 98,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "header-card",
+    "sidebar": "none",
+    "palette": {
+      "id": "indigo",
+      "name": "Electric Indigo",
+      "primary": "#312e81",
+      "secondary": "#4f46e5",
+      "accent": "#4f46e5",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#1e1b4b",
+      "muted": "#64748b",
+      "border": "#e0e7ff"
+    },
+    "colors": {
+      "primary": "#312e81",
+      "secondary": "#4f46e5",
+      "accent": "#4f46e5",
+      "text": "#1e1b4b",
+      "bg": "#ffffff",
+      "border": "#e0e7ff"
+    },
+    "typography": {
+      "heading": "Inter",
+      "body": "Inter, sans-serif",
+      "headingFont": "Inter, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Inter, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "arrow",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Highlights App Store metrics, SwiftUI/Kotlin architecture, and device telemetry.",
+    "rating": 4.9,
+    "industry": "Software Developer / IT"
+  },
+  {
+    "id": "dev-cybersecurity",
+    "name": "InfoSec & Cybersecurity Architect",
+    "category": "Software Developer / IT",
+    "categoryId": "software",
+    "categoryName": "Software Developer / IT",
+    "roles": [
+      "Security Engineer",
+      "SOC Analyst",
+      "Penetration Tester"
+    ],
+    "experienceLevels": [
+      "senior",
+      "lead"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "crimson",
+      "name": "Harvard Crimson",
+      "primary": "#7f1d1d",
+      "secondary": "#dc2626",
+      "accent": "#dc2626",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#450a0a",
+      "muted": "#57534e",
+      "border": "#fee2e2"
+    },
+    "colors": {
+      "primary": "#7f1d1d",
+      "secondary": "#dc2626",
+      "accent": "#dc2626",
+      "text": "#450a0a",
+      "bg": "#ffffff",
+      "border": "#fee2e2"
+    },
+    "typography": {
+      "heading": "Fira Code",
+      "body": "Inter, sans-serif",
+      "headingFont": "Fira Code, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Fira Code, sans-serif",
+    "dividerStyle": "bar",
+    "bulletStyle": "square",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Structured NIST/ISO framework matrices with CVE vulnerability disclosures.",
+    "rating": 4.9,
+    "industry": "Software Developer / IT"
+  },
+  {
+    "id": "dev-systems-embedded",
+    "name": "Embedded Systems & Firmware Engineer",
+    "category": "Software Developer / IT",
+    "categoryId": "software",
+    "categoryName": "Software Developer / IT",
+    "roles": [
+      "Embedded Developer",
+      "Firmware Engineer",
+      "IoT Lead"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 98,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "teal",
+      "name": "Deep Teal",
+      "primary": "#134e4a",
+      "secondary": "#0d9488",
+      "accent": "#0d9488",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#042f2e",
+      "muted": "#52525b",
+      "border": "#ccfbf1"
+    },
+    "colors": {
+      "primary": "#134e4a",
+      "secondary": "#0d9488",
+      "accent": "#0d9488",
+      "text": "#042f2e",
+      "bg": "#ffffff",
+      "border": "#ccfbf1"
+    },
+    "typography": {
+      "heading": "Roboto",
+      "body": "Inter, sans-serif",
+      "headingFont": "Roboto, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Roboto, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "dash",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Dedicated RTOS, hardware interface, and low-level C/C++ domain matrix.",
+    "rating": 4.9,
+    "industry": "Software Developer / IT"
+  },
+  {
+    "id": "dev-qa-automation",
+    "name": "Principal SDET & Test Automation",
+    "category": "Software Developer / IT",
+    "categoryId": "software",
+    "categoryName": "Software Developer / IT",
+    "roles": [
+      "SDET",
+      "QA Lead",
+      "Test Automation Engineer"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 98,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "two-column",
+    "sidebar": "left",
+    "palette": {
+      "id": "emerald",
+      "name": "Nordic Emerald",
+      "primary": "#064e3b",
+      "secondary": "#059669",
+      "accent": "#059669",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#022c22",
+      "muted": "#4b5563",
+      "border": "#d1fae5"
+    },
+    "colors": {
+      "primary": "#064e3b",
+      "secondary": "#059669",
+      "accent": "#059669",
+      "text": "#022c22",
+      "bg": "#ffffff",
+      "border": "#d1fae5"
+    },
+    "typography": {
+      "heading": "Inter",
+      "body": "Inter, sans-serif",
+      "headingFont": "Inter, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Inter, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "check",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Quality pipelines, Playwright/Selenium frameworks, and CI/CD gates.",
+    "rating": 4.9,
+    "industry": "Software Developer / IT"
+  },
+  {
+    "id": "dev-tech-lead",
+    "name": "Staff Engineer & Tech Lead",
+    "category": "Software Developer / IT",
+    "categoryId": "software",
+    "categoryName": "Software Developer / IT",
+    "roles": [
+      "Tech Lead",
+      "Principal Engineer",
+      "Director of Engineering"
+    ],
+    "experienceLevels": [
+      "senior",
+      "executive"
+    ],
+    "atsFriendly": true,
+    "atsScore": 98,
+    "photoPolicy": "optional",
+    "photoRequired": false,
+    "layout": "header-card",
+    "sidebar": "none",
+    "palette": {
+      "id": "slate",
+      "name": "Executive Slate",
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#0f172a",
+      "muted": "#64748b",
+      "border": "#e2e8f0"
+    },
+    "colors": {
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "text": "#0f172a",
+      "bg": "#ffffff",
+      "border": "#e2e8f0"
+    },
+    "typography": {
+      "heading": "Plus Jakarta Sans",
+      "body": "Inter, sans-serif",
+      "headingFont": "Plus Jakarta Sans, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Plus Jakarta Sans, sans-serif",
+    "dividerStyle": "double",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Highlights architectural governance, system scalability, and engineering mentorship.",
+    "rating": 4.9,
+    "industry": "Software Developer / IT"
+  },
+  {
+    "id": "ds-applied-scientist",
+    "name": "Applied AI & LLM Scientist",
+    "category": "Data Science / AI / ML",
+    "categoryId": "datascience",
+    "categoryName": "Data Science / AI / ML",
+    "roles": [
+      "AI Scientist",
+      "LLM Engineer",
+      "GenAI Researcher"
+    ],
+    "experienceLevels": [
+      "senior",
+      "lead"
+    ],
+    "atsFriendly": true,
+    "atsScore": 98,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "violet",
+      "name": "Fintech Violet",
+      "primary": "#3b0764",
+      "secondary": "#7c3aed",
+      "accent": "#7c3aed",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#2e1065",
+      "muted": "#6b7280",
+      "border": "#ede9fe"
+    },
+    "colors": {
+      "primary": "#3b0764",
+      "secondary": "#7c3aed",
+      "accent": "#7c3aed",
+      "text": "#2e1065",
+      "bg": "#ffffff",
+      "border": "#ede9fe"
+    },
+    "typography": {
+      "heading": "Inter",
+      "body": "Inter, sans-serif",
+      "headingFont": "Inter, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Inter, sans-serif",
+    "dividerStyle": "bar",
+    "bulletStyle": "arrow",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Highlights model training, RAG pipelines, fine-tuning, and arXiv publications.",
+    "rating": 4.9,
+    "industry": "Data Science / AI / ML"
+  },
+  {
+    "id": "ds-data-engineer",
+    "name": "Big Data & Lakehouse Architect",
+    "category": "Data Science / AI / ML",
+    "categoryId": "datascience",
+    "categoryName": "Data Science / AI / ML",
+    "roles": [
+      "Data Engineer",
+      "Lakehouse Architect",
+      "ETL Developer"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "two-column",
+    "sidebar": "left",
+    "palette": {
+      "id": "cyan",
+      "name": "Cyberpunk Cyan",
+      "primary": "#083344",
+      "secondary": "#0891b2",
+      "accent": "#0891b2",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#082f49",
+      "muted": "#64748b",
+      "border": "#cffafe"
+    },
+    "colors": {
+      "primary": "#083344",
+      "secondary": "#0891b2",
+      "accent": "#0891b2",
+      "text": "#082f49",
+      "bg": "#ffffff",
+      "border": "#cffafe"
+    },
+    "typography": {
+      "heading": "Plus Jakarta Sans",
+      "body": "Inter, sans-serif",
+      "headingFont": "Plus Jakarta Sans, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Plus Jakarta Sans, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Spark, Databricks, Snowflake, and streaming pipeline throughput.",
+    "rating": 4.9,
+    "industry": "Data Science / AI / ML"
+  },
+  {
+    "id": "ds-mlops-engineer",
+    "name": "Production MLOps Engineer",
+    "category": "Data Science / AI / ML",
+    "categoryId": "datascience",
+    "categoryName": "Data Science / AI / ML",
+    "roles": [
+      "MLOps Engineer",
+      "ML Infrastructure Lead"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 98,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "sidebar-left",
+    "sidebar": "left",
+    "palette": {
+      "id": "indigo",
+      "name": "Electric Indigo",
+      "primary": "#312e81",
+      "secondary": "#4f46e5",
+      "accent": "#4f46e5",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#1e1b4b",
+      "muted": "#64748b",
+      "border": "#e0e7ff"
+    },
+    "colors": {
+      "primary": "#312e81",
+      "secondary": "#4f46e5",
+      "accent": "#4f46e5",
+      "text": "#1e1b4b",
+      "bg": "#ffffff",
+      "border": "#e0e7ff"
+    },
+    "typography": {
+      "heading": "JetBrains Mono",
+      "body": "Inter, sans-serif",
+      "headingFont": "JetBrains Mono, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "JetBrains Mono, sans-serif",
+    "dividerStyle": "bar",
+    "bulletStyle": "square",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Model registry, drift monitoring, Kubeflow, and serving latency metrics.",
+    "rating": 4.9,
+    "industry": "Data Science / AI / ML"
+  },
+  {
+    "id": "ds-bi-analyst",
+    "name": "Enterprise BI & Analytics Lead",
+    "category": "Data Science / AI / ML",
+    "categoryId": "datascience",
+    "categoryName": "Data Science / AI / ML",
+    "roles": [
+      "BI Analyst",
+      "Tableau Specialist",
+      "PowerBI Developer"
+    ],
+    "experienceLevels": [
+      "junior",
+      "mid"
+    ],
+    "atsFriendly": true,
+    "atsScore": 98,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "navy",
+      "name": "Oxford Navy",
+      "primary": "#1e3a8a",
+      "secondary": "#2563eb",
+      "accent": "#2563eb",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#172554",
+      "muted": "#475569",
+      "border": "#cbd5e1"
+    },
+    "colors": {
+      "primary": "#1e3a8a",
+      "secondary": "#2563eb",
+      "accent": "#2563eb",
+      "text": "#172554",
+      "bg": "#ffffff",
+      "border": "#cbd5e1"
+    },
+    "typography": {
+      "heading": "Roboto",
+      "body": "Inter, sans-serif",
+      "headingFont": "Roboto, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Roboto, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Clear visualization dashboards, SQL optimization, and stakeholder KPI delivery.",
+    "rating": 4.9,
+    "industry": "Data Science / AI / ML"
+  },
+  {
+    "id": "ds-data-architect",
+    "name": "Enterprise Data Architect",
+    "category": "Data Science / AI / ML",
+    "categoryId": "datascience",
+    "categoryName": "Data Science / AI / ML",
+    "roles": [
+      "Data Architect",
+      "CDO",
+      "Head of Data"
+    ],
+    "experienceLevels": [
+      "senior",
+      "executive"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "header-card",
+    "sidebar": "none",
+    "palette": {
+      "id": "slate",
+      "name": "Executive Slate",
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#0f172a",
+      "muted": "#64748b",
+      "border": "#e2e8f0"
+    },
+    "colors": {
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "text": "#0f172a",
+      "bg": "#ffffff",
+      "border": "#e2e8f0"
+    },
+    "typography": {
+      "heading": "Inter",
+      "body": "Inter, sans-serif",
+      "headingFont": "Inter, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Inter, sans-serif",
+    "dividerStyle": "double",
+    "bulletStyle": "square",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Data governance, Medallion Lakehouse schemas, and enterprise compliance.",
+    "rating": 4.9,
+    "industry": "Data Science / AI / ML"
+  },
+  {
+    "id": "ds-nlp-genai",
+    "name": "Generative AI & Agentic Systems",
+    "category": "Data Science / AI / ML",
+    "categoryId": "datascience",
+    "categoryName": "Data Science / AI / ML",
+    "roles": [
+      "Agentic AI Engineer",
+      "NLP Scientist"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 97,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "violet",
+      "name": "Fintech Violet",
+      "primary": "#3b0764",
+      "secondary": "#7c3aed",
+      "accent": "#7c3aed",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#2e1065",
+      "muted": "#6b7280",
+      "border": "#ede9fe"
+    },
+    "colors": {
+      "primary": "#3b0764",
+      "secondary": "#7c3aed",
+      "accent": "#7c3aed",
+      "text": "#2e1065",
+      "bg": "#ffffff",
+      "border": "#ede9fe"
+    },
+    "typography": {
+      "heading": "Fira Code",
+      "body": "Inter, sans-serif",
+      "headingFont": "Fira Code, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Fira Code, sans-serif",
+    "dividerStyle": "bar",
+    "bulletStyle": "arrow",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Autonomous agent workflows, LangGraph, tool-calling LLMs, and prompt evaluations.",
+    "rating": 4.9,
+    "industry": "Data Science / AI / ML"
+  },
+  {
+    "id": "ds-quant-analyst",
+    "name": "Quantitative Research Analyst",
+    "category": "Data Science / AI / ML",
+    "categoryId": "datascience",
+    "categoryName": "Data Science / AI / ML",
+    "roles": [
+      "Quant Analyst",
+      "Financial Engineer"
+    ],
+    "experienceLevels": [
+      "senior",
+      "lead"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "monochrome",
+      "name": "Pure Monochrome",
+      "primary": "#18181b",
+      "secondary": "#27272a",
+      "accent": "#27272a",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#09090b",
+      "muted": "#71717a",
+      "border": "#e4e4e7"
+    },
+    "colors": {
+      "primary": "#18181b",
+      "secondary": "#27272a",
+      "accent": "#27272a",
+      "text": "#09090b",
+      "bg": "#ffffff",
+      "border": "#e4e4e7"
+    },
+    "typography": {
+      "heading": "Merriweather",
+      "body": "Inter, sans-serif",
+      "headingFont": "Merriweather, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Merriweather, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "dash",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Stochastic calculus, statistical arbitrage, and algorithmic trading systems.",
+    "rating": 4.9,
+    "industry": "Data Science / AI / ML"
+  },
+  {
+    "id": "ds-analytics-engineer",
+    "name": "Modern Analytics Engineer",
+    "category": "Data Science / AI / ML",
+    "categoryId": "datascience",
+    "categoryName": "Data Science / AI / ML",
+    "roles": [
+      "Analytics Engineer",
+      "dbt Specialist"
+    ],
+    "experienceLevels": [
+      "junior",
+      "mid"
+    ],
+    "atsFriendly": true,
+    "atsScore": 98,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "two-column",
+    "sidebar": "right",
+    "palette": {
+      "id": "teal",
+      "name": "Deep Teal",
+      "primary": "#134e4a",
+      "secondary": "#0d9488",
+      "accent": "#0d9488",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#042f2e",
+      "muted": "#52525b",
+      "border": "#ccfbf1"
+    },
+    "colors": {
+      "primary": "#134e4a",
+      "secondary": "#0d9488",
+      "accent": "#0d9488",
+      "text": "#042f2e",
+      "bg": "#ffffff",
+      "border": "#ccfbf1"
+    },
+    "typography": {
+      "heading": "Plus Jakarta Sans",
+      "body": "Inter, sans-serif",
+      "headingFont": "Plus Jakarta Sans, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Plus Jakarta Sans, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Data modeling with dbt, semantic layer definitions, and warehouse schemas.",
+    "rating": 4.9,
+    "industry": "Data Science / AI / ML"
+  },
+  {
+    "id": "ds-computer-vision",
+    "name": "Computer Vision & Robotics Engineer",
+    "category": "Data Science / AI / ML",
+    "categoryId": "datascience",
+    "categoryName": "Data Science / AI / ML",
+    "roles": [
+      "Computer Vision Engineer",
+      "Robotics AI Specialist"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 98,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "cyan",
+      "name": "Cyberpunk Cyan",
+      "primary": "#083344",
+      "secondary": "#0891b2",
+      "accent": "#0891b2",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#082f49",
+      "muted": "#64748b",
+      "border": "#cffafe"
+    },
+    "colors": {
+      "primary": "#083344",
+      "secondary": "#0891b2",
+      "accent": "#0891b2",
+      "text": "#082f49",
+      "bg": "#ffffff",
+      "border": "#cffafe"
+    },
+    "typography": {
+      "heading": "Inter",
+      "body": "Inter, sans-serif",
+      "headingFont": "Inter, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Inter, sans-serif",
+    "dividerStyle": "bar",
+    "bulletStyle": "square",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Edge inference, tensor optimization, YOLO, and robotic perception.",
+    "rating": 4.9,
+    "industry": "Data Science / AI / ML"
+  },
+  {
+    "id": "ds-research-lead",
+    "name": "Head of Data Science & Research",
+    "category": "Data Science / AI / ML",
+    "categoryId": "datascience",
+    "categoryName": "Data Science / AI / ML",
+    "roles": [
+      "Head of AI",
+      "Director of Data Science"
+    ],
+    "experienceLevels": [
+      "senior",
+      "executive"
+    ],
+    "atsFriendly": true,
+    "atsScore": 97,
+    "photoPolicy": "optional",
+    "photoRequired": false,
+    "layout": "header-card",
+    "sidebar": "none",
+    "palette": {
+      "id": "indigo",
+      "name": "Electric Indigo",
+      "primary": "#312e81",
+      "secondary": "#4f46e5",
+      "accent": "#4f46e5",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#1e1b4b",
+      "muted": "#64748b",
+      "border": "#e0e7ff"
+    },
+    "colors": {
+      "primary": "#312e81",
+      "secondary": "#4f46e5",
+      "accent": "#4f46e5",
+      "text": "#1e1b4b",
+      "bg": "#ffffff",
+      "border": "#e0e7ff"
+    },
+    "typography": {
+      "heading": "Plus Jakarta Sans",
+      "body": "Inter, sans-serif",
+      "headingFont": "Plus Jakarta Sans, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Plus Jakarta Sans, sans-serif",
+    "dividerStyle": "double",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Strategic AI roadmaps, patents, and team building from scratch.",
+    "rating": 4.9,
+    "industry": "Data Science / AI / ML"
+  },
+  {
+    "id": "biz-product-manager",
+    "name": "Principal Product Manager",
+    "category": "Business / Management",
+    "categoryId": "business",
+    "categoryName": "Business / Management",
+    "roles": [
+      "Product Manager",
+      "Group PM",
+      "VP of Product"
+    ],
+    "experienceLevels": [
+      "senior",
+      "lead"
+    ],
+    "atsFriendly": true,
+    "atsScore": 98,
+    "photoPolicy": "optional",
+    "photoRequired": false,
+    "layout": "header-card",
+    "sidebar": "none",
+    "palette": {
+      "id": "slate",
+      "name": "Executive Slate",
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#0f172a",
+      "muted": "#64748b",
+      "border": "#e2e8f0"
+    },
+    "colors": {
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "text": "#0f172a",
+      "bg": "#ffffff",
+      "border": "#e2e8f0"
+    },
+    "typography": {
+      "heading": "Plus Jakarta Sans",
+      "body": "Inter, sans-serif",
+      "headingFont": "Plus Jakarta Sans, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Plus Jakarta Sans, sans-serif",
+    "dividerStyle": "bar",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Feature adoption, North Star metrics, roadmap ownership, and customer interviews.",
+    "rating": 4.9,
+    "industry": "Business / Management"
+  },
+  {
+    "id": "biz-strategy-ops",
+    "name": "Strategy & Business Operations Lead",
+    "category": "Business / Management",
+    "categoryId": "business",
+    "categoryName": "Business / Management",
+    "roles": [
+      "BizOps Manager",
+      "Strategy Director"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 98,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "two-column",
+    "sidebar": "left",
+    "palette": {
+      "id": "navy",
+      "name": "Oxford Navy",
+      "primary": "#1e3a8a",
+      "secondary": "#2563eb",
+      "accent": "#2563eb",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#172554",
+      "muted": "#475569",
+      "border": "#cbd5e1"
+    },
+    "colors": {
+      "primary": "#1e3a8a",
+      "secondary": "#2563eb",
+      "accent": "#2563eb",
+      "text": "#172554",
+      "bg": "#ffffff",
+      "border": "#cbd5e1"
+    },
+    "typography": {
+      "heading": "Inter",
+      "body": "Inter, sans-serif",
+      "headingFont": "Inter, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Inter, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "arrow",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Market entry models, cross-functional OKRs, and operational efficiency.",
+    "rating": 4.9,
+    "industry": "Business / Management"
+  },
+  {
+    "id": "biz-program-director",
+    "name": "Enterprise Program Director",
+    "category": "Business / Management",
+    "categoryId": "business",
+    "categoryName": "Business / Management",
+    "roles": [
+      "Program Manager",
+      "Director of PMO"
+    ],
+    "experienceLevels": [
+      "senior",
+      "executive"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "monochrome",
+      "name": "Pure Monochrome",
+      "primary": "#18181b",
+      "secondary": "#27272a",
+      "accent": "#27272a",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#09090b",
+      "muted": "#71717a",
+      "border": "#e4e4e7"
+    },
+    "colors": {
+      "primary": "#18181b",
+      "secondary": "#27272a",
+      "accent": "#27272a",
+      "text": "#09090b",
+      "bg": "#ffffff",
+      "border": "#e4e4e7"
+    },
+    "typography": {
+      "heading": "Roboto",
+      "body": "Inter, sans-serif",
+      "headingFont": "Roboto, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Roboto, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "square",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Multi-million dollar portfolio management and global vendor negotiations.",
+    "rating": 4.9,
+    "industry": "Business / Management"
+  },
+  {
+    "id": "biz-scrum-agile",
+    "name": "Agile Coach & Transformation Lead",
+    "category": "Business / Management",
+    "categoryId": "business",
+    "categoryName": "Business / Management",
+    "roles": [
+      "Agile Coach",
+      "Scrum Master",
+      "RTE"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 98,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "two-column",
+    "sidebar": "right",
+    "palette": {
+      "id": "teal",
+      "name": "Deep Teal",
+      "primary": "#134e4a",
+      "secondary": "#0d9488",
+      "accent": "#0d9488",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#042f2e",
+      "muted": "#52525b",
+      "border": "#ccfbf1"
+    },
+    "colors": {
+      "primary": "#134e4a",
+      "secondary": "#0d9488",
+      "accent": "#0d9488",
+      "text": "#042f2e",
+      "bg": "#ffffff",
+      "border": "#ccfbf1"
+    },
+    "typography": {
+      "heading": "Lato",
+      "body": "Inter, sans-serif",
+      "headingFont": "Lato, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Lato, sans-serif",
+    "dividerStyle": "bar",
+    "bulletStyle": "check",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Scaled Agile (SAFe), sprint velocity optimization, and team empowerment.",
+    "rating": 4.9,
+    "industry": "Business / Management"
+  },
+  {
+    "id": "biz-general-manager",
+    "name": "General Manager & P&L Owner",
+    "category": "Business / Management",
+    "categoryId": "business",
+    "categoryName": "Business / Management",
+    "roles": [
+      "General Manager",
+      "Managing Director",
+      "COO"
+    ],
+    "experienceLevels": [
+      "senior",
+      "executive"
+    ],
+    "atsFriendly": true,
+    "atsScore": 98,
+    "photoPolicy": "optional",
+    "photoRequired": false,
+    "layout": "header-card",
+    "sidebar": "none",
+    "palette": {
+      "id": "navy",
+      "name": "Oxford Navy",
+      "primary": "#1e3a8a",
+      "secondary": "#2563eb",
+      "accent": "#2563eb",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#172554",
+      "muted": "#475569",
+      "border": "#cbd5e1"
+    },
+    "colors": {
+      "primary": "#1e3a8a",
+      "secondary": "#2563eb",
+      "accent": "#2563eb",
+      "text": "#172554",
+      "bg": "#ffffff",
+      "border": "#cbd5e1"
+    },
+    "typography": {
+      "heading": "Playfair Display",
+      "body": "Inter, sans-serif",
+      "headingFont": "Playfair Display, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Playfair Display, sans-serif",
+    "dividerStyle": "double",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Full P&L responsibility, gross margin expansion, and regional expansion.",
+    "rating": 4.9,
+    "industry": "Business / Management"
+  },
+  {
+    "id": "biz-supply-chain",
+    "name": "Global Supply Chain & Logistics Director",
+    "category": "Business / Management",
+    "categoryId": "business",
+    "categoryName": "Business / Management",
+    "roles": [
+      "Supply Chain Director",
+      "Procurement Manager"
+    ],
+    "experienceLevels": [
+      "senior",
+      "lead"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "slate",
+      "name": "Executive Slate",
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#0f172a",
+      "muted": "#64748b",
+      "border": "#e2e8f0"
+    },
+    "colors": {
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "text": "#0f172a",
+      "bg": "#ffffff",
+      "border": "#e2e8f0"
+    },
+    "typography": {
+      "heading": "Inter",
+      "body": "Inter, sans-serif",
+      "headingFont": "Inter, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Inter, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "square",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Vendor resilience, freight cost reductions, and inventory turnaround times.",
+    "rating": 4.9,
+    "industry": "Business / Management"
+  },
+  {
+    "id": "biz-management-consultant",
+    "name": "MBB Management Consultant",
+    "category": "Business / Management",
+    "categoryId": "business",
+    "categoryName": "Business / Management",
+    "roles": [
+      "Management Consultant",
+      "Engagement Manager"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "monochrome",
+      "name": "Pure Monochrome",
+      "primary": "#18181b",
+      "secondary": "#27272a",
+      "accent": "#27272a",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#09090b",
+      "muted": "#71717a",
+      "border": "#e4e4e7"
+    },
+    "colors": {
+      "primary": "#18181b",
+      "secondary": "#27272a",
+      "accent": "#27272a",
+      "text": "#09090b",
+      "bg": "#ffffff",
+      "border": "#e4e4e7"
+    },
+    "typography": {
+      "heading": "Plus Jakarta Sans",
+      "body": "Inter, sans-serif",
+      "headingFont": "Plus Jakarta Sans, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Plus Jakarta Sans, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "arrow",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Pyramid principle communication, board-level impact, and restructuring.",
+    "rating": 4.9,
+    "industry": "Business / Management"
+  },
+  {
+    "id": "biz-chief-of-staff",
+    "name": "Corporate Chief of Staff",
+    "category": "Business / Management",
+    "categoryId": "business",
+    "categoryName": "Business / Management",
+    "roles": [
+      "Chief of Staff",
+      "VP Strategic Initiatives"
+    ],
+    "experienceLevels": [
+      "senior",
+      "lead"
+    ],
+    "atsFriendly": true,
+    "atsScore": 98,
+    "photoPolicy": "optional",
+    "photoRequired": false,
+    "layout": "two-column",
+    "sidebar": "left",
+    "palette": {
+      "id": "indigo",
+      "name": "Electric Indigo",
+      "primary": "#312e81",
+      "secondary": "#4f46e5",
+      "accent": "#4f46e5",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#1e1b4b",
+      "muted": "#64748b",
+      "border": "#e0e7ff"
+    },
+    "colors": {
+      "primary": "#312e81",
+      "secondary": "#4f46e5",
+      "accent": "#4f46e5",
+      "text": "#1e1b4b",
+      "bg": "#ffffff",
+      "border": "#e0e7ff"
+    },
+    "typography": {
+      "heading": "Inter",
+      "body": "Inter, sans-serif",
+      "headingFont": "Inter, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Inter, sans-serif",
+    "dividerStyle": "bar",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Executive shadow management, board presentation crafting, and quarterly reviews.",
+    "rating": 4.9,
+    "industry": "Business / Management"
+  },
+  {
+    "id": "biz-bizdev-partnerships",
+    "name": "Strategic Partnerships & BizDev Lead",
+    "category": "Business / Management",
+    "categoryId": "business",
+    "categoryName": "Business / Management",
+    "roles": [
+      "Head of Partnerships",
+      "Business Development Director"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 97,
+    "photoPolicy": "optional",
+    "photoRequired": false,
+    "layout": "sidebar-left",
+    "sidebar": "left",
+    "palette": {
+      "id": "violet",
+      "name": "Fintech Violet",
+      "primary": "#3b0764",
+      "secondary": "#7c3aed",
+      "accent": "#7c3aed",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#2e1065",
+      "muted": "#6b7280",
+      "border": "#ede9fe"
+    },
+    "colors": {
+      "primary": "#3b0764",
+      "secondary": "#7c3aed",
+      "accent": "#7c3aed",
+      "text": "#2e1065",
+      "bg": "#ffffff",
+      "border": "#ede9fe"
+    },
+    "typography": {
+      "heading": "Plus Jakarta Sans",
+      "body": "Inter, sans-serif",
+      "headingFont": "Plus Jakarta Sans, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Plus Jakarta Sans, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "arrow",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Ecosystem integrations, co-selling agreements, and revenue sharing models.",
+    "rating": 4.9,
+    "industry": "Business / Management"
+  },
+  {
+    "id": "biz-executive-director",
+    "name": "Managing Director & Board Member",
+    "category": "Business / Management",
+    "categoryId": "business",
+    "categoryName": "Business / Management",
+    "roles": [
+      "Managing Director",
+      "Board Advisor",
+      "CEO"
+    ],
+    "experienceLevels": [
+      "executive"
+    ],
+    "atsFriendly": false,
+    "atsScore": 95,
+    "photoPolicy": "required",
+    "photoRequired": true,
+    "layout": "header-card",
+    "sidebar": "none",
+    "palette": {
+      "id": "burgundy",
+      "name": "Imperial Burgundy",
+      "primary": "#500724",
+      "secondary": "#be123c",
+      "accent": "#be123c",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#380415",
+      "muted": "#706e66",
+      "border": "#fce7f3"
+    },
+    "colors": {
+      "primary": "#500724",
+      "secondary": "#be123c",
+      "accent": "#be123c",
+      "text": "#380415",
+      "bg": "#ffffff",
+      "border": "#fce7f3"
+    },
+    "typography": {
+      "heading": "Playfair Display",
+      "body": "Inter, sans-serif",
+      "headingFont": "Playfair Display, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Playfair Display, sans-serif",
+    "dividerStyle": "double",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Senior leadership avatar profile tailored for investor and board presentations.",
+    "rating": 4.9,
+    "industry": "Business / Management"
+  },
+  {
+    "id": "fin-investment-banker",
+    "name": "Investment Banking Analyst",
+    "category": "Finance / Accounting",
+    "categoryId": "finance",
+    "categoryName": "Finance / Accounting",
+    "roles": [
+      "IB Analyst",
+      "Associate Banker",
+      "M&A Associate"
+    ],
+    "experienceLevels": [
+      "junior",
+      "mid"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "monochrome",
+      "name": "Pure Monochrome",
+      "primary": "#18181b",
+      "secondary": "#27272a",
+      "accent": "#27272a",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#09090b",
+      "muted": "#71717a",
+      "border": "#e4e4e7"
+    },
+    "colors": {
+      "primary": "#18181b",
+      "secondary": "#27272a",
+      "accent": "#27272a",
+      "text": "#09090b",
+      "bg": "#ffffff",
+      "border": "#e4e4e7"
+    },
+    "typography": {
+      "heading": "Merriweather",
+      "body": "Inter, sans-serif",
+      "headingFont": "Merriweather, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Merriweather, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Rigorous DCF, LBO, and pitchbook transaction records.",
+    "rating": 4.9,
+    "industry": "Finance / Accounting"
+  },
+  {
+    "id": "fin-private-equity",
+    "name": "Private Equity & LBO Associate",
+    "category": "Finance / Accounting",
+    "categoryId": "finance",
+    "categoryName": "Finance / Accounting",
+    "roles": [
+      "PE Associate",
+      "Investment Principal"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "navy",
+      "name": "Oxford Navy",
+      "primary": "#1e3a8a",
+      "secondary": "#2563eb",
+      "accent": "#2563eb",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#172554",
+      "muted": "#475569",
+      "border": "#cbd5e1"
+    },
+    "colors": {
+      "primary": "#1e3a8a",
+      "secondary": "#2563eb",
+      "accent": "#2563eb",
+      "text": "#172554",
+      "bg": "#ffffff",
+      "border": "#cbd5e1"
+    },
+    "typography": {
+      "heading": "Playfair Display",
+      "body": "Inter, sans-serif",
+      "headingFont": "Playfair Display, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Playfair Display, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "square",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Portfolio company EBITDA expansion and buyout investment committee memos.",
+    "rating": 4.9,
+    "industry": "Finance / Accounting"
+  },
+  {
+    "id": "fin-cpa-controller",
+    "name": "Corporate Controller & CPA",
+    "category": "Finance / Accounting",
+    "categoryId": "finance",
+    "categoryName": "Finance / Accounting",
+    "roles": [
+      "Controller",
+      "Accounting Director",
+      "CPA"
+    ],
+    "experienceLevels": [
+      "senior",
+      "lead"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "slate",
+      "name": "Executive Slate",
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#0f172a",
+      "muted": "#64748b",
+      "border": "#e2e8f0"
+    },
+    "colors": {
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "text": "#0f172a",
+      "bg": "#ffffff",
+      "border": "#e2e8f0"
+    },
+    "typography": {
+      "heading": "Roboto",
+      "body": "Inter, sans-serif",
+      "headingFont": "Roboto, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Roboto, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "GAAP/IFRS compliance, audit management, and SEC reporting accuracy.",
+    "rating": 4.9,
+    "industry": "Finance / Accounting"
+  },
+  {
+    "id": "fin-fpna-manager",
+    "name": "Senior FP&A Manager",
+    "category": "Finance / Accounting",
+    "categoryId": "finance",
+    "categoryName": "Finance / Accounting",
+    "roles": [
+      "FP&A Manager",
+      "Financial Planning Director"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 98,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "two-column",
+    "sidebar": "left",
+    "palette": {
+      "id": "teal",
+      "name": "Deep Teal",
+      "primary": "#134e4a",
+      "secondary": "#0d9488",
+      "accent": "#0d9488",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#042f2e",
+      "muted": "#52525b",
+      "border": "#ccfbf1"
+    },
+    "colors": {
+      "primary": "#134e4a",
+      "secondary": "#0d9488",
+      "accent": "#0d9488",
+      "text": "#042f2e",
+      "bg": "#ffffff",
+      "border": "#ccfbf1"
+    },
+    "typography": {
+      "heading": "Inter",
+      "body": "Inter, sans-serif",
+      "headingFont": "Inter, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Inter, sans-serif",
+    "dividerStyle": "bar",
+    "bulletStyle": "arrow",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Annual budgeting, variance analysis, rolling forecasts, and scenario modeling.",
+    "rating": 4.9,
+    "industry": "Finance / Accounting"
+  },
+  {
+    "id": "fin-equity-research",
+    "name": "Equity Research Analyst",
+    "category": "Finance / Accounting",
+    "categoryId": "finance",
+    "categoryName": "Finance / Accounting",
+    "roles": [
+      "Equity Research Associate",
+      "CFA Candidate"
+    ],
+    "experienceLevels": [
+      "junior",
+      "mid"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "monochrome",
+      "name": "Pure Monochrome",
+      "primary": "#18181b",
+      "secondary": "#27272a",
+      "accent": "#27272a",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#09090b",
+      "muted": "#71717a",
+      "border": "#e4e4e7"
+    },
+    "colors": {
+      "primary": "#18181b",
+      "secondary": "#27272a",
+      "accent": "#27272a",
+      "text": "#09090b",
+      "bg": "#ffffff",
+      "border": "#e4e4e7"
+    },
+    "typography": {
+      "heading": "Lora",
+      "body": "Inter, sans-serif",
+      "headingFont": "Lora, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Lora, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "dash",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Sector coverage initiation reports, EPS forecasting, and target price modeling.",
+    "rating": 4.9,
+    "industry": "Finance / Accounting"
+  },
+  {
+    "id": "fin-internal-audit",
+    "name": "Risk Management & Internal Audit Lead",
+    "category": "Finance / Accounting",
+    "categoryId": "finance",
+    "categoryName": "Finance / Accounting",
+    "roles": [
+      "Internal Auditor",
+      "SOX Compliance Lead"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "navy",
+      "name": "Oxford Navy",
+      "primary": "#1e3a8a",
+      "secondary": "#2563eb",
+      "accent": "#2563eb",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#172554",
+      "muted": "#475569",
+      "border": "#cbd5e1"
+    },
+    "colors": {
+      "primary": "#1e3a8a",
+      "secondary": "#2563eb",
+      "accent": "#2563eb",
+      "text": "#172554",
+      "bg": "#ffffff",
+      "border": "#cbd5e1"
+    },
+    "typography": {
+      "heading": "Inter",
+      "body": "Inter, sans-serif",
+      "headingFont": "Inter, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Inter, sans-serif",
+    "dividerStyle": "double",
+    "bulletStyle": "check",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "SOX controls, operational risk assessment, and fraud prevention matrices.",
+    "rating": 4.9,
+    "industry": "Finance / Accounting"
+  },
+  {
+    "id": "fin-treasury-analyst",
+    "name": "Corporate Treasury Analyst",
+    "category": "Finance / Accounting",
+    "categoryId": "finance",
+    "categoryName": "Finance / Accounting",
+    "roles": [
+      "Treasury Analyst",
+      "Cash Management Lead"
+    ],
+    "experienceLevels": [
+      "junior",
+      "mid"
+    ],
+    "atsFriendly": true,
+    "atsScore": 98,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "two-column",
+    "sidebar": "right",
+    "palette": {
+      "id": "slate",
+      "name": "Executive Slate",
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#0f172a",
+      "muted": "#64748b",
+      "border": "#e2e8f0"
+    },
+    "colors": {
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "text": "#0f172a",
+      "bg": "#ffffff",
+      "border": "#e2e8f0"
+    },
+    "typography": {
+      "heading": "Lato",
+      "body": "Inter, sans-serif",
+      "headingFont": "Lato, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Lato, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Liquidity optimization, FX hedging, and working capital debt facilities.",
+    "rating": 4.9,
+    "industry": "Finance / Accounting"
+  },
+  {
+    "id": "fin-tax-specialist",
+    "name": "Senior Tax Advisor & Planner",
+    "category": "Finance / Accounting",
+    "categoryId": "finance",
+    "categoryName": "Finance / Accounting",
+    "roles": [
+      "Tax Manager",
+      "International Tax Lead"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "burgundy",
+      "name": "Imperial Burgundy",
+      "primary": "#500724",
+      "secondary": "#be123c",
+      "accent": "#be123c",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#380415",
+      "muted": "#706e66",
+      "border": "#fce7f3"
+    },
+    "colors": {
+      "primary": "#500724",
+      "secondary": "#be123c",
+      "accent": "#be123c",
+      "text": "#380415",
+      "bg": "#ffffff",
+      "border": "#fce7f3"
+    },
+    "typography": {
+      "heading": "Roboto",
+      "body": "Inter, sans-serif",
+      "headingFont": "Roboto, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Roboto, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Corporate tax provisioning, cross-border transfer pricing, and credits.",
+    "rating": 4.9,
+    "industry": "Finance / Accounting"
+  },
+  {
+    "id": "fin-actuarial-analyst",
+    "name": "Actuarial Science Associate",
+    "category": "Finance / Accounting",
+    "categoryId": "finance",
+    "categoryName": "Finance / Accounting",
+    "roles": [
+      "Actuary",
+      "Risk Modeler",
+      "ASA/FSA"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "monochrome",
+      "name": "Pure Monochrome",
+      "primary": "#18181b",
+      "secondary": "#27272a",
+      "accent": "#27272a",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#09090b",
+      "muted": "#71717a",
+      "border": "#e4e4e7"
+    },
+    "colors": {
+      "primary": "#18181b",
+      "secondary": "#27272a",
+      "accent": "#27272a",
+      "text": "#09090b",
+      "bg": "#ffffff",
+      "border": "#e4e4e7"
+    },
+    "typography": {
+      "heading": "Merriweather",
+      "body": "Inter, sans-serif",
+      "headingFont": "Merriweather, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Merriweather, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "square",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Mortality modeling, reserve calculations, and insurance risk modeling.",
+    "rating": 4.9,
+    "industry": "Finance / Accounting"
+  },
+  {
+    "id": "fin-wealth-advisor",
+    "name": "Private Wealth Advisor & CFP",
+    "category": "Finance / Accounting",
+    "categoryId": "finance",
+    "categoryName": "Finance / Accounting",
+    "roles": [
+      "Wealth Manager",
+      "CFP",
+      "Family Office Lead"
+    ],
+    "experienceLevels": [
+      "senior",
+      "lead"
+    ],
+    "atsFriendly": false,
+    "atsScore": 95,
+    "photoPolicy": "required",
+    "photoRequired": true,
+    "layout": "header-card",
+    "sidebar": "none",
+    "palette": {
+      "id": "navy",
+      "name": "Oxford Navy",
+      "primary": "#1e3a8a",
+      "secondary": "#2563eb",
+      "accent": "#2563eb",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#172554",
+      "muted": "#475569",
+      "border": "#cbd5e1"
+    },
+    "colors": {
+      "primary": "#1e3a8a",
+      "secondary": "#2563eb",
+      "accent": "#2563eb",
+      "text": "#172554",
+      "bg": "#ffffff",
+      "border": "#cbd5e1"
+    },
+    "typography": {
+      "heading": "Playfair Display",
+      "body": "Inter, sans-serif",
+      "headingFont": "Playfair Display, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Playfair Display, sans-serif",
+    "dividerStyle": "double",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Client-facing wealth stewardship portfolio with professional executive photo.",
+    "rating": 4.9,
+    "industry": "Finance / Accounting"
+  },
+  {
+    "id": "mkt-growth-lead",
+    "name": "Growth Marketing & Demand Gen Director",
+    "category": "Marketing / Sales",
+    "categoryId": "marketing",
+    "categoryName": "Marketing / Sales",
+    "roles": [
+      "Growth Marketer",
+      "Demand Gen Lead",
+      "VP Marketing"
+    ],
+    "experienceLevels": [
+      "senior",
+      "lead"
+    ],
+    "atsFriendly": true,
+    "atsScore": 97,
+    "photoPolicy": "optional",
+    "photoRequired": false,
+    "layout": "two-column",
+    "sidebar": "right",
+    "palette": {
+      "id": "indigo",
+      "name": "Electric Indigo",
+      "primary": "#312e81",
+      "secondary": "#4f46e5",
+      "accent": "#4f46e5",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#1e1b4b",
+      "muted": "#64748b",
+      "border": "#e0e7ff"
+    },
+    "colors": {
+      "primary": "#312e81",
+      "secondary": "#4f46e5",
+      "accent": "#4f46e5",
+      "text": "#1e1b4b",
+      "bg": "#ffffff",
+      "border": "#e0e7ff"
+    },
+    "typography": {
+      "heading": "Plus Jakarta Sans",
+      "body": "Inter, sans-serif",
+      "headingFont": "Plus Jakarta Sans, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Plus Jakarta Sans, sans-serif",
+    "dividerStyle": "bar",
+    "bulletStyle": "arrow",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "CAC/LTV ratios, paid acquisition scale, and viral loop experimentation.",
+    "rating": 4.9,
+    "industry": "Marketing / Sales"
+  },
+  {
+    "id": "mkt-brand-director",
+    "name": "Global Brand Strategy Director",
+    "category": "Marketing / Sales",
+    "categoryId": "marketing",
+    "categoryName": "Marketing / Sales",
+    "roles": [
+      "Brand Director",
+      "Creative Strategist"
+    ],
+    "experienceLevels": [
+      "senior",
+      "executive"
+    ],
+    "atsFriendly": false,
+    "atsScore": 94,
+    "photoPolicy": "required",
+    "photoRequired": true,
+    "layout": "header-card",
+    "sidebar": "none",
+    "palette": {
+      "id": "rose",
+      "name": "Chic Rose",
+      "primary": "#881337",
+      "secondary": "#e11d48",
+      "accent": "#e11d48",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#4c0519",
+      "muted": "#71717a",
+      "border": "#ffe4e6"
+    },
+    "colors": {
+      "primary": "#881337",
+      "secondary": "#e11d48",
+      "accent": "#e11d48",
+      "text": "#4c0519",
+      "bg": "#ffffff",
+      "border": "#ffe4e6"
+    },
+    "typography": {
+      "heading": "Playfair Display",
+      "body": "Inter, sans-serif",
+      "headingFont": "Playfair Display, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Playfair Display, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "High-profile brand visual identity with required executive photo header.",
+    "rating": 4.9,
+    "industry": "Marketing / Sales"
+  },
+  {
+    "id": "mkt-content-strategist",
+    "name": "Editorial & Content Marketing Strategist",
+    "category": "Marketing / Sales",
+    "categoryId": "marketing",
+    "categoryName": "Marketing / Sales",
+    "roles": [
+      "Content Strategist",
+      "Managing Editor"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 98,
+    "photoPolicy": "optional",
+    "photoRequired": false,
+    "layout": "sidebar-left",
+    "sidebar": "left",
+    "palette": {
+      "id": "amber",
+      "name": "Editorial Amber",
+      "primary": "#451a03",
+      "secondary": "#d97706",
+      "accent": "#d97706",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#292524",
+      "muted": "#78716c",
+      "border": "#fef3c7"
+    },
+    "colors": {
+      "primary": "#451a03",
+      "secondary": "#d97706",
+      "accent": "#d97706",
+      "text": "#292524",
+      "bg": "#ffffff",
+      "border": "#fef3c7"
+    },
+    "typography": {
+      "heading": "Lora",
+      "body": "Inter, sans-serif",
+      "headingFont": "Lora, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Lora, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Organic traffic expansion, editorial calendars, and thought leadership.",
+    "rating": 4.9,
+    "industry": "Marketing / Sales"
+  },
+  {
+    "id": "mkt-seo-performance",
+    "name": "Technical SEO & Performance Marketing",
+    "category": "Marketing / Sales",
+    "categoryId": "marketing",
+    "categoryName": "Marketing / Sales",
+    "roles": [
+      "SEO Specialist",
+      "SEM Manager"
+    ],
+    "experienceLevels": [
+      "junior",
+      "mid"
+    ],
+    "atsFriendly": true,
+    "atsScore": 98,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "teal",
+      "name": "Deep Teal",
+      "primary": "#134e4a",
+      "secondary": "#0d9488",
+      "accent": "#0d9488",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#042f2e",
+      "muted": "#52525b",
+      "border": "#ccfbf1"
+    },
+    "colors": {
+      "primary": "#134e4a",
+      "secondary": "#0d9488",
+      "accent": "#0d9488",
+      "text": "#042f2e",
+      "bg": "#ffffff",
+      "border": "#ccfbf1"
+    },
+    "typography": {
+      "heading": "Inter",
+      "body": "Inter, sans-serif",
+      "headingFont": "Inter, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Inter, sans-serif",
+    "dividerStyle": "bar",
+    "bulletStyle": "square",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Core Web Vitals, organic keyword rankings, and multi-channel attribution.",
+    "rating": 4.9,
+    "industry": "Marketing / Sales"
+  },
+  {
+    "id": "mkt-product-marketing",
+    "name": "Senior Product Marketing Manager (PMM)",
+    "category": "Marketing / Sales",
+    "categoryId": "marketing",
+    "categoryName": "Marketing / Sales",
+    "roles": [
+      "PMM",
+      "Go-To-Market Lead"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 98,
+    "photoPolicy": "optional",
+    "photoRequired": false,
+    "layout": "two-column",
+    "sidebar": "left",
+    "palette": {
+      "id": "violet",
+      "name": "Fintech Violet",
+      "primary": "#3b0764",
+      "secondary": "#7c3aed",
+      "accent": "#7c3aed",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#2e1065",
+      "muted": "#6b7280",
+      "border": "#ede9fe"
+    },
+    "colors": {
+      "primary": "#3b0764",
+      "secondary": "#7c3aed",
+      "accent": "#7c3aed",
+      "text": "#2e1065",
+      "bg": "#ffffff",
+      "border": "#ede9fe"
+    },
+    "typography": {
+      "heading": "Plus Jakarta Sans",
+      "body": "Inter, sans-serif",
+      "headingFont": "Plus Jakarta Sans, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Plus Jakarta Sans, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "arrow",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "GTM positioning, competitive battlecards, sales enablement, and launch tiers.",
+    "rating": 4.9,
+    "industry": "Marketing / Sales"
+  },
+  {
+    "id": "mkt-enterprise-ae",
+    "name": "Enterprise Account Executive (SaaS)",
+    "category": "Marketing / Sales",
+    "categoryId": "marketing",
+    "categoryName": "Marketing / Sales",
+    "roles": [
+      "Account Executive",
+      "Strategic AE"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 98,
+    "photoPolicy": "optional",
+    "photoRequired": false,
+    "layout": "header-card",
+    "sidebar": "none",
+    "palette": {
+      "id": "slate",
+      "name": "Executive Slate",
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#0f172a",
+      "muted": "#64748b",
+      "border": "#e2e8f0"
+    },
+    "colors": {
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "text": "#0f172a",
+      "bg": "#ffffff",
+      "border": "#e2e8f0"
+    },
+    "typography": {
+      "heading": "Inter",
+      "body": "Inter, sans-serif",
+      "headingFont": "Inter, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Inter, sans-serif",
+    "dividerStyle": "bar",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "150%+ quota attainment, MEDDPICC methodology, and Fortune 500 contract closes.",
+    "rating": 4.9,
+    "industry": "Marketing / Sales"
+  },
+  {
+    "id": "mkt-sales-director",
+    "name": "VP of Global Sales & Revenue",
+    "category": "Marketing / Sales",
+    "categoryId": "marketing",
+    "categoryName": "Marketing / Sales",
+    "roles": [
+      "VP Sales",
+      "Chief Revenue Officer",
+      "Sales Director"
+    ],
+    "experienceLevels": [
+      "senior",
+      "executive"
+    ],
+    "atsFriendly": false,
+    "atsScore": 95,
+    "photoPolicy": "required",
+    "photoRequired": true,
+    "layout": "header-card",
+    "sidebar": "none",
+    "palette": {
+      "id": "navy",
+      "name": "Oxford Navy",
+      "primary": "#1e3a8a",
+      "secondary": "#2563eb",
+      "accent": "#2563eb",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#172554",
+      "muted": "#475569",
+      "border": "#cbd5e1"
+    },
+    "colors": {
+      "primary": "#1e3a8a",
+      "secondary": "#2563eb",
+      "accent": "#2563eb",
+      "text": "#172554",
+      "bg": "#ffffff",
+      "border": "#cbd5e1"
+    },
+    "typography": {
+      "heading": "Plus Jakarta Sans",
+      "body": "Inter, sans-serif",
+      "headingFont": "Plus Jakarta Sans, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Plus Jakarta Sans, sans-serif",
+    "dividerStyle": "double",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Executive commercial profile highlighting enterprise pipeline growth.",
+    "rating": 4.9,
+    "industry": "Marketing / Sales"
+  },
+  {
+    "id": "mkt-social-influencer",
+    "name": "Social Media & Community Director",
+    "category": "Marketing / Sales",
+    "categoryId": "marketing",
+    "categoryName": "Marketing / Sales",
+    "roles": [
+      "Social Media Manager",
+      "Community Lead"
+    ],
+    "experienceLevels": [
+      "junior",
+      "mid"
+    ],
+    "atsFriendly": false,
+    "atsScore": 94,
+    "photoPolicy": "required",
+    "photoRequired": true,
+    "layout": "two-column",
+    "sidebar": "left",
+    "palette": {
+      "id": "violet",
+      "name": "Fintech Violet",
+      "primary": "#3b0764",
+      "secondary": "#7c3aed",
+      "accent": "#7c3aed",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#2e1065",
+      "muted": "#6b7280",
+      "border": "#ede9fe"
+    },
+    "colors": {
+      "primary": "#3b0764",
+      "secondary": "#7c3aed",
+      "accent": "#7c3aed",
+      "text": "#2e1065",
+      "bg": "#ffffff",
+      "border": "#ede9fe"
+    },
+    "typography": {
+      "heading": "Plus Jakarta Sans",
+      "body": "Inter, sans-serif",
+      "headingFont": "Plus Jakarta Sans, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Plus Jakarta Sans, sans-serif",
+    "dividerStyle": "bar",
+    "bulletStyle": "arrow",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Channel follower growth, viral campaigns, engagement rates, and creator partnerships.",
+    "rating": 4.9,
+    "industry": "Marketing / Sales"
+  },
+  {
+    "id": "mkt-pr-communications",
+    "name": "Corporate Communications & PR Lead",
+    "category": "Marketing / Sales",
+    "categoryId": "marketing",
+    "categoryName": "Marketing / Sales",
+    "roles": [
+      "PR Director",
+      "Communications Manager"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": false,
+    "atsScore": 95,
+    "photoPolicy": "required",
+    "photoRequired": true,
+    "layout": "header-card",
+    "sidebar": "none",
+    "palette": {
+      "id": "burgundy",
+      "name": "Imperial Burgundy",
+      "primary": "#500724",
+      "secondary": "#be123c",
+      "accent": "#be123c",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#380415",
+      "muted": "#706e66",
+      "border": "#fce7f3"
+    },
+    "colors": {
+      "primary": "#500724",
+      "secondary": "#be123c",
+      "accent": "#be123c",
+      "text": "#380415",
+      "bg": "#ffffff",
+      "border": "#fce7f3"
+    },
+    "typography": {
+      "heading": "Merriweather",
+      "body": "Inter, sans-serif",
+      "headingFont": "Merriweather, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Merriweather, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Media relations, tier-one press placements, crisis communications, and keynotes.",
+    "rating": 4.9,
+    "industry": "Marketing / Sales"
+  },
+  {
+    "id": "mkt-ecommerce-manager",
+    "name": "DTC & E-commerce Operations Manager",
+    "category": "Marketing / Sales",
+    "categoryId": "marketing",
+    "categoryName": "Marketing / Sales",
+    "roles": [
+      "E-commerce Manager",
+      "Shopify Plus Lead"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 98,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "two-column",
+    "sidebar": "right",
+    "palette": {
+      "id": "emerald",
+      "name": "Nordic Emerald",
+      "primary": "#064e3b",
+      "secondary": "#059669",
+      "accent": "#059669",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#022c22",
+      "muted": "#4b5563",
+      "border": "#d1fae5"
+    },
+    "colors": {
+      "primary": "#064e3b",
+      "secondary": "#059669",
+      "accent": "#059669",
+      "text": "#022c22",
+      "bg": "#ffffff",
+      "border": "#d1fae5"
+    },
+    "typography": {
+      "heading": "Roboto",
+      "body": "Inter, sans-serif",
+      "headingFont": "Roboto, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Roboto, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "check",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "ROAS metrics, conversion rate optimization, inventory churn, and average order value.",
+    "rating": 4.9,
+    "industry": "Marketing / Sales"
+  },
+  {
+    "id": "eng-mechanical-lead",
+    "name": "Senior Mechanical Design Engineer",
+    "category": "Engineering / Technical",
+    "categoryId": "engineering",
+    "categoryName": "Engineering / Technical",
+    "roles": [
+      "Mechanical Engineer",
+      "CAD Designer",
+      "FEA Analyst"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "slate",
+      "name": "Executive Slate",
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#0f172a",
+      "muted": "#64748b",
+      "border": "#e2e8f0"
+    },
+    "colors": {
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "text": "#0f172a",
+      "bg": "#ffffff",
+      "border": "#e2e8f0"
+    },
+    "typography": {
+      "heading": "Roboto",
+      "body": "Inter, sans-serif",
+      "headingFont": "Roboto, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Roboto, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "SolidWorks, GD&T, FEA stress simulations, and DFM production ramp.",
+    "rating": 4.9,
+    "industry": "Engineering / Technical"
+  },
+  {
+    "id": "eng-electrical-hardware",
+    "name": "Hardware Architecture & PCB Engineer",
+    "category": "Engineering / Technical",
+    "categoryId": "engineering",
+    "categoryName": "Engineering / Technical",
+    "roles": [
+      "Electrical Engineer",
+      "PCB Designer"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "two-column",
+    "sidebar": "left",
+    "palette": {
+      "id": "cyan",
+      "name": "Cyberpunk Cyan",
+      "primary": "#083344",
+      "secondary": "#0891b2",
+      "accent": "#0891b2",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#082f49",
+      "muted": "#64748b",
+      "border": "#cffafe"
+    },
+    "colors": {
+      "primary": "#083344",
+      "secondary": "#0891b2",
+      "accent": "#0891b2",
+      "text": "#082f49",
+      "bg": "#ffffff",
+      "border": "#cffafe"
+    },
+    "typography": {
+      "heading": "JetBrains Mono",
+      "body": "Inter, sans-serif",
+      "headingFont": "JetBrains Mono, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "JetBrains Mono, sans-serif",
+    "dividerStyle": "bar",
+    "bulletStyle": "square",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "High-speed board layout, signal integrity, schematic capture, and EMC testing.",
+    "rating": 4.9,
+    "industry": "Engineering / Technical"
+  },
+  {
+    "id": "eng-civil-structural",
+    "name": "Structural & Civil Project Engineer",
+    "category": "Engineering / Technical",
+    "categoryId": "engineering",
+    "categoryName": "Engineering / Technical",
+    "roles": [
+      "Civil Engineer",
+      "Structural PE"
+    ],
+    "experienceLevels": [
+      "senior",
+      "lead"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "monochrome",
+      "name": "Pure Monochrome",
+      "primary": "#18181b",
+      "secondary": "#27272a",
+      "accent": "#27272a",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#09090b",
+      "muted": "#71717a",
+      "border": "#e4e4e7"
+    },
+    "colors": {
+      "primary": "#18181b",
+      "secondary": "#27272a",
+      "accent": "#27272a",
+      "text": "#09090b",
+      "bg": "#ffffff",
+      "border": "#e4e4e7"
+    },
+    "typography": {
+      "heading": "Inter",
+      "body": "Inter, sans-serif",
+      "headingFont": "Inter, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Inter, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "square",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "AASHTO/IBC compliance, municipal approvals, and concrete load models.",
+    "rating": 4.9,
+    "industry": "Engineering / Technical"
+  },
+  {
+    "id": "eng-aerospace-propulsion",
+    "name": "Aerospace & Propulsion Systems Engineer",
+    "category": "Engineering / Technical",
+    "categoryId": "engineering",
+    "categoryName": "Engineering / Technical",
+    "roles": [
+      "Aerospace Engineer",
+      "Systems Lead"
+    ],
+    "experienceLevels": [
+      "senior",
+      "lead"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "navy",
+      "name": "Oxford Navy",
+      "primary": "#1e3a8a",
+      "secondary": "#2563eb",
+      "accent": "#2563eb",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#172554",
+      "muted": "#475569",
+      "border": "#cbd5e1"
+    },
+    "colors": {
+      "primary": "#1e3a8a",
+      "secondary": "#2563eb",
+      "accent": "#2563eb",
+      "text": "#172554",
+      "bg": "#ffffff",
+      "border": "#cbd5e1"
+    },
+    "typography": {
+      "heading": "Inter",
+      "body": "Inter, sans-serif",
+      "headingFont": "Inter, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Inter, sans-serif",
+    "dividerStyle": "double",
+    "bulletStyle": "arrow",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Thermal dynamics, propulsion cycles, DO-178C avionics, and mission safety.",
+    "rating": 4.9,
+    "industry": "Engineering / Technical"
+  },
+  {
+    "id": "eng-chemical-process",
+    "name": "Chemical Process & Materials Engineer",
+    "category": "Engineering / Technical",
+    "categoryId": "engineering",
+    "categoryName": "Engineering / Technical",
+    "roles": [
+      "Process Engineer",
+      "Chemical Engineer"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "teal",
+      "name": "Deep Teal",
+      "primary": "#134e4a",
+      "secondary": "#0d9488",
+      "accent": "#0d9488",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#042f2e",
+      "muted": "#52525b",
+      "border": "#ccfbf1"
+    },
+    "colors": {
+      "primary": "#134e4a",
+      "secondary": "#0d9488",
+      "accent": "#0d9488",
+      "text": "#042f2e",
+      "bg": "#ffffff",
+      "border": "#ccfbf1"
+    },
+    "typography": {
+      "heading": "Roboto",
+      "body": "Inter, sans-serif",
+      "headingFont": "Roboto, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Roboto, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "P&ID generation, Aspen Plus modeling, yield optimization, and HAZOP reviews.",
+    "rating": 4.9,
+    "industry": "Engineering / Technical"
+  },
+  {
+    "id": "eng-robotics-automation",
+    "name": "Robotics & Industrial Automation Lead",
+    "category": "Engineering / Technical",
+    "categoryId": "engineering",
+    "categoryName": "Engineering / Technical",
+    "roles": [
+      "Robotics Engineer",
+      "PLC Programmer"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 98,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "two-column",
+    "sidebar": "right",
+    "palette": {
+      "id": "indigo",
+      "name": "Electric Indigo",
+      "primary": "#312e81",
+      "secondary": "#4f46e5",
+      "accent": "#4f46e5",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#1e1b4b",
+      "muted": "#64748b",
+      "border": "#e0e7ff"
+    },
+    "colors": {
+      "primary": "#312e81",
+      "secondary": "#4f46e5",
+      "accent": "#4f46e5",
+      "text": "#1e1b4b",
+      "bg": "#ffffff",
+      "border": "#e0e7ff"
+    },
+    "typography": {
+      "heading": "JetBrains Mono",
+      "body": "Inter, sans-serif",
+      "headingFont": "JetBrains Mono, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "JetBrains Mono, sans-serif",
+    "dividerStyle": "bar",
+    "bulletStyle": "arrow",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "ROS2, robotic kinematics, industrial PLC programming, and machine vision.",
+    "rating": 4.9,
+    "industry": "Engineering / Technical"
+  },
+  {
+    "id": "eng-biomedical-devices",
+    "name": "Biomedical Device R&D Engineer",
+    "category": "Engineering / Technical",
+    "categoryId": "engineering",
+    "categoryName": "Engineering / Technical",
+    "roles": [
+      "Biomedical Engineer",
+      "FDA Regulatory Lead"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "emerald",
+      "name": "Nordic Emerald",
+      "primary": "#064e3b",
+      "secondary": "#059669",
+      "accent": "#059669",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#022c22",
+      "muted": "#4b5563",
+      "border": "#d1fae5"
+    },
+    "colors": {
+      "primary": "#064e3b",
+      "secondary": "#059669",
+      "accent": "#059669",
+      "text": "#022c22",
+      "bg": "#ffffff",
+      "border": "#d1fae5"
+    },
+    "typography": {
+      "heading": "Inter",
+      "body": "Inter, sans-serif",
+      "headingFont": "Inter, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Inter, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "check",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "FDA 510(k), ISO 13485 compliance, biocompatibility, and clinical trial devices.",
+    "rating": 4.9,
+    "industry": "Engineering / Technical"
+  },
+  {
+    "id": "eng-environmental-sustainability",
+    "name": "Environmental & Sustainability Engineer",
+    "category": "Engineering / Technical",
+    "categoryId": "engineering",
+    "categoryName": "Engineering / Technical",
+    "roles": [
+      "Environmental Engineer",
+      "ESG Analyst"
+    ],
+    "experienceLevels": [
+      "junior",
+      "mid"
+    ],
+    "atsFriendly": true,
+    "atsScore": 98,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "two-column",
+    "sidebar": "left",
+    "palette": {
+      "id": "emerald",
+      "name": "Nordic Emerald",
+      "primary": "#064e3b",
+      "secondary": "#059669",
+      "accent": "#059669",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#022c22",
+      "muted": "#4b5563",
+      "border": "#d1fae5"
+    },
+    "colors": {
+      "primary": "#064e3b",
+      "secondary": "#059669",
+      "accent": "#059669",
+      "text": "#022c22",
+      "bg": "#ffffff",
+      "border": "#d1fae5"
+    },
+    "typography": {
+      "heading": "Lato",
+      "body": "Inter, sans-serif",
+      "headingFont": "Lato, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Lato, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Carbon footprint auditing, water reclamation, NEPA reviews, and LEED certification.",
+    "rating": 4.9,
+    "industry": "Engineering / Technical"
+  },
+  {
+    "id": "eng-manufacturing-quality",
+    "name": "Six Sigma Quality & Manufacturing Engineer",
+    "category": "Engineering / Technical",
+    "categoryId": "engineering",
+    "categoryName": "Engineering / Technical",
+    "roles": [
+      "Quality Engineer",
+      "Black Belt"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "slate",
+      "name": "Executive Slate",
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#0f172a",
+      "muted": "#64748b",
+      "border": "#e2e8f0"
+    },
+    "colors": {
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "text": "#0f172a",
+      "bg": "#ffffff",
+      "border": "#e2e8f0"
+    },
+    "typography": {
+      "heading": "Roboto",
+      "body": "Inter, sans-serif",
+      "headingFont": "Roboto, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Roboto, sans-serif",
+    "dividerStyle": "bar",
+    "bulletStyle": "square",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "PPAP, FMEA, statistical process control (SPC), and scrap reduction programs.",
+    "rating": 4.9,
+    "industry": "Engineering / Technical"
+  },
+  {
+    "id": "eng-energy-renewable",
+    "name": "Renewable Energy & Grid Systems Engineer",
+    "category": "Engineering / Technical",
+    "categoryId": "engineering",
+    "categoryName": "Engineering / Technical",
+    "roles": [
+      "Renewable Energy Engineer",
+      "Solar/Wind Lead"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 98,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "header-card",
+    "sidebar": "none",
+    "palette": {
+      "id": "amber",
+      "name": "Editorial Amber",
+      "primary": "#451a03",
+      "secondary": "#d97706",
+      "accent": "#d97706",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#292524",
+      "muted": "#78716c",
+      "border": "#fef3c7"
+    },
+    "colors": {
+      "primary": "#451a03",
+      "secondary": "#d97706",
+      "accent": "#d97706",
+      "text": "#292524",
+      "bg": "#ffffff",
+      "border": "#fef3c7"
+    },
+    "typography": {
+      "heading": "Inter",
+      "body": "Inter, sans-serif",
+      "headingFont": "Inter, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Inter, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "arrow",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Microgrid integration, battery storage systems (BESS), and interconnection studies.",
+    "rating": 4.9,
+    "industry": "Engineering / Technical"
+  },
+  {
+    "id": "stu-cs-intern",
+    "name": "Computer Science Internship Candidate",
+    "category": "Student / Fresher / Internship",
+    "categoryId": "student",
+    "categoryName": "Student / Fresher / Internship",
+    "roles": [
+      "CS Student",
+      "Software Intern",
+      "Junior Dev"
+    ],
+    "experienceLevels": [
+      "student",
+      "fresher"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "indigo",
+      "name": "Electric Indigo",
+      "primary": "#312e81",
+      "secondary": "#4f46e5",
+      "accent": "#4f46e5",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#1e1b4b",
+      "muted": "#64748b",
+      "border": "#e0e7ff"
+    },
+    "colors": {
+      "primary": "#312e81",
+      "secondary": "#4f46e5",
+      "accent": "#4f46e5",
+      "text": "#1e1b4b",
+      "bg": "#ffffff",
+      "border": "#e0e7ff"
+    },
+    "typography": {
+      "heading": "JetBrains Mono",
+      "body": "Inter, sans-serif",
+      "headingFont": "JetBrains Mono, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "JetBrains Mono, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "disc",
+    "sections": [
+      "education",
+      "projects",
+      "skills",
+      "experience",
+      "certifications"
+    ],
+    "description": "Prioritizes coursework, competitive programming, and GitHub project repos.",
+    "rating": 4.9,
+    "industry": "Student / Fresher / Internship"
+  },
+  {
+    "id": "stu-engineering-graduate",
+    "name": "Honors Engineering Graduate",
+    "category": "Student / Fresher / Internship",
+    "categoryId": "student",
+    "categoryName": "Student / Fresher / Internship",
+    "roles": [
+      "Engineering Graduate",
+      "Graduate Trainee"
+    ],
+    "experienceLevels": [
+      "student",
+      "fresher"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "navy",
+      "name": "Oxford Navy",
+      "primary": "#1e3a8a",
+      "secondary": "#2563eb",
+      "accent": "#2563eb",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#172554",
+      "muted": "#475569",
+      "border": "#cbd5e1"
+    },
+    "colors": {
+      "primary": "#1e3a8a",
+      "secondary": "#2563eb",
+      "accent": "#2563eb",
+      "text": "#172554",
+      "bg": "#ffffff",
+      "border": "#cbd5e1"
+    },
+    "typography": {
+      "heading": "Inter",
+      "body": "Inter, sans-serif",
+      "headingFont": "Inter, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Inter, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "square",
+    "sections": [
+      "education",
+      "projects",
+      "skills",
+      "experience",
+      "certifications"
+    ],
+    "description": "Highlights senior capstone design, GPA honors, and engineering labs.",
+    "rating": 4.9,
+    "industry": "Student / Fresher / Internship"
+  },
+  {
+    "id": "stu-business-entry",
+    "name": "Business Administration Fresh Graduate",
+    "category": "Student / Fresher / Internship",
+    "categoryId": "student",
+    "categoryName": "Student / Fresher / Internship",
+    "roles": [
+      "Business Graduate",
+      "Junior Analyst"
+    ],
+    "experienceLevels": [
+      "student",
+      "fresher"
+    ],
+    "atsFriendly": true,
+    "atsScore": 98,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "two-column",
+    "sidebar": "right",
+    "palette": {
+      "id": "slate",
+      "name": "Executive Slate",
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#0f172a",
+      "muted": "#64748b",
+      "border": "#e2e8f0"
+    },
+    "colors": {
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "text": "#0f172a",
+      "bg": "#ffffff",
+      "border": "#e2e8f0"
+    },
+    "typography": {
+      "heading": "Plus Jakarta Sans",
+      "body": "Inter, sans-serif",
+      "headingFont": "Plus Jakarta Sans, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Plus Jakarta Sans, sans-serif",
+    "dividerStyle": "bar",
+    "bulletStyle": "arrow",
+    "sections": [
+      "education",
+      "projects",
+      "skills",
+      "experience",
+      "certifications"
+    ],
+    "description": "Case competition wins, club leadership roles, and financial analysis coursework.",
+    "rating": 4.9,
+    "industry": "Student / Fresher / Internship"
+  },
+  {
+    "id": "stu-first-job-minimal",
+    "name": "Clean First-Job Starter",
+    "category": "Student / Fresher / Internship",
+    "categoryId": "student",
+    "categoryName": "Student / Fresher / Internship",
+    "roles": [
+      "Entry Level",
+      "First-time Applicant"
+    ],
+    "experienceLevels": [
+      "student",
+      "fresher"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "monochrome",
+      "name": "Pure Monochrome",
+      "primary": "#18181b",
+      "secondary": "#27272a",
+      "accent": "#27272a",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#09090b",
+      "muted": "#71717a",
+      "border": "#e4e4e7"
+    },
+    "colors": {
+      "primary": "#18181b",
+      "secondary": "#27272a",
+      "accent": "#27272a",
+      "text": "#09090b",
+      "bg": "#ffffff",
+      "border": "#e4e4e7"
+    },
+    "typography": {
+      "heading": "Inter",
+      "body": "Inter, sans-serif",
+      "headingFont": "Inter, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Inter, sans-serif",
+    "dividerStyle": "minimal",
+    "bulletStyle": "dash",
+    "sections": [
+      "education",
+      "projects",
+      "skills",
+      "experience",
+      "certifications"
+    ],
+    "description": "Understated format ideal for applicants with 0-1 years of experience.",
+    "rating": 4.9,
+    "industry": "Student / Fresher / Internship"
+  },
+  {
+    "id": "stu-project-heavy",
+    "name": "Project & Hackathon Focused Student",
+    "category": "Student / Fresher / Internship",
+    "categoryId": "student",
+    "categoryName": "Student / Fresher / Internship",
+    "roles": [
+      "Hackathon Winner",
+      "Full Stack Student"
+    ],
+    "experienceLevels": [
+      "student",
+      "fresher"
+    ],
+    "atsFriendly": true,
+    "atsScore": 98,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "two-column",
+    "sidebar": "left",
+    "palette": {
+      "id": "cyan",
+      "name": "Cyberpunk Cyan",
+      "primary": "#083344",
+      "secondary": "#0891b2",
+      "accent": "#0891b2",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#082f49",
+      "muted": "#64748b",
+      "border": "#cffafe"
+    },
+    "colors": {
+      "primary": "#083344",
+      "secondary": "#0891b2",
+      "accent": "#0891b2",
+      "text": "#082f49",
+      "bg": "#ffffff",
+      "border": "#cffafe"
+    },
+    "typography": {
+      "heading": "Fira Code",
+      "body": "Inter, sans-serif",
+      "headingFont": "Fira Code, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Fira Code, sans-serif",
+    "dividerStyle": "bar",
+    "bulletStyle": "arrow",
+    "sections": [
+      "education",
+      "projects",
+      "skills",
+      "experience",
+      "certifications"
+    ],
+    "description": "Elevates 3-4 feature projects to the top with live deployment URLs.",
+    "rating": 4.9,
+    "industry": "Student / Fresher / Internship"
+  },
+  {
+    "id": "stu-campus-leader",
+    "name": "Student Body Leader & Extracurriculars",
+    "category": "Student / Fresher / Internship",
+    "categoryId": "student",
+    "categoryName": "Student / Fresher / Internship",
+    "roles": [
+      "Student President",
+      "Campus Ambassador"
+    ],
+    "experienceLevels": [
+      "student",
+      "fresher"
+    ],
+    "atsFriendly": true,
+    "atsScore": 97,
+    "photoPolicy": "optional",
+    "photoRequired": false,
+    "layout": "header-card",
+    "sidebar": "none",
+    "palette": {
+      "id": "crimson",
+      "name": "Harvard Crimson",
+      "primary": "#7f1d1d",
+      "secondary": "#dc2626",
+      "accent": "#dc2626",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#450a0a",
+      "muted": "#57534e",
+      "border": "#fee2e2"
+    },
+    "colors": {
+      "primary": "#7f1d1d",
+      "secondary": "#dc2626",
+      "accent": "#dc2626",
+      "text": "#450a0a",
+      "bg": "#ffffff",
+      "border": "#fee2e2"
+    },
+    "typography": {
+      "heading": "Plus Jakarta Sans",
+      "body": "Inter, sans-serif",
+      "headingFont": "Plus Jakarta Sans, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Plus Jakarta Sans, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "disc",
+    "sections": [
+      "education",
+      "projects",
+      "skills",
+      "experience",
+      "certifications"
+    ],
+    "description": "Highlights campus elections, event organization, and student representation.",
+    "rating": 4.9,
+    "industry": "Student / Fresher / Internship"
+  },
+  {
+    "id": "stu-finance-trainee",
+    "name": "Financial Analyst Management Trainee",
+    "category": "Student / Fresher / Internship",
+    "categoryId": "student",
+    "categoryName": "Student / Fresher / Internship",
+    "roles": [
+      "Finance Trainee",
+      "Junior Auditor"
+    ],
+    "experienceLevels": [
+      "student",
+      "fresher"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "monochrome",
+      "name": "Pure Monochrome",
+      "primary": "#18181b",
+      "secondary": "#27272a",
+      "accent": "#27272a",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#09090b",
+      "muted": "#71717a",
+      "border": "#e4e4e7"
+    },
+    "colors": {
+      "primary": "#18181b",
+      "secondary": "#27272a",
+      "accent": "#27272a",
+      "text": "#09090b",
+      "bg": "#ffffff",
+      "border": "#e4e4e7"
+    },
+    "typography": {
+      "heading": "Playfair Display",
+      "body": "Inter, sans-serif",
+      "headingFont": "Playfair Display, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Playfair Display, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "disc",
+    "sections": [
+      "education",
+      "projects",
+      "skills",
+      "experience",
+      "certifications"
+    ],
+    "description": "Wall Street trainee format highlighting GPA, Bloomberg certifications, and internships.",
+    "rating": 4.9,
+    "industry": "Student / Fresher / Internship"
+  },
+  {
+    "id": "stu-marketing-intern",
+    "name": "Creative Marketing & Social Intern",
+    "category": "Student / Fresher / Internship",
+    "categoryId": "student",
+    "categoryName": "Student / Fresher / Internship",
+    "roles": [
+      "Marketing Intern",
+      "Content Creator"
+    ],
+    "experienceLevels": [
+      "student",
+      "fresher"
+    ],
+    "atsFriendly": true,
+    "atsScore": 97,
+    "photoPolicy": "optional",
+    "photoRequired": false,
+    "layout": "sidebar-left",
+    "sidebar": "left",
+    "palette": {
+      "id": "violet",
+      "name": "Fintech Violet",
+      "primary": "#3b0764",
+      "secondary": "#7c3aed",
+      "accent": "#7c3aed",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#2e1065",
+      "muted": "#6b7280",
+      "border": "#ede9fe"
+    },
+    "colors": {
+      "primary": "#3b0764",
+      "secondary": "#7c3aed",
+      "accent": "#7c3aed",
+      "text": "#2e1065",
+      "bg": "#ffffff",
+      "border": "#ede9fe"
+    },
+    "typography": {
+      "heading": "Plus Jakarta Sans",
+      "body": "Inter, sans-serif",
+      "headingFont": "Plus Jakarta Sans, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Plus Jakarta Sans, sans-serif",
+    "dividerStyle": "bar",
+    "bulletStyle": "disc",
+    "sections": [
+      "education",
+      "projects",
+      "skills",
+      "experience",
+      "certifications"
+    ],
+    "description": "Showcases TikTok/IG metrics, graphic design skills, and campus campaigns.",
+    "rating": 4.9,
+    "industry": "Student / Fresher / Internship"
+  },
+  {
+    "id": "stu-datascience-entry",
+    "name": "Junior Data Science & Analytics Fresher",
+    "category": "Student / Fresher / Internship",
+    "categoryId": "student",
+    "categoryName": "Student / Fresher / Internship",
+    "roles": [
+      "Data Science Intern",
+      "Junior Analyst"
+    ],
+    "experienceLevels": [
+      "student",
+      "fresher"
+    ],
+    "atsFriendly": true,
+    "atsScore": 98,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "two-column",
+    "sidebar": "left",
+    "palette": {
+      "id": "teal",
+      "name": "Deep Teal",
+      "primary": "#134e4a",
+      "secondary": "#0d9488",
+      "accent": "#0d9488",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#042f2e",
+      "muted": "#52525b",
+      "border": "#ccfbf1"
+    },
+    "colors": {
+      "primary": "#134e4a",
+      "secondary": "#0d9488",
+      "accent": "#0d9488",
+      "text": "#042f2e",
+      "bg": "#ffffff",
+      "border": "#ccfbf1"
+    },
+    "typography": {
+      "heading": "Inter",
+      "body": "Inter, sans-serif",
+      "headingFont": "Inter, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Inter, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "arrow",
+    "sections": [
+      "education",
+      "projects",
+      "skills",
+      "experience",
+      "certifications"
+    ],
+    "description": "Kaggle competition medals, Jupyter notebook showcases, and Python scripts.",
+    "rating": 4.9,
+    "industry": "Student / Fresher / Internship"
+  },
+  {
+    "id": "stu-stem-researcher",
+    "name": "Undergraduate STEM Research Assistant",
+    "category": "Student / Fresher / Internship",
+    "categoryId": "student",
+    "categoryName": "Student / Fresher / Internship",
+    "roles": [
+      "Research Assistant",
+      "Lab Tech"
+    ],
+    "experienceLevels": [
+      "student",
+      "fresher"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "slate",
+      "name": "Executive Slate",
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#0f172a",
+      "muted": "#64748b",
+      "border": "#e2e8f0"
+    },
+    "colors": {
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "text": "#0f172a",
+      "bg": "#ffffff",
+      "border": "#e2e8f0"
+    },
+    "typography": {
+      "heading": "Merriweather",
+      "body": "Inter, sans-serif",
+      "headingFont": "Merriweather, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Merriweather, sans-serif",
+    "dividerStyle": "double",
+    "bulletStyle": "square",
+    "sections": [
+      "education",
+      "projects",
+      "skills",
+      "experience",
+      "certifications"
+    ],
+    "description": "Lab techniques, co-authored conference posters, and NSF grant participation.",
+    "rating": 4.9,
+    "industry": "Student / Fresher / Internship"
+  },
+  {
+    "id": "hc-physician-md",
+    "name": "Attending Physician / MD",
+    "category": "Healthcare / Education / Research",
+    "categoryId": "healthcare",
+    "categoryName": "Healthcare / Education / Research",
+    "roles": [
+      "Physician",
+      "Doctor",
+      "Resident"
+    ],
+    "experienceLevels": [
+      "senior",
+      "lead"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "navy",
+      "name": "Oxford Navy",
+      "primary": "#1e3a8a",
+      "secondary": "#2563eb",
+      "accent": "#2563eb",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#172554",
+      "muted": "#475569",
+      "border": "#cbd5e1"
+    },
+    "colors": {
+      "primary": "#1e3a8a",
+      "secondary": "#2563eb",
+      "accent": "#2563eb",
+      "text": "#172554",
+      "bg": "#ffffff",
+      "border": "#cbd5e1"
+    },
+    "typography": {
+      "heading": "Merriweather",
+      "body": "Inter, sans-serif",
+      "headingFont": "Merriweather, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Merriweather, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "certifications",
+      "experience",
+      "education",
+      "skills",
+      "publications"
+    ],
+    "description": "Board certifications, clinical rotations, hospital affiliations, and medical license IDs.",
+    "rating": 4.9,
+    "industry": "Healthcare / Education / Research"
+  },
+  {
+    "id": "hc-registered-nurse",
+    "name": "Critical Care Registered Nurse (BSN, RN)",
+    "category": "Healthcare / Education / Research",
+    "categoryId": "healthcare",
+    "categoryName": "Healthcare / Education / Research",
+    "roles": [
+      "Registered Nurse",
+      "ICU Nurse",
+      "Nurse Practitioner"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "two-column",
+    "sidebar": "right",
+    "palette": {
+      "id": "teal",
+      "name": "Deep Teal",
+      "primary": "#134e4a",
+      "secondary": "#0d9488",
+      "accent": "#0d9488",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#042f2e",
+      "muted": "#52525b",
+      "border": "#ccfbf1"
+    },
+    "colors": {
+      "primary": "#134e4a",
+      "secondary": "#0d9488",
+      "accent": "#0d9488",
+      "text": "#042f2e",
+      "bg": "#ffffff",
+      "border": "#ccfbf1"
+    },
+    "typography": {
+      "heading": "Inter",
+      "body": "Inter, sans-serif",
+      "headingFont": "Inter, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Inter, sans-serif",
+    "dividerStyle": "bar",
+    "bulletStyle": "check",
+    "sections": [
+      "summary",
+      "certifications",
+      "experience",
+      "education",
+      "skills",
+      "publications"
+    ],
+    "description": "BLS/ACLS credentials, patient bed-ratio capacity, and clinical competencies.",
+    "rating": 4.9,
+    "industry": "Healthcare / Education / Research"
+  },
+  {
+    "id": "hc-pharmacist-pharmd",
+    "name": "Clinical Specialist Pharmacist (PharmD)",
+    "category": "Healthcare / Education / Research",
+    "categoryId": "healthcare",
+    "categoryName": "Healthcare / Education / Research",
+    "roles": [
+      "Pharmacist",
+      "Clinical Specialist"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "slate",
+      "name": "Executive Slate",
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#0f172a",
+      "muted": "#64748b",
+      "border": "#e2e8f0"
+    },
+    "colors": {
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "text": "#0f172a",
+      "bg": "#ffffff",
+      "border": "#e2e8f0"
+    },
+    "typography": {
+      "heading": "Roboto",
+      "body": "Inter, sans-serif",
+      "headingFont": "Roboto, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Roboto, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "certifications",
+      "experience",
+      "education",
+      "skills",
+      "publications"
+    ],
+    "description": "Medication therapy management (MTM), DEA licensure, and formulary oversight.",
+    "rating": 4.9,
+    "industry": "Healthcare / Education / Research"
+  },
+  {
+    "id": "hc-medical-director",
+    "name": "Clinical Medical Director",
+    "category": "Healthcare / Education / Research",
+    "categoryId": "healthcare",
+    "categoryName": "Healthcare / Education / Research",
+    "roles": [
+      "Medical Director",
+      "Chief Medical Officer"
+    ],
+    "experienceLevels": [
+      "senior",
+      "executive"
+    ],
+    "atsFriendly": false,
+    "atsScore": 95,
+    "photoPolicy": "required",
+    "photoRequired": true,
+    "layout": "header-card",
+    "sidebar": "none",
+    "palette": {
+      "id": "navy",
+      "name": "Oxford Navy",
+      "primary": "#1e3a8a",
+      "secondary": "#2563eb",
+      "accent": "#2563eb",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#172554",
+      "muted": "#475569",
+      "border": "#cbd5e1"
+    },
+    "colors": {
+      "primary": "#1e3a8a",
+      "secondary": "#2563eb",
+      "accent": "#2563eb",
+      "text": "#172554",
+      "bg": "#ffffff",
+      "border": "#cbd5e1"
+    },
+    "typography": {
+      "heading": "Playfair Display",
+      "body": "Inter, sans-serif",
+      "headingFont": "Playfair Display, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Playfair Display, sans-serif",
+    "dividerStyle": "double",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "certifications",
+      "experience",
+      "education",
+      "skills",
+      "publications"
+    ],
+    "description": "Executive healthcare presentation with required MD portrait header.",
+    "rating": 4.9,
+    "industry": "Healthcare / Education / Research"
+  },
+  {
+    "id": "hc-university-professor",
+    "name": "Tenured University Professor (Academic CV)",
+    "category": "Healthcare / Education / Research",
+    "categoryId": "healthcare",
+    "categoryName": "Healthcare / Education / Research",
+    "roles": [
+      "Professor",
+      "Faculty",
+      "Lecturer"
+    ],
+    "experienceLevels": [
+      "senior",
+      "academic"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "monochrome",
+      "name": "Pure Monochrome",
+      "primary": "#18181b",
+      "secondary": "#27272a",
+      "accent": "#27272a",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#09090b",
+      "muted": "#71717a",
+      "border": "#e4e4e7"
+    },
+    "colors": {
+      "primary": "#18181b",
+      "secondary": "#27272a",
+      "accent": "#27272a",
+      "text": "#09090b",
+      "bg": "#ffffff",
+      "border": "#e4e4e7"
+    },
+    "typography": {
+      "heading": "Lora",
+      "body": "Inter, sans-serif",
+      "headingFont": "Lora, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Lora, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "square",
+    "sections": [
+      "summary",
+      "certifications",
+      "experience",
+      "education",
+      "skills",
+      "publications"
+    ],
+    "description": "Traditional multi-page academic curriculum vitae for peer-reviewed papers and grants.",
+    "rating": 4.9,
+    "industry": "Healthcare / Education / Research"
+  },
+  {
+    "id": "hc-postdoc-fellow",
+    "name": "Postdoctoral Research Fellow",
+    "category": "Healthcare / Education / Research",
+    "categoryId": "healthcare",
+    "categoryName": "Healthcare / Education / Research",
+    "roles": [
+      "Postdoc",
+      "Research Scientist"
+    ],
+    "experienceLevels": [
+      "mid",
+      "academic"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "slate",
+      "name": "Executive Slate",
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#0f172a",
+      "muted": "#64748b",
+      "border": "#e2e8f0"
+    },
+    "colors": {
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "text": "#0f172a",
+      "bg": "#ffffff",
+      "border": "#e2e8f0"
+    },
+    "typography": {
+      "heading": "Merriweather",
+      "body": "Inter, sans-serif",
+      "headingFont": "Merriweather, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Merriweather, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "dash",
+    "sections": [
+      "summary",
+      "certifications",
+      "experience",
+      "education",
+      "skills",
+      "publications"
+    ],
+    "description": "Post-graduate research outcomes, lab instrumentation, and citations.",
+    "rating": 4.9,
+    "industry": "Healthcare / Education / Research"
+  },
+  {
+    "id": "hc-highschool-educator",
+    "name": "STEM Educator & Curriculum Lead",
+    "category": "Healthcare / Education / Research",
+    "categoryId": "healthcare",
+    "categoryName": "Healthcare / Education / Research",
+    "roles": [
+      "Teacher",
+      "Curriculum Specialist"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 98,
+    "photoPolicy": "optional",
+    "photoRequired": false,
+    "layout": "two-column",
+    "sidebar": "left",
+    "palette": {
+      "id": "emerald",
+      "name": "Nordic Emerald",
+      "primary": "#064e3b",
+      "secondary": "#059669",
+      "accent": "#059669",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#022c22",
+      "muted": "#4b5563",
+      "border": "#d1fae5"
+    },
+    "colors": {
+      "primary": "#064e3b",
+      "secondary": "#059669",
+      "accent": "#059669",
+      "text": "#022c22",
+      "bg": "#ffffff",
+      "border": "#d1fae5"
+    },
+    "typography": {
+      "heading": "Plus Jakarta Sans",
+      "body": "Inter, sans-serif",
+      "headingFont": "Plus Jakarta Sans, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Plus Jakarta Sans, sans-serif",
+    "dividerStyle": "bar",
+    "bulletStyle": "arrow",
+    "sections": [
+      "summary",
+      "certifications",
+      "experience",
+      "education",
+      "skills",
+      "publications"
+    ],
+    "description": "Classroom standardized test gains, state teaching credentials, and AP syllabi.",
+    "rating": 4.9,
+    "industry": "Healthcare / Education / Research"
+  },
+  {
+    "id": "hc-school-principal",
+    "name": "K-12 School Principal & Administrator",
+    "category": "Healthcare / Education / Research",
+    "categoryId": "healthcare",
+    "categoryName": "Healthcare / Education / Research",
+    "roles": [
+      "School Principal",
+      "District Administrator"
+    ],
+    "experienceLevels": [
+      "senior",
+      "lead"
+    ],
+    "atsFriendly": false,
+    "atsScore": 95,
+    "photoPolicy": "required",
+    "photoRequired": true,
+    "layout": "header-card",
+    "sidebar": "none",
+    "palette": {
+      "id": "burgundy",
+      "name": "Imperial Burgundy",
+      "primary": "#500724",
+      "secondary": "#be123c",
+      "accent": "#be123c",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#380415",
+      "muted": "#706e66",
+      "border": "#fce7f3"
+    },
+    "colors": {
+      "primary": "#500724",
+      "secondary": "#be123c",
+      "accent": "#be123c",
+      "text": "#380415",
+      "bg": "#ffffff",
+      "border": "#fce7f3"
+    },
+    "typography": {
+      "heading": "Playfair Display",
+      "body": "Inter, sans-serif",
+      "headingFont": "Playfair Display, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Playfair Display, sans-serif",
+    "dividerStyle": "double",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "certifications",
+      "experience",
+      "education",
+      "skills",
+      "publications"
+    ],
+    "description": "Educational leadership and community outreach with professional administrator photo.",
+    "rating": 4.9,
+    "industry": "Healthcare / Education / Research"
+  },
+  {
+    "id": "hc-biotech-scientist",
+    "name": "Biotech Senior Research Scientist",
+    "category": "Healthcare / Education / Research",
+    "categoryId": "healthcare",
+    "categoryName": "Healthcare / Education / Research",
+    "roles": [
+      "Biotech Scientist",
+      "Genomics Researcher"
+    ],
+    "experienceLevels": [
+      "senior",
+      "lead"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "cyan",
+      "name": "Cyberpunk Cyan",
+      "primary": "#083344",
+      "secondary": "#0891b2",
+      "accent": "#0891b2",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#082f49",
+      "muted": "#64748b",
+      "border": "#cffafe"
+    },
+    "colors": {
+      "primary": "#083344",
+      "secondary": "#0891b2",
+      "accent": "#0891b2",
+      "text": "#082f49",
+      "bg": "#ffffff",
+      "border": "#cffafe"
+    },
+    "typography": {
+      "heading": "Inter",
+      "body": "Inter, sans-serif",
+      "headingFont": "Inter, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Inter, sans-serif",
+    "dividerStyle": "bar",
+    "bulletStyle": "square",
+    "sections": [
+      "summary",
+      "certifications",
+      "experience",
+      "education",
+      "skills",
+      "publications"
+    ],
+    "description": "Assay development, CRISPR protocols, IND filings, and venture-backed research.",
+    "rating": 4.9,
+    "industry": "Healthcare / Education / Research"
+  },
+  {
+    "id": "hc-clinical-psychologist",
+    "name": "Licensed Clinical Psychologist (PsyD)",
+    "category": "Healthcare / Education / Research",
+    "categoryId": "healthcare",
+    "categoryName": "Healthcare / Education / Research",
+    "roles": [
+      "Psychologist",
+      "Therapist"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 99,
+    "photoPolicy": "no_photo",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "monochrome",
+      "name": "Pure Monochrome",
+      "primary": "#18181b",
+      "secondary": "#27272a",
+      "accent": "#27272a",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#09090b",
+      "muted": "#71717a",
+      "border": "#e4e4e7"
+    },
+    "colors": {
+      "primary": "#18181b",
+      "secondary": "#27272a",
+      "accent": "#27272a",
+      "text": "#09090b",
+      "bg": "#ffffff",
+      "border": "#e4e4e7"
+    },
+    "typography": {
+      "heading": "Lora",
+      "body": "Inter, sans-serif",
+      "headingFont": "Lora, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Lora, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "certifications",
+      "experience",
+      "education",
+      "skills",
+      "publications"
+    ],
+    "description": "Diagnostic evaluations, DSM-5 treatment modalities, and private practice hours.",
+    "rating": 4.9,
+    "industry": "Healthcare / Education / Research"
+  },
+  {
+    "id": "crt-product-uiux",
+    "name": "Senior UI/UX & Product Designer",
+    "category": "Creative / Designer / Media",
+    "categoryId": "creative",
+    "categoryName": "Creative / Designer / Media",
+    "roles": [
+      "Product Designer",
+      "UI/UX Designer"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 97,
+    "photoPolicy": "optional",
+    "photoRequired": false,
+    "layout": "two-column",
+    "sidebar": "right",
+    "palette": {
+      "id": "indigo",
+      "name": "Electric Indigo",
+      "primary": "#312e81",
+      "secondary": "#4f46e5",
+      "accent": "#4f46e5",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#1e1b4b",
+      "muted": "#64748b",
+      "border": "#e0e7ff"
+    },
+    "colors": {
+      "primary": "#312e81",
+      "secondary": "#4f46e5",
+      "accent": "#4f46e5",
+      "text": "#1e1b4b",
+      "bg": "#ffffff",
+      "border": "#e0e7ff"
+    },
+    "typography": {
+      "heading": "Plus Jakarta Sans",
+      "body": "Inter, sans-serif",
+      "headingFont": "Plus Jakarta Sans, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Plus Jakarta Sans, sans-serif",
+    "dividerStyle": "bar",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "UX case studies, Figma design tokens, and user conversion lifts.",
+    "rating": 4.9,
+    "industry": "Creative / Designer / Media"
+  },
+  {
+    "id": "crt-creative-director",
+    "name": "Executive Creative Director",
+    "category": "Creative / Designer / Media",
+    "categoryId": "creative",
+    "categoryName": "Creative / Designer / Media",
+    "roles": [
+      "Creative Director",
+      "VP Design"
+    ],
+    "experienceLevels": [
+      "senior",
+      "executive"
+    ],
+    "atsFriendly": false,
+    "atsScore": 94,
+    "photoPolicy": "required",
+    "photoRequired": true,
+    "layout": "header-card",
+    "sidebar": "none",
+    "palette": {
+      "id": "rose",
+      "name": "Chic Rose",
+      "primary": "#881337",
+      "secondary": "#e11d48",
+      "accent": "#e11d48",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#4c0519",
+      "muted": "#71717a",
+      "border": "#ffe4e6"
+    },
+    "colors": {
+      "primary": "#881337",
+      "secondary": "#e11d48",
+      "accent": "#e11d48",
+      "text": "#4c0519",
+      "bg": "#ffffff",
+      "border": "#ffe4e6"
+    },
+    "typography": {
+      "heading": "Playfair Display",
+      "body": "Inter, sans-serif",
+      "headingFont": "Playfair Display, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Playfair Display, sans-serif",
+    "dividerStyle": "double",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Agency leadership profile with high-impact executive photo.",
+    "rating": 4.9,
+    "industry": "Creative / Designer / Media"
+  },
+  {
+    "id": "crt-graphic-visual",
+    "name": "Visual & Graphic Brand Identity Designer",
+    "category": "Creative / Designer / Media",
+    "categoryId": "creative",
+    "categoryName": "Creative / Designer / Media",
+    "roles": [
+      "Graphic Designer",
+      "Visual Artist"
+    ],
+    "experienceLevels": [
+      "junior",
+      "mid"
+    ],
+    "atsFriendly": true,
+    "atsScore": 97,
+    "photoPolicy": "optional",
+    "photoRequired": false,
+    "layout": "sidebar-left",
+    "sidebar": "left",
+    "palette": {
+      "id": "violet",
+      "name": "Fintech Violet",
+      "primary": "#3b0764",
+      "secondary": "#7c3aed",
+      "accent": "#7c3aed",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#2e1065",
+      "muted": "#6b7280",
+      "border": "#ede9fe"
+    },
+    "colors": {
+      "primary": "#3b0764",
+      "secondary": "#7c3aed",
+      "accent": "#7c3aed",
+      "text": "#2e1065",
+      "bg": "#ffffff",
+      "border": "#ede9fe"
+    },
+    "typography": {
+      "heading": "Plus Jakarta Sans",
+      "body": "Inter, sans-serif",
+      "headingFont": "Plus Jakarta Sans, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Plus Jakarta Sans, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "arrow",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Typography curation, Adobe Creative Cloud mastery, and brand guidelines.",
+    "rating": 4.9,
+    "industry": "Creative / Designer / Media"
+  },
+  {
+    "id": "crt-motion-animator",
+    "name": "3D Motion Designer & VFX Artist",
+    "category": "Creative / Designer / Media",
+    "categoryId": "creative",
+    "categoryName": "Creative / Designer / Media",
+    "roles": [
+      "Motion Designer",
+      "3D Artist"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 97,
+    "photoPolicy": "optional",
+    "photoRequired": false,
+    "layout": "two-column",
+    "sidebar": "left",
+    "palette": {
+      "id": "cyan",
+      "name": "Cyberpunk Cyan",
+      "primary": "#083344",
+      "secondary": "#0891b2",
+      "accent": "#0891b2",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#082f49",
+      "muted": "#64748b",
+      "border": "#cffafe"
+    },
+    "colors": {
+      "primary": "#083344",
+      "secondary": "#0891b2",
+      "accent": "#0891b2",
+      "text": "#082f49",
+      "bg": "#ffffff",
+      "border": "#cffafe"
+    },
+    "typography": {
+      "heading": "JetBrains Mono",
+      "body": "Inter, sans-serif",
+      "headingFont": "JetBrains Mono, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "JetBrains Mono, sans-serif",
+    "dividerStyle": "bar",
+    "bulletStyle": "square",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Cinema4D, Blender, After Effects pipelines, and commercial reels.",
+    "rating": 4.9,
+    "industry": "Creative / Designer / Media"
+  },
+  {
+    "id": "crt-fashion-director",
+    "name": "Luxury Fashion & Apparel Director",
+    "category": "Creative / Designer / Media",
+    "categoryId": "creative",
+    "categoryName": "Creative / Designer / Media",
+    "roles": [
+      "Fashion Director",
+      "Apparel Lead"
+    ],
+    "experienceLevels": [
+      "senior",
+      "lead"
+    ],
+    "atsFriendly": false,
+    "atsScore": 93,
+    "photoPolicy": "required",
+    "photoRequired": true,
+    "layout": "header-card",
+    "sidebar": "none",
+    "palette": {
+      "id": "burgundy",
+      "name": "Imperial Burgundy",
+      "primary": "#500724",
+      "secondary": "#be123c",
+      "accent": "#be123c",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#380415",
+      "muted": "#706e66",
+      "border": "#fce7f3"
+    },
+    "colors": {
+      "primary": "#500724",
+      "secondary": "#be123c",
+      "accent": "#be123c",
+      "text": "#380415",
+      "bg": "#ffffff",
+      "border": "#fce7f3"
+    },
+    "typography": {
+      "heading": "Playfair Display",
+      "body": "Inter, sans-serif",
+      "headingFont": "Playfair Display, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Playfair Display, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Editorial luxury styling requiring verified candidate visual portrait.",
+    "rating": 4.9,
+    "industry": "Creative / Designer / Media"
+  },
+  {
+    "id": "crt-commercial-photographer",
+    "name": "Commercial & Editorial Photographer",
+    "category": "Creative / Designer / Media",
+    "categoryId": "creative",
+    "categoryName": "Creative / Designer / Media",
+    "roles": [
+      "Photographer",
+      "Studio Director"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": false,
+    "atsScore": 93,
+    "photoPolicy": "required",
+    "photoRequired": true,
+    "layout": "sidebar-left",
+    "sidebar": "left",
+    "palette": {
+      "id": "monochrome",
+      "name": "Pure Monochrome",
+      "primary": "#18181b",
+      "secondary": "#27272a",
+      "accent": "#27272a",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#09090b",
+      "muted": "#71717a",
+      "border": "#e4e4e7"
+    },
+    "colors": {
+      "primary": "#18181b",
+      "secondary": "#27272a",
+      "accent": "#27272a",
+      "text": "#09090b",
+      "bg": "#ffffff",
+      "border": "#e4e4e7"
+    },
+    "typography": {
+      "heading": "Inter",
+      "body": "Inter, sans-serif",
+      "headingFont": "Inter, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Inter, sans-serif",
+    "dividerStyle": "minimal",
+    "bulletStyle": "dash",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Studio client roster, gear mastery, and photographer profile photo.",
+    "rating": 4.9,
+    "industry": "Creative / Designer / Media"
+  },
+  {
+    "id": "crt-media-broadcast",
+    "name": "TV News Anchor & Broadcast Journalist",
+    "category": "Creative / Designer / Media",
+    "categoryId": "creative",
+    "categoryName": "Creative / Designer / Media",
+    "roles": [
+      "News Anchor",
+      "Broadcast Journalist"
+    ],
+    "experienceLevels": [
+      "senior",
+      "lead"
+    ],
+    "atsFriendly": false,
+    "atsScore": 94,
+    "photoPolicy": "required",
+    "photoRequired": true,
+    "layout": "header-card",
+    "sidebar": "none",
+    "palette": {
+      "id": "navy",
+      "name": "Oxford Navy",
+      "primary": "#1e3a8a",
+      "secondary": "#2563eb",
+      "accent": "#2563eb",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#172554",
+      "muted": "#475569",
+      "border": "#cbd5e1"
+    },
+    "colors": {
+      "primary": "#1e3a8a",
+      "secondary": "#2563eb",
+      "accent": "#2563eb",
+      "text": "#172554",
+      "bg": "#ffffff",
+      "border": "#cbd5e1"
+    },
+    "typography": {
+      "heading": "Plus Jakarta Sans",
+      "body": "Inter, sans-serif",
+      "headingFont": "Plus Jakarta Sans, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Plus Jakarta Sans, sans-serif",
+    "dividerStyle": "double",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "On-air presence and reporting portfolio with mandatory broadcast photo.",
+    "rating": 4.9,
+    "industry": "Creative / Designer / Media"
+  },
+  {
+    "id": "crt-copywriter-story",
+    "name": "Senior Copywriter & Narrative Lead",
+    "category": "Creative / Designer / Media",
+    "categoryId": "creative",
+    "categoryName": "Creative / Designer / Media",
+    "roles": [
+      "Copywriter",
+      "Creative Narrative Lead"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 98,
+    "photoPolicy": "optional",
+    "photoRequired": false,
+    "layout": "single-column",
+    "sidebar": "none",
+    "palette": {
+      "id": "amber",
+      "name": "Editorial Amber",
+      "primary": "#451a03",
+      "secondary": "#d97706",
+      "accent": "#d97706",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#292524",
+      "muted": "#78716c",
+      "border": "#fef3c7"
+    },
+    "colors": {
+      "primary": "#451a03",
+      "secondary": "#d97706",
+      "accent": "#d97706",
+      "text": "#292524",
+      "bg": "#ffffff",
+      "border": "#fef3c7"
+    },
+    "typography": {
+      "heading": "Lora",
+      "body": "Inter, sans-serif",
+      "headingFont": "Lora, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Lora, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "disc",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Award-winning ad campaigns, brand taglines, and storytelling voice.",
+    "rating": 4.9,
+    "industry": "Creative / Designer / Media"
+  },
+  {
+    "id": "crt-interior-architect",
+    "name": "Interior Architect & Spatial Designer",
+    "category": "Creative / Designer / Media",
+    "categoryId": "creative",
+    "categoryName": "Creative / Designer / Media",
+    "roles": [
+      "Interior Architect",
+      "Spatial Designer"
+    ],
+    "experienceLevels": [
+      "mid",
+      "senior"
+    ],
+    "atsFriendly": true,
+    "atsScore": 97,
+    "photoPolicy": "optional",
+    "photoRequired": false,
+    "layout": "two-column",
+    "sidebar": "right",
+    "palette": {
+      "id": "slate",
+      "name": "Executive Slate",
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#0f172a",
+      "muted": "#64748b",
+      "border": "#e2e8f0"
+    },
+    "colors": {
+      "primary": "#0f172a",
+      "secondary": "#0284c7",
+      "accent": "#0284c7",
+      "text": "#0f172a",
+      "bg": "#ffffff",
+      "border": "#e2e8f0"
+    },
+    "typography": {
+      "heading": "Lato",
+      "body": "Inter, sans-serif",
+      "headingFont": "Lato, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Lato, sans-serif",
+    "dividerStyle": "bar",
+    "bulletStyle": "square",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Revit/AutoCAD architectural drawings, commercial FF&E, and permits.",
+    "rating": 4.9,
+    "industry": "Creative / Designer / Media"
+  },
+  {
+    "id": "crt-talent-actor",
+    "name": "Performing Arts, Actor & Media Talent",
+    "category": "Creative / Designer / Media",
+    "categoryId": "creative",
+    "categoryName": "Creative / Designer / Media",
+    "roles": [
+      "Actor",
+      "Talent",
+      "Performer"
+    ],
+    "experienceLevels": [
+      "all"
+    ],
+    "atsFriendly": false,
+    "atsScore": 90,
+    "photoPolicy": "required",
+    "photoRequired": true,
+    "layout": "header-card",
+    "sidebar": "none",
+    "palette": {
+      "id": "monochrome",
+      "name": "Pure Monochrome",
+      "primary": "#18181b",
+      "secondary": "#27272a",
+      "accent": "#27272a",
+      "background": "#ffffff",
+      "bg": "#ffffff",
+      "text": "#09090b",
+      "muted": "#71717a",
+      "border": "#e4e4e7"
+    },
+    "colors": {
+      "primary": "#18181b",
+      "secondary": "#27272a",
+      "accent": "#27272a",
+      "text": "#09090b",
+      "bg": "#ffffff",
+      "border": "#e4e4e7"
+    },
+    "typography": {
+      "heading": "Playfair Display",
+      "body": "Inter, sans-serif",
+      "headingFont": "Playfair Display, sans-serif",
+      "bodyFont": "Inter, sans-serif",
+      "baseSize": 13,
+      "lineHeight": 1.45
+    },
+    "fontFamily": "Playfair Display, sans-serif",
+    "dividerStyle": "line",
+    "bulletStyle": "star",
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education",
+      "certifications"
+    ],
+    "description": "Industry standard SAG-AFTRA casting headshot format with required photo.",
+    "rating": 4.9,
+    "industry": "Creative / Designer / Media"
+  }
+];
+
+export const TEMPLATES = TEMPLATE_REGISTRY;
 
 export const isFullBleedTemplate = (templateId) => {
-  return false; // Zero full-bleed clipping: all templates maintain standard printable margins
+  if (!templateId) return false;
+  return false;
 };

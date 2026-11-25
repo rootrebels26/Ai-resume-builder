@@ -116,68 +116,60 @@ export function DynamicResumeCanvas({
 
   // Section Heading Component with matching divider style
   const SectionHeading = ({ title, icon: Icon }) => {
-    let dividerClass = 'border-b pb-1 mb-2.5';
-    let dividerInlineStyle = { borderColor: primaryColor };
+    let dividerClass = 'border-b pb-1.5 mb-2.5';
+    let dividerInlineStyle = { borderColor: primaryColor, boxSizing: 'border-box' };
 
     if (dividerStyle === 'bar') {
       dividerClass = 'pl-2.5 border-l-4 mb-2.5';
-      dividerInlineStyle = { borderColor: primaryColor };
+      dividerInlineStyle = { borderColor: primaryColor, boxSizing: 'border-box' };
     } else if (dividerStyle === 'dashed') {
-      dividerClass = 'border-b border-dashed pb-1 mb-2.5';
-      dividerInlineStyle = { borderColor: primaryColor };
+      dividerClass = 'border-b border-dashed pb-1.5 mb-2.5';
+      dividerInlineStyle = { borderColor: primaryColor, boxSizing: 'border-box' };
     } else if (dividerStyle === 'double') {
-      dividerClass = 'border-b-2 border-double pb-1 mb-2.5';
-      dividerInlineStyle = { borderColor: primaryColor };
+      dividerClass = 'border-b-2 border-double pb-1.5 mb-2.5';
+      dividerInlineStyle = { borderColor: primaryColor, boxSizing: 'border-box' };
     } else if (dividerStyle === 'minimal') {
       dividerClass = 'mb-2';
-      dividerInlineStyle = {};
+      dividerInlineStyle = { boxSizing: 'border-box' };
     } else if (dividerStyle === 'none') {
       dividerClass = 'mb-2';
-      dividerInlineStyle = {};
+      dividerInlineStyle = { boxSizing: 'border-box' };
     }
 
     return (
       <div className={`${isOnePage ? 'mt-2' : 'mt-3.5'} first:mt-0 ${dividerClass}`} style={dividerInlineStyle}>
         <h2
-          className="font-bold tracking-tight uppercase flex items-center gap-1.5"
+          className="font-bold tracking-tight uppercase flex items-center gap-1.5 leading-normal"
           style={{
             fontFamily: headingFont,
             fontSize: `${(baseFontSize * 1.15).toFixed(1)}px`,
             color: primaryColor,
             letterSpacing: '0.04em',
+            margin: 0,
+            padding: 0,
+            display: 'flex',
           }}
         >
-          {Icon && <Icon className="w-3.5 h-3.5 inline-block opacity-85 shrink-0" style={{ color: accentColor }} />}
+          {Icon && (
+            <span className="inline-flex items-center justify-center shrink-0" style={{ width: '14px', height: '14px' }}>
+              <Icon className="w-3.5 h-3.5 opacity-85 shrink-0" style={{ color: accentColor, strokeWidth: 2, display: 'block' }} />
+            </span>
+          )}
           <span>{title}</span>
         </h2>
       </div>
     );
   };
 
-  // 1. Candidate Header Component (Zero Photo)
+  const effectivePageNumber = pageNumber || rawResumeData?.pageNumber || 1;
+  const isContinuation = Boolean(rawResumeData?.isContinuation || effectivePageNumber > 1);
+
+  // 1. Candidate Header Component (With optional photo support)
   const HeaderComponent = () => {
-    // On continuation pages (Page 2+), render a compact header so maximum space is dedicated to experience & projects
-    if (pageNumber > 1) {
-      return (
-        <header
-          className="pb-1.5 mb-2 flex flex-row items-baseline justify-between border-b"
-          style={{ borderColor: `${primaryColor}20` }}
-        >
-          <div className="flex items-baseline gap-2">
-            <span className="font-extrabold text-sm tracking-tight" style={{ color: primaryColor, fontFamily: headingFont }}>
-              {personalInfo.fullName || 'Candidate'}
-            </span>
-            {personalInfo.professionalTitle && (
-              <span className="text-xs font-semibold opacity-75" style={{ color: accentColor }}>
-                • {personalInfo.professionalTitle}
-              </span>
-            )}
-          </div>
-          <span className="text-[10px] font-mono font-medium opacity-60">
-            Page {pageNumber} of {totalPages}
-          </span>
-        </header>
-      );
+    // On continuation pages (Page 2+), DO NOT render candidate name, title, or contact details.
+    // Continuation pages start directly with the remaining resume sections (experience, projects, etc.).
+    if (effectivePageNumber > 1 || isContinuation) {
+      return null;
     }
 
     const isHeaderCard = activeLayout === 'header-card';
@@ -191,31 +183,42 @@ export function DynamicResumeCanvas({
           borderLeft: isHeaderCard ? `5px solid ${primaryColor}` : 'none',
         }}
       >
-        <div className="flex flex-col gap-1.5">
-          <div className="flex flex-row items-baseline justify-between gap-1">
-            <h1
-              className="font-extrabold tracking-tight"
-              style={{
-                fontFamily: headingFont,
-                fontSize: `${(baseFontSize * 2.1).toFixed(1)}px`,
-                color: primaryColor,
-                lineHeight: 1.15,
-              }}
-            >
-              {personalInfo.fullName || 'YOUR NAME'}
-            </h1>
-            {personalInfo.professionalTitle && (
-              <span
-                className="font-semibold text-sm tracking-wide uppercase shrink-0"
+        <div className="flex flex-row items-center gap-4">
+          {personalInfo.photo && (
+            <div className="shrink-0">
+              <img
+                src={personalInfo.photo}
+                alt={personalInfo.fullName || 'Candidate Photo'}
+                className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-2 shadow-sm"
+                style={{ borderColor: primaryColor }}
+              />
+            </div>
+          )}
+          <div className="flex-1 flex flex-col gap-1.5 min-w-0">
+            <div className="flex flex-row items-baseline justify-between gap-1 flex-wrap">
+              <h1
+                className="font-extrabold tracking-tight"
                 style={{
-                  color: accentColor,
                   fontFamily: headingFont,
+                  fontSize: `${(baseFontSize * 2.1).toFixed(1)}px`,
+                  color: primaryColor,
+                  lineHeight: 1.15,
                 }}
               >
-                {personalInfo.professionalTitle}
-              </span>
-            )}
-          </div>
+                {personalInfo.fullName || 'YOUR NAME'}
+              </h1>
+              {personalInfo.professionalTitle && (
+                <span
+                  className="font-semibold text-sm tracking-wide uppercase shrink-0"
+                  style={{
+                    color: accentColor,
+                    fontFamily: headingFont,
+                  }}
+                >
+                  {personalInfo.professionalTitle}
+                </span>
+              )}
+            </div>
 
           {/* Contact Bar */}
           <div
@@ -225,25 +228,31 @@ export function DynamicResumeCanvas({
             {personalInfo.phone && (
               <a
                 href={`tel:${personalInfo.phone}`}
-                className="inline-flex items-center gap-1 hover:underline text-current"
+                className="inline-flex items-center gap-1.5 hover:underline text-current leading-none"
               >
-                <Phone className="w-3 h-3 shrink-0" style={{ color: accentColor }} />
-                <span>{personalInfo.phone}</span>
+                <span className="inline-flex items-center justify-center shrink-0" style={{ width: '13px', height: '13px' }}>
+                  <Phone className="w-3 h-3 shrink-0" style={{ color: accentColor, strokeWidth: 2, display: 'block' }} />
+                </span>
+                <span className="leading-tight">{personalInfo.phone}</span>
               </a>
             )}
             {personalInfo.email && (
               <a
                 href={`mailto:${personalInfo.email}`}
-                className="inline-flex items-center gap-1 hover:underline text-current"
+                className="inline-flex items-center gap-1.5 hover:underline text-current leading-none"
               >
-                <Mail className="w-3 h-3 shrink-0" style={{ color: accentColor }} />
-                <span>{personalInfo.email}</span>
+                <span className="inline-flex items-center justify-center shrink-0" style={{ width: '13px', height: '13px' }}>
+                  <Mail className="w-3 h-3 shrink-0" style={{ color: accentColor, strokeWidth: 2, display: 'block' }} />
+                </span>
+                <span className="leading-tight">{personalInfo.email}</span>
               </a>
             )}
             {personalInfo.location && (
-              <span className="inline-flex items-center gap-1">
-                <MapPin className="w-3 h-3 shrink-0" style={{ color: accentColor }} />
-                <span>{personalInfo.location}</span>
+              <span className="inline-flex items-center gap-1.5 leading-none">
+                <span className="inline-flex items-center justify-center shrink-0" style={{ width: '13px', height: '13px' }}>
+                  <MapPin className="w-3 h-3 shrink-0" style={{ color: accentColor, strokeWidth: 2, display: 'block' }} />
+                </span>
+                <span className="leading-tight">{personalInfo.location}</span>
               </span>
             )}
             {personalInfo.linkedin && (
@@ -251,10 +260,12 @@ export function DynamicResumeCanvas({
                 href={normalizeUrl(personalInfo.linkedin)}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1 hover:underline text-current font-medium"
+                className="inline-flex items-center gap-1.5 hover:underline text-current font-medium leading-none"
               >
-                <Linkedin className="w-3 h-3 shrink-0" style={{ color: accentColor }} />
-                <span>{personalInfo.linkedin.replace(/^https?:\/\/(www\.)?linkedin\.com\/in\/?/i, 'linkedin.com/in/')}</span>
+                <span className="inline-flex items-center justify-center shrink-0" style={{ width: '13px', height: '13px' }}>
+                  <Linkedin className="w-3 h-3 shrink-0" style={{ color: accentColor, strokeWidth: 2, display: 'block' }} />
+                </span>
+                <span className="leading-tight">{personalInfo.linkedin.replace(/^https?:\/\/(www\.)?linkedin\.com\/in\/?/i, 'linkedin.com/in/')}</span>
               </a>
             )}
             {personalInfo.github && (
@@ -262,10 +273,12 @@ export function DynamicResumeCanvas({
                 href={normalizeUrl(personalInfo.github)}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1 hover:underline text-current font-medium"
+                className="inline-flex items-center gap-1.5 hover:underline text-current font-medium leading-none"
               >
-                <Github className="w-3 h-3 shrink-0" style={{ color: accentColor }} />
-                <span>{personalInfo.github.replace(/^https?:\/\/(www\.)?github\.com\/?/i, 'github.com/')}</span>
+                <span className="inline-flex items-center justify-center shrink-0" style={{ width: '13px', height: '13px' }}>
+                  <Github className="w-3 h-3 shrink-0" style={{ color: accentColor, strokeWidth: 2, display: 'block' }} />
+                </span>
+                <span className="leading-tight">{personalInfo.github.replace(/^https?:\/\/(www\.)?github\.com\/?/i, 'github.com/')}</span>
               </a>
             )}
             {personalInfo.website && (
@@ -273,20 +286,25 @@ export function DynamicResumeCanvas({
                 href={normalizeUrl(personalInfo.website)}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1 hover:underline text-current font-medium"
+                className="inline-flex items-center gap-1.5 hover:underline text-current font-medium leading-none"
               >
-                <Globe className="w-3 h-3 shrink-0" style={{ color: accentColor }} />
-                <span>{personalInfo.website.replace(/^https?:\/\//i, '')}</span>
+                <span className="inline-flex items-center justify-center shrink-0" style={{ width: '13px', height: '13px' }}>
+                  <Globe className="w-3 h-3 shrink-0" style={{ color: accentColor, strokeWidth: 2, display: 'block' }} />
+                </span>
+                <span className="leading-tight">{personalInfo.website.replace(/^https?:\/\//i, '').replace(/\/$/, '')}</span>
               </a>
             )}
           </div>
         </div>
-      </header>
-    );
-  };
+      </div>
+    </header>
+  );
+};
 
   // Section Renderers
   const renderSummary = () => {
+    // Professional summary MUST ONLY ever appear on Page 1
+    if (effectivePageNumber > 1 || isContinuation) return null;
     if (!isVisible('summary') || !professionalSummary) return null;
     return (
       <section className={isOnePage ? "mb-2" : "mb-3"}>

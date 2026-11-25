@@ -6,73 +6,73 @@ import { TEMPLATE_REGISTRY, TEMPLATE_CATEGORIES } from '../constants/templateReg
 const ROLE_MAPPINGS = [
   {
     keywords: ['software', 'developer', 'frontend', 'backend', 'full stack', 'web', 'react', 'node', 'python', 'java', 'cloud', 'devops', 'cyber', 'security', 'database', 'architect', 'systems', 'mobile', 'ios', 'android', 'embedded', 'qa', 'test'],
-    category: 'tech',
-    industry: 'Technology',
+    category: 'software',
+    industry: 'Technology & Software',
     suggestedLayouts: ['single-column', 'two-column', 'header-card'],
     prioritySections: ['summary', 'skills', 'experience', 'projects', 'certifications', 'education'],
   },
   {
-    keywords: ['data', 'data scientist', 'machine learning', 'ai', 'analytics', 'data analyst', 'bi', 'business intelligence', 'big data', 'etl', 'deep learning'],
-    category: 'tech',
-    industry: 'Data & AI',
+    keywords: ['data', 'data scientist', 'machine learning', 'ai', 'analytics', 'data analyst', 'bi', 'business intelligence', 'big data', 'etl', 'deep learning', 'lakehouse', 'databricks', 'spark', 'llm'],
+    category: 'datascience',
+    industry: 'Data Science & AI/ML',
     suggestedLayouts: ['single-column', 'two-column'],
     prioritySections: ['summary', 'skills', 'experience', 'projects', 'publications', 'education'],
   },
   {
-    keywords: ['designer', 'ui', 'ux', 'product designer', 'graphic', 'visual', 'creative', 'art', 'animator', 'video', 'content creator'],
+    keywords: ['designer', 'ui', 'ux', 'product designer', 'graphic', 'visual', 'creative', 'art', 'animator', 'video', 'content creator', 'media', 'photographer', 'actor'],
     category: 'creative',
-    industry: 'Design & Creative',
-    suggestedLayouts: ['sidebar-left', 'two-column', 'modern-split'],
+    industry: 'Creative / Designer / Media',
+    suggestedLayouts: ['sidebar-left', 'two-column', 'header-card'],
     prioritySections: ['summary', 'skills', 'projects', 'experience', 'education', 'awards'],
   },
   {
-    keywords: ['product manager', 'project manager', 'scrum', 'agile', 'operations', 'business analyst', 'consultant', 'strategy', 'program manager'],
-    category: 'finance',
-    industry: 'Business & Management',
+    keywords: ['product manager', 'project manager', 'scrum', 'agile', 'operations', 'business analyst', 'consultant', 'strategy', 'program manager', 'chief of staff', 'general manager'],
+    category: 'business',
+    industry: 'Business / Management',
     suggestedLayouts: ['two-column', 'single-column', 'header-card'],
     prioritySections: ['summary', 'experience', 'skills', 'projects', 'education', 'certifications'],
   },
   {
-    keywords: ['finance', 'financial', 'accountant', 'accounting', 'auditor', 'tax', 'banking', 'investment', 'portfolio', 'cpa', 'risk', 'actuary'],
+    keywords: ['finance', 'financial', 'accountant', 'accounting', 'auditor', 'tax', 'banking', 'investment', 'portfolio', 'cpa', 'risk', 'actuary', 'treasury', 'controller'],
     category: 'finance',
-    industry: 'Finance & Banking',
-    suggestedLayouts: ['single-column', 'two-column'],
+    industry: 'Finance / Accounting',
+    suggestedLayouts: ['single-column', 'two-column', 'header-card'],
     prioritySections: ['summary', 'experience', 'certifications', 'skills', 'education'],
   },
   {
-    keywords: ['marketing', 'seo', 'growth', 'brand', 'sales', 'account executive', 'social media', 'content strategist', 'copywriter', 'pr', 'public relations'],
-    category: 'modern',
-    industry: 'Marketing & Sales',
+    keywords: ['marketing', 'seo', 'growth', 'brand', 'sales', 'account executive', 'social media', 'content strategist', 'copywriter', 'pr', 'public relations', 'e-commerce'],
+    category: 'marketing',
+    industry: 'Marketing / Sales',
     suggestedLayouts: ['two-column', 'sidebar-left', 'header-card'],
     prioritySections: ['summary', 'experience', 'skills', 'projects', 'education'],
   },
   {
-    keywords: ['executive', 'director', 'vp', 'vice president', 'chief', 'ceo', 'cto', 'cfo', 'coo', 'head of', 'general manager', 'president'],
-    category: 'executive',
-    industry: 'Executive Leadership',
-    suggestedLayouts: ['header-card', 'single-column'],
-    prioritySections: ['summary', 'experience', 'skills', 'education', 'certifications', 'awards'],
+    keywords: ['mechanical', 'electrical', 'civil', 'hardware', 'aerospace', 'chemical', 'robotics', 'quality', 'manufacturing', 'renewable', 'energy', 'materials'],
+    category: 'engineering',
+    industry: 'Engineering / Technical',
+    suggestedLayouts: ['single-column', 'two-column', 'header-card'],
+    prioritySections: ['summary', 'skills', 'experience', 'projects', 'certifications', 'education'],
   },
   {
-    keywords: ['researcher', 'scientist', 'phd', 'professor', 'lecturer', 'academic', 'fellow', 'postdoc', 'scholar', 'instructor', 'teacher'],
-    category: 'academic',
-    industry: 'Education & Research',
-    suggestedLayouts: ['single-column', 'two-column'],
-    prioritySections: ['summary', 'education', 'experience', 'publications', 'skills', 'certifications', 'awards'],
-  },
-  {
-    keywords: ['student', 'fresher', 'intern', 'graduate', 'entry level', 'junior'],
+    keywords: ['student', 'fresher', 'intern', 'graduate', 'entry level', 'junior', 'campus', 'hackathon'],
     category: 'student',
-    industry: 'Entry Level',
+    industry: 'Student / Fresher / Internship',
     suggestedLayouts: ['two-column', 'single-column'],
     prioritySections: ['education', 'projects', 'skills', 'experience', 'certifications'],
   },
   {
-    keywords: ['nurse', 'doctor', 'medical', 'healthcare', 'clinical', 'pharmacist', 'therapist', 'physician', 'hospital'],
-    category: 'ats',
-    industry: 'Healthcare',
-    suggestedLayouts: ['single-column', 'two-column'],
+    keywords: ['nurse', 'doctor', 'physician', 'medical', 'healthcare', 'clinical', 'pharmacist', 'therapist', 'professor', 'teacher', 'educator', 'principal', 'researcher', 'scientist'],
+    category: 'healthcare',
+    industry: 'Healthcare / Education / Research',
+    suggestedLayouts: ['single-column', 'two-column', 'header-card'],
     prioritySections: ['summary', 'certifications', 'experience', 'education', 'skills'],
+  },
+  {
+    keywords: ['traditional', 'corporate', 'federal', 'compliance', 'legal', 'lawyer', 'general', 'ats'],
+    category: 'ats',
+    industry: 'ATS-Friendly / Traditional',
+    suggestedLayouts: ['single-column'],
+    prioritySections: ['summary', 'skills', 'experience', 'education', 'certifications'],
   },
 ];
 
@@ -142,7 +142,7 @@ export function recommendTemplates({
     let score = 0;
 
     // Category match
-    if (matchedRule && tpl.category === matchedRule.category) {
+    if (matchedRule && (tpl.categoryId === matchedRule.category || tpl.category === matchedRule.category)) {
       score += 40;
     }
 
@@ -152,7 +152,7 @@ export function recommendTemplates({
     }
 
     // Industry match
-    if (matchedRule && tpl.industry.toLowerCase().includes(matchedRule.industry.toLowerCase())) {
+    if (matchedRule && tpl.industry && tpl.industry.toLowerCase().includes(matchedRule.industry.toLowerCase())) {
       score += 20;
     }
 

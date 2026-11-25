@@ -1,4 +1,7 @@
 from fastapi.testclient import TestClient
+from app.core.config import settings
+# Force local provider during unit tests to avoid network timeouts in sandboxed environments
+settings.AI_PROVIDER = "local"
 from app.main import app
 
 client = TestClient(app)

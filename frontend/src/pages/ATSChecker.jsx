@@ -254,7 +254,7 @@ export function ATSChecker() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                accept=".pdf,.docx,.doc,.txt,.rtf,.png,.jpg,.jpeg,.webp,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,text/plain,text/rtf,image/png,image/jpeg,image/webp"
                 onChange={handleFileChange}
                 className="hidden"
               />

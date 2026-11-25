@@ -151,6 +151,16 @@ export function ExtractionReviewModal({
           >
             Skills ({totalSkillsCount})
           </button>
+          <button
+            onClick={() => setActiveTab('certifications')}
+            className={`py-2 px-3 rounded-t-xl border-t border-x transition-colors ${
+              activeTab === 'certifications'
+                ? 'bg-white border-ink/20 text-ink shadow-brutal-sm'
+                : 'border-transparent text-ink-muted hover:text-ink'
+            }`}
+          >
+            Certifications ({(resumeData.certifications || []).length})
+          </button>
         </div>
 
         {/* Modal Body Content */}
@@ -420,6 +430,32 @@ export function ExtractionReviewModal({
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* TAB: CERTIFICATIONS */}
+          {activeTab === 'certifications' && (
+            <div className="space-y-3">
+              {(resumeData.certifications || []).length === 0 ? (
+                <div className="text-xs text-ink-muted italic py-4 text-center">
+                  No certifications detected in the document. You can add them anytime in the editor.
+                </div>
+              ) : (
+                (resumeData.certifications || []).map((cert, idx) => {
+                  const certName = typeof cert === 'string' ? cert : (cert.name || cert.title);
+                  const issuer = typeof cert === 'object' ? cert.issuer : null;
+                  const date = typeof cert === 'object' ? cert.date : null;
+                  return (
+                    <div key={idx} className="p-3 rounded-xl bg-canvas border border-ink/15 flex items-baseline justify-between gap-2">
+                      <div>
+                        <span className="font-bold text-xs text-ink">{certName}</span>
+                        {issuer && <span className="text-xs text-ink-muted ml-2">({issuer})</span>}
+                      </div>
+                      {date && <span className="text-[11px] font-mono text-ink-muted">{date}</span>}
+                    </div>
+                  );
+                })
+              )}
             </div>
           )}
         </div>

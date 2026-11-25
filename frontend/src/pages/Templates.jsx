@@ -1,9 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import {
   Search, Filter, X, Sparkles, Layout, CheckCircle2, ArrowRight,
   Sliders, Star, Heart, Compass, ShieldCheck, ChevronRight, Columns,
-  Layers, Check, HelpCircle, Briefcase, GraduationCap
+  Layers, Check, HelpCircle, Briefcase, GraduationCap, Plus, Camera,
+  FileText, Wand2, Info
 } from 'lucide-react';
 import {
   TEMPLATES, TEMPLATE_CATEGORIES, EXPERIENCE_LEVELS, INDUSTRIES, TOTAL_TEMPLATES_COUNT
@@ -12,19 +13,20 @@ import { useResume } from '../context/ResumeContext';
 import { useAuth } from '../context/AuthContext';
 import { TemplateDraftCard } from '../components/templates/TemplateDraftCard';
 import { TemplateQuickPreviewModal } from '../components/templates/TemplateQuickPreviewModal';
-import { recommendTemplates, CAREER_LEVEL_CONFIGS } from '../utils/templateRecommender';
+import { PhotoUploadModal } from '../components/templates/PhotoUploadModal';
+import { recommendTemplates } from '../utils/templateRecommender';
 
 export function Templates() {
   const navigate = useNavigate();
-  const { selectTemplate, selectedTemplateId, resumeData, updatePreferences } = useResume();
+  const { selectTemplate, selectedTemplateId, resumeData, updatePreferences, updatePersonalInfo, createNewResume } = useResume();
   const { requireAuth } = useAuth();
 
   // Filters State
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedExperience, setSelectedExperience] = useState("all");
-  const [selectedIndustry, setSelectedIndustry] = useState("all");
-  const [selectedLayout, setSelectedLayout] = useState("all");
+  const [selectedPhotoPolicy, setSelectedPhotoPolicy] = useState("all"); // 'all' | 'no_photo' | 'required' | 'optional'
+  const [onlyAtsFriendly, setOnlyAtsFriendly] = useState(false);
   const [sortBy, setSortBy] = useState("popular"); // 'popular' | 'ats' | 'name'
   const [favorites, setFavorites] = useState(() => {
     try {
@@ -35,10 +37,12 @@ export function Templates() {
   });
   const [onlyFavorites, setOnlyFavorites] = useState(false);
 
-  // Quick Preview & Compare State
+  // Quick Preview State
   const [previewTemplate, setPreviewTemplate] = useState(null);
-  const [compareList, setCompareList] = useState([]);
-  const [showCompareModal, setShowCompareModal] = useState(false);
+
+  // Photo Upload Modal State
+  const [photoModalOpen, setPhotoModalOpen] = useState(false);
+  const [pendingTemplate, setPendingTemplate] = useState(null);
 
   // Role Recommender State
   const [showRecommender, setShowRecommender] = useState(false);
@@ -46,6 +50,7 @@ export function Templates() {
     resumeData?.personalInfo?.professionalTitle || ''
   );
   const [recommenderLevel, setRecommenderLevel] = useState('mid');
+  const [recommenderPhotoPref, setRecommenderPhotoPref] = useState('any');
   const [recommendationResult, setRecommendationResult] = useState(null);
 
   // Toggle favorite
@@ -80,31 +85,35 @@ export function Templates() {
       if (onlyFavorites && !favorites.includes(tpl.id)) return false;
 
       // Category filter
-      if (selectedCategory !== "all" && tpl.category !== selectedCategory) return false;
+      if (selectedCategory !== "all" && tpl.categoryId !== selectedCategory && tpl.category !== selectedCategory) {
+        return false;
+      }
 
       // Experience level filter
       if (selectedExperience !== "all" && tpl.experienceLevels && !tpl.experienceLevels.includes(selectedExperience)) {
         return false;
       }
 
-      // Industry filter
-      if (selectedIndustry !== "all" && tpl.industry.toLowerCase() !== selectedIndustry.toLowerCase()) {
-        return false;
+      // Photo Policy filter
+      if (selectedPhotoPolicy !== "all") {
+        if (selectedPhotoPolicy === "required" && tpl.photoPolicy !== "required" && !tpl.photoRequired) return false;
+        if (selectedPhotoPolicy === "no_photo" && tpl.photoPolicy !== "no_photo") return false;
+        if (selectedPhotoPolicy === "optional" && tpl.photoPolicy !== "optional") return false;
       }
 
-      // Layout filter
-      if (selectedLayout !== "all" && tpl.layout !== selectedLayout) {
+      // ATS filter
+      if (onlyAtsFriendly && (!tpl.atsFriendly || (tpl.atsScore && tpl.atsScore < 98))) {
         return false;
       }
 
       // Search match
       if (query) {
         const matchName = tpl.name.toLowerCase().includes(query);
-        const matchDesc = tpl.description.toLowerCase().includes(query);
+        const matchDesc = tpl.description?.toLowerCase().includes(query);
         const matchId = tpl.id.toLowerCase().includes(query);
         const matchRoles = tpl.roles && tpl.roles.some(r => r.toLowerCase().includes(query));
-        const matchInd = tpl.industry.toLowerCase().includes(query);
-        if (!matchName && !matchDesc && !matchId && !matchRoles && !matchInd) return false;
+        const matchCat = (tpl.category || '').toLowerCase().includes(query);
+        if (!matchName && !matchDesc && !matchId && !matchRoles && !matchCat) return false;
       }
 
       return true;
@@ -116,149 +125,243 @@ export function Templates() {
     } else if (sortBy === 'name') {
       return [...list].sort((a, b) => a.name.localeCompare(b.name));
     } else {
-      // Popular (downloads / rating)
-      return [...list].sort((a, b) => (b.downloads || 0) - (a.downloads || 0));
+      return list;
     }
-  }, [selectedCategory, searchQuery, selectedExperience, selectedIndustry, selectedLayout, sortBy, favorites, onlyFavorites]);
+  }, [selectedCategory, searchQuery, selectedExperience, selectedPhotoPolicy, onlyAtsFriendly, sortBy, favorites, onlyFavorites]);
 
-  const handleSelectTemplate = (id) => {
-    requireAuth(() => {
-      selectTemplate(id);
-      // Automatically apply default palette and layout from template
-      const chosenTpl = TEMPLATES.find(t => t.id === id);
-      if (chosenTpl) {
-        const pal = chosenTpl.palette || chosenTpl.defaultPalette || {};
-        updatePreferences({
-          layout: chosenTpl.layout || 'single-column',
-          themeColor: pal.primary || '#0f172a',
-          primaryColor: pal.primary || '#0f172a',
-          accentColor: pal.accent || pal.secondary || '#3b82f6',
-          dividerStyle: chosenTpl.dividerStyle || 'line',
-          bulletStyle: chosenTpl.bulletStyle || 'disc',
-        });
+  // Handle template selection with photo check
+  const handleSelectTemplate = (template) => {
+    const tplId = typeof template === 'string' ? template : template.id;
+    const targetTpl = typeof template === 'object' ? template : TEMPLATES.find(t => t.id === tplId);
+
+    // If template requires photo and user doesn't have one, show photo upload modal
+    if (targetTpl && (targetTpl.photoPolicy === 'required' || targetTpl.photoRequired)) {
+      if (!resumeData?.personalInfo?.photo) {
+        setPendingTemplate(targetTpl);
+        setPhotoModalOpen(true);
+        return;
       }
-      navigate('/builder');
-    }, 'Enter your unique company access code to edit and export this template.');
+    }
+
+    applyTemplateAndNavigate(targetTpl || tplId);
   };
 
-  const handleToggleCompare = (tplId) => {
-    setCompareList(prev => {
-      if (prev.includes(tplId)) return prev.filter(id => id !== tplId);
-      if (prev.length >= 2) return [prev[1], tplId];
-      return [...prev, tplId];
+  const applyTemplateAndNavigate = (targetTpl) => {
+    const tplId = typeof targetTpl === 'string' ? targetTpl : targetTpl.id;
+    const tplObj = typeof targetTpl === 'object' ? targetTpl : TEMPLATES.find(t => t.id === tplId);
+
+    selectTemplate(tplId);
+    if (tplObj) {
+      const pal = tplObj.palette || tplObj.colors || {};
+      updatePreferences({
+        layout: tplObj.layout || 'single-column',
+        themeColor: pal.primary || '#0f172a',
+        primaryColor: pal.primary || '#0f172a',
+        accentColor: pal.accent || pal.secondary || '#3b82f6',
+        dividerStyle: tplObj.dividerStyle || 'line',
+        bulletStyle: tplObj.bulletStyle || 'disc',
+      });
+    }
+    navigate('/builder');
+  };
+
+  // Photo modal confirmed
+  const handlePhotoConfirmed = (photoDataUrl) => {
+    updatePersonalInfo({ photo: photoDataUrl });
+    if (pendingTemplate) {
+      applyTemplateAndNavigate(pendingTemplate);
+      setPendingTemplate(null);
+    }
+  };
+
+  // Handle Create Blank Resume
+  const handleCreateBlankResume = () => {
+    createNewResume('Blank Resume');
+    selectTemplate('ats-classic');
+    updatePreferences({
+      layout: 'single-column',
+      themeColor: '#0f172a',
+      primaryColor: '#0f172a',
+      accentColor: '#3b82f6',
+      dividerStyle: 'line',
+      bulletStyle: 'disc',
     });
+    navigate('/builder');
   };
 
   return (
-    <div className="flex-1 bg-canvas min-h-screen py-8 sm:py-12">
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 space-y-8 w-full">
-        {/* Header Banner */}
-        <div className="text-center max-w-3xl mx-auto space-y-3">
-          <div className="eyebrow-tag justify-center">
-            <span className="w-2 h-2 rounded-full bg-volt border border-ink" />
-            <span>CANVA-INSPIRED DESIGN STUDIO • {TOTAL_TEMPLATES_COUNT} ZERO-PHOTO TEMPLATES</span>
-          </div>
-          <h1 className="text-3xl sm:text-5xl font-extrabold text-ink tracking-tight">
-            Role-Calibrated Templates.{' '}
-            <span className="editorial-italic text-[1.12em]">100% ATS Safe.</span>
-          </h1>
-          <p className="text-xs sm:text-sm text-ink-secondary max-w-2xl mx-auto leading-relaxed">
-            Every template is precision-engineered for recruiter readability and ATS compliance with pure typographic elegance — zero photo requirements, customizable fonts, and instant live canvas editing.
-          </p>
+    <div className="min-h-screen bg-[#0B0F19] text-slate-100 flex flex-col">
+      {/* Top Navigation Bar */}
+      <nav className="border-b border-slate-800 bg-[#0B0F19]/90 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-8 py-3.5 flex items-center justify-between">
+        <div className="flex items-center gap-6">
+          <Link to="/" className="flex items-center gap-2 text-white font-extrabold text-base tracking-tight hover:opacity-90">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-violet-500/30">
+              <Sparkles className="w-4 h-4 text-white" />
+            </div>
+            <span>ResumeStudio</span>
+          </Link>
 
-          {/* Quick Smart Recommender Trigger */}
-          <div className="pt-2">
-            <button
-              type="button"
-              onClick={() => setShowRecommender(!showRecommender)}
-              className="btn-volt py-2 px-5 text-xs font-extrabold shadow-brutal-sm inline-flex items-center gap-2 cursor-pointer"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>{showRecommender ? "Hide Role Recommendation Engine" : "Smart Role Recommendation Engine"}</span>
-            </button>
+          <div className="hidden md:flex items-center gap-1 text-xs font-semibold text-slate-400">
+            <Link to="/templates" className="px-3 py-1.5 rounded-lg text-white bg-slate-800/80">
+              Templates
+            </Link>
+            <Link to="/dashboard" className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-slate-800/40 transition">
+              My Resumes
+            </Link>
+            <Link to="/builder" className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-slate-800/40 transition flex items-center gap-1.5">
+              <Wand2 className="w-3.5 h-3.5 text-violet-400" />
+              <span>AI Optimization</span>
+            </Link>
           </div>
         </div>
 
-        {/* Smart Role Recommendation Engine Drawer */}
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setShowRecommender(!showRecommender)}
+            className="px-3 py-1.5 text-xs font-bold rounded-xl bg-violet-600 hover:bg-violet-500 text-white transition flex items-center gap-1.5 shadow-md shadow-violet-600/20"
+          >
+            <Compass className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Role Matcher</span>
+          </button>
+          <Link
+            to="/builder"
+            className="px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 transition"
+          >
+            Open Builder
+          </Link>
+        </div>
+      </nav>
+
+      <main className="flex-1 max-w-[1500px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        {/* Gallery Introduction */}
+        <div className="text-center max-w-3xl mx-auto space-y-3 pt-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-950/60 border border-violet-700/50 text-[11px] font-mono text-violet-300">
+            <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
+            <span>CANVA-INSPIRED TEMPLATE ENGINE • EXACTLY {TOTAL_TEMPLATES_COUNT} TEMPLATES</span>
+          </div>
+
+          <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
+            Find the Perfect Resume Template
+          </h1>
+          <p className="text-sm sm:text-base text-slate-400 leading-relaxed max-w-2xl mx-auto">
+            Choose a professionally designed resume template based on your career, experience, and target job. Engineered for 100% ATS readability and Canva-style visual polish.
+          </p>
+        </div>
+
+        {/* Role-Wise Template Recommendation Engine Drawer */}
         {showRecommender && (
-          <div className="card-surface p-5 sm:p-6 bg-white border-[1.5px] border-ink shadow-brutal space-y-4 animate-fadeIn">
-            <div className="flex items-center justify-between border-b border-ink/10 pb-3">
-              <div className="flex items-center gap-2">
-                <Compass className="w-5 h-5 text-editorial-violet" />
-                <h3 className="font-extrabold text-sm sm:text-base text-ink">Intelligent Role & Career Matcher</h3>
+          <div className="p-6 bg-slate-900 border border-violet-500/40 rounded-3xl shadow-2xl space-y-5 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <Compass className="w-5 h-5 text-violet-400" />
+                <div>
+                  <h3 className="font-bold text-base text-white">Role-Wise Template Recommendation Engine</h3>
+                  <p className="text-xs text-slate-400">Answer 3 questions to get instant curated template recommendations</p>
+                </div>
               </div>
-              <span className="text-[11px] font-mono text-ink-muted">AI-Calibrated ATS Logic</span>
+              <button
+                onClick={() => setShowRecommender(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block text-[11px] font-bold text-ink-muted uppercase mb-1">
-                  Your Target Role / Title
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Target Job Role
                 </label>
                 <input
                   type="text"
                   value={recommenderRole}
                   onChange={(e) => setRecommenderRole(e.target.value)}
-                  placeholder="e.g. Senior Data Engineer, Frontend Developer, Registered Nurse..."
-                  className="input-base text-xs"
+                  placeholder="e.g. Data Scientist, Azure Architect, Full Stack SWE..."
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-violet-500"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-ink-muted uppercase mb-1">
-                  Career Experience Level
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Experience Level
                 </label>
                 <select
                   value={recommenderLevel}
                   onChange={(e) => setRecommenderLevel(e.target.value)}
-                  className="input-base text-xs"
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-950 border border-slate-700 text-white focus:outline-none focus:border-violet-500"
                 >
-                  <option value="student">Student / Intern</option>
+                  <option value="student">Student / Campus</option>
                   <option value="fresher">Fresher / Graduate</option>
-                  <option value="entry">Entry-Level (1-2 yrs)</option>
-                  <option value="mid">Mid-Level (2-5 yrs)</option>
-                  <option value="senior">Senior Professional (5-10 yrs)</option>
-                  <option value="executive">Director / Executive (10+ yrs)</option>
-                  <option value="academic">Academic Researcher / PhD</option>
+                  <option value="mid">Mid-Level (3-6 yrs)</option>
+                  <option value="senior">Senior Professional (6-10 yrs)</option>
+                  <option value="lead">Staff / Tech Lead</option>
+                  <option value="executive">Director / VP / Executive</option>
                 </select>
               </div>
 
-              <div className="flex items-end">
-                <button
-                  type="button"
-                  onClick={handleRunRecommendation}
-                  className="btn-volt w-full py-2.5 text-xs font-bold shadow-brutal-sm flex items-center justify-center gap-1.5 cursor-pointer"
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Profile Photo Preference
+                </label>
+                <select
+                  value={recommenderPhotoPref}
+                  onChange={(e) => setRecommenderPhotoPref(e.target.value)}
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-950 border border-slate-700 text-white focus:outline-none focus:border-violet-500"
                 >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Find Best Matched Templates</span>
-                </button>
+                  <option value="any">Any Template Style</option>
+                  <option value="no_photo">No Photo (100% Traditional ATS)</option>
+                  <option value="required">Photo-Required (Executive & Media)</option>
+                </select>
               </div>
             </div>
 
-            {/* Recommendation Output */}
-            {recommendationResult && (
-              <div className="mt-4 pt-4 border-t border-ink/10 space-y-3 bg-canvas p-4 rounded-xl">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div className="text-xs font-bold text-ink">
-                    🎯 Recommended for <span className="text-editorial-violet underline">{recommenderRole}</span> ({recommendationResult.matchedIndustry})
-                  </div>
-                  <div className="text-[11px] text-ink-muted">
-                    Recommended Section Priority: <span className="font-mono font-bold text-ink">{recommendationResult.suggestedSectionOrder.slice(0, 4).join(' → ')}</span>
-                  </div>
-                </div>
+            <div className="flex items-center justify-between pt-2">
+              <span className="text-xs text-slate-400">
+                Matches role titles against all 100 specialized template definitions
+              </span>
+              <button
+                type="button"
+                onClick={handleRunRecommendation}
+                className="px-5 py-2 text-xs font-bold rounded-xl bg-violet-600 hover:bg-violet-500 text-white transition flex items-center gap-2 shadow-lg shadow-violet-600/25"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Find Recommended Templates</span>
+              </button>
+            </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+            {/* Recommendation Results */}
+            {recommendationResult && (
+              <div className="pt-4 border-t border-slate-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-violet-300 uppercase tracking-wider">
+                    Top Recommended Matches for "{recommenderRole}":
+                  </span>
+                  <button
+                    onClick={() => setRecommendationResult(null)}
+                    className="text-xs text-slate-400 hover:text-white"
+                  >
+                    Clear Results
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                   {recommendationResult.recommendations.map(tpl => (
-                    <button
+                    <div
                       key={tpl.id}
-                      type="button"
-                      onClick={() => handleSelectTemplate(tpl.id)}
-                      className="p-2.5 rounded-lg border border-ink/20 hover:border-ink bg-white text-left transition shadow-xs hover:shadow-brutal-xs flex flex-col justify-between cursor-pointer"
+                      onClick={() => handleSelectTemplate(tpl)}
+                      className="p-3 bg-slate-950 rounded-xl border border-slate-800 hover:border-violet-500 cursor-pointer transition text-left group"
                     >
-                      <div className="font-extrabold text-xs text-ink truncate">{tpl.name}</div>
-                      <div className="text-[10px] text-ink-muted capitalize">{tpl.categoryName || tpl.category}</div>
-                      <div className="mt-1 text-[10px] font-mono font-bold text-emerald-700">ATS {tpl.atsScore}%</div>
-                    </button>
+                      <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1">
+                        <span className="truncate">{tpl.category}</span>
+                        <span className="text-emerald-400 font-mono font-bold">ATS {tpl.atsScore || 98}%</span>
+                      </div>
+                      <h4 className="text-xs font-bold text-white group-hover:text-violet-400 truncate">
+                        {tpl.name}
+                      </h4>
+                      <p className="text-[10px] text-slate-500 mt-1 truncate">
+                        {tpl.layout}
+                      </p>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -266,335 +369,229 @@ export function Templates() {
           </div>
         )}
 
-        {/* Top Controls Bar: Search, Filters & Sorting */}
-        <div className="card-surface p-4 sm:p-5 space-y-4 bg-white">
-          <div className="flex flex-col sm:flex-row items-center gap-3">
-            <div className="relative flex-1 w-full">
-              <Search className="w-4 h-4 text-ink-subtle absolute left-3.5 top-1/2 -translate-y-1/2" />
+        {/* Search & Filter System */}
+        <div className="space-y-4">
+          {/* Main search and quick toggle controls */}
+          <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
+            {/* Search Input */}
+            <div className="relative flex-1 max-w-xl">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Search 100 templates by job title, skill, layout, e.g. Data Scientist, Cloud Architect, Executive..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="input-base pl-9 text-xs"
+                placeholder="Search 100 templates by title, role (e.g. Data Scientist, SWE, Director)..."
+                className="w-full pl-10 pr-9 py-2.5 text-xs rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink text-xs font-bold"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
                 >
-                  Clear
+                  <X className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>
 
-            {/* Sort & Quick Filter Dropdowns */}
-            <div className="flex items-center gap-2 w-full sm:w-auto">
+            {/* Filter Dropdowns & Toggles */}
+            <div className="flex flex-wrap items-center gap-2.5 text-xs">
+              {/* Photo Filter */}
+              <select
+                value={selectedPhotoPolicy}
+                onChange={(e) => setSelectedPhotoPolicy(e.target.value)}
+                className="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 focus:outline-none focus:border-violet-500"
+              >
+                <option value="all">All Photo Styles</option>
+                <option value="no_photo">No Photo (ATS Safe)</option>
+                <option value="required">Photo Required</option>
+                <option value="optional">Optional Photo</option>
+              </select>
+
+              {/* Experience Filter */}
+              <select
+                value={selectedExperience}
+                onChange={(e) => setSelectedExperience(e.target.value)}
+                className="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 focus:outline-none focus:border-violet-500"
+              >
+                <option value="all">All Experience Levels</option>
+                <option value="student">Student / Campus</option>
+                <option value="fresher">Fresher (0-1 yrs)</option>
+                <option value="mid">Mid-Level (3-6 yrs)</option>
+                <option value="senior">Senior (6-10 yrs)</option>
+                <option value="lead">Lead / Staff</option>
+                <option value="executive">Executive</option>
+              </select>
+
+              {/* Sort By */}
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="input-base text-xs py-2 w-full sm:w-auto font-semibold"
+                className="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 focus:outline-none focus:border-violet-500"
               >
-                <option value="popular">Most Popular</option>
+                <option value="popular">Recommended</option>
                 <option value="ats">Highest ATS Score</option>
                 <option value="name">Alphabetical (A-Z)</option>
               </select>
 
+              {/* ATS Toggle */}
+              <button
+                type="button"
+                onClick={() => setOnlyAtsFriendly(!onlyAtsFriendly)}
+                className={`px-3 py-2 rounded-xl border transition flex items-center gap-1.5 font-semibold ${
+                  onlyAtsFriendly
+                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+                    : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
+                }`}
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>ATS 98%+</span>
+              </button>
+
+              {/* Favorites Toggle */}
               <button
                 type="button"
                 onClick={() => setOnlyFavorites(!onlyFavorites)}
-                className={`py-2 px-3 rounded-lg border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shrink-0 ${
+                className={`px-3 py-2 rounded-xl border transition flex items-center gap-1.5 font-semibold ${
                   onlyFavorites
-                    ? 'bg-rose-50 border-rose-500 text-rose-700'
-                    : 'border-ink/20 hover:border-ink bg-white text-ink-muted'
+                    ? 'bg-rose-500/20 text-rose-400 border-rose-500/40'
+                    : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
                 }`}
-                title="View favorite templates"
               >
-                <Heart className={`w-3.5 h-3.5 ${onlyFavorites ? 'fill-rose-500 text-rose-500' : ''}`} />
-                <span className="hidden sm:inline">Favorites</span>
-                {favorites.length > 0 && <span className="font-mono">({favorites.length})</span>}
+                <Heart className={`w-3.5 h-3.5 ${onlyFavorites ? 'fill-rose-400' : ''}`} />
+                <span>Favorites ({favorites.length})</span>
               </button>
-
-              {compareList.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setShowCompareModal(true)}
-                  className="btn-volt py-2 px-3 text-xs font-bold shadow-brutal-sm flex items-center gap-1 cursor-pointer shrink-0"
-                >
-                  <Columns className="w-3.5 h-3.5" />
-                  <span>Compare ({compareList.length}/2)</span>
-                </button>
-              )}
             </div>
           </div>
 
-          {/* Quick Filter Pills */}
-          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-ink/10 text-xs">
-            <span className="text-[11px] font-bold text-ink-muted uppercase mr-1">Layout:</span>
-            {[
-              { id: 'all', label: 'All Layouts' },
-              { id: 'single-column', label: 'Single Column (Standard ATS)' },
-              { id: 'two-column', label: 'Two Column' },
-              { id: 'sidebar-left', label: 'Sidebar Left' },
-              { id: 'header-card', label: 'Header Card' },
-            ].map(l => (
-              <button
-                key={l.id}
-                type="button"
-                onClick={() => setSelectedLayout(l.id)}
-                className={`px-3 py-1 rounded-full text-xs font-bold transition cursor-pointer border ${
-                  selectedLayout === l.id
-                    ? 'bg-ink text-white border-ink'
-                    : 'bg-canvas text-ink border-ink/15 hover:border-ink'
-                }`}
-              >
-                {l.label}
-              </button>
-            ))}
-
-            <div className="ml-auto text-xs font-mono font-bold text-ink-muted">
-              Showing <strong className="text-ink">{filteredTemplates.length}</strong> of {TOTAL_TEMPLATES_COUNT} templates
-            </div>
+          {/* 10 Category Horizontal Tabs */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+            {TEMPLATE_CATEGORIES.map((cat) => {
+              const isActive = selectedCategory === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition border shrink-0 ${
+                    isActive
+                      ? 'bg-violet-600 text-white border-violet-500 shadow-md shadow-violet-600/30'
+                      : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:text-white hover:bg-slate-800'
+                  }`}
+                >
+                  <span>{cat.name}</span>
+                  <span className={`ml-1.5 text-[10px] font-mono px-1.5 py-0.2 rounded-md ${
+                    isActive ? 'bg-violet-700 text-white' : 'bg-slate-800 text-slate-400'
+                  }`}>
+                    {cat.count}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* Canva-Style Split Layout: Left Category Sidebar + Right Templates Grid */}
-        <div className="flex flex-col lg:flex-row gap-6 items-start">
-          {/* Left Category & Experience Sidebar */}
-          <div className="w-full lg:w-64 shrink-0 bg-white border-[1.5px] border-ink rounded-2xl p-4 space-y-6 shadow-brutal-sm">
-            {/* Categories */}
-            <div className="space-y-2">
-              <label className="block text-[11px] font-extrabold text-ink-muted uppercase tracking-wider">
-                Professional Categories
-              </label>
-              <div className="space-y-1">
-                {TEMPLATE_CATEGORIES.map(cat => {
-                  const active = selectedCategory === cat.id;
-                  return (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => setSelectedCategory(cat.id)}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold transition flex items-center justify-between cursor-pointer ${
-                        active
-                          ? 'bg-ink text-white shadow-brutal-xs'
-                          : 'text-ink-secondary hover:bg-canvas hover:text-ink'
-                      }`}
-                    >
-                      <span className="truncate">{cat.name}</span>
-                      <ChevronRight className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-volt' : 'opacity-30'}`} />
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Experience Level Filter */}
-            <div className="space-y-2 pt-4 border-t border-ink/10">
-              <label className="block text-[11px] font-extrabold text-ink-muted uppercase tracking-wider">
-                Experience Level
-              </label>
-              <div className="space-y-1">
-                {EXPERIENCE_LEVELS.map(exp => {
-                  const active = selectedExperience === exp.id;
-                  return (
-                    <button
-                      key={exp.id}
-                      type="button"
-                      onClick={() => setSelectedExperience(exp.id)}
-                      className={`w-full text-left px-3 py-1.5 rounded-md text-xs font-semibold transition cursor-pointer ${
-                        active
-                          ? 'bg-primary/10 text-primary font-bold border-l-2 border-primary'
-                          : 'text-ink-muted hover:text-ink hover:bg-canvas'
-                      }`}
-                    >
-                      {exp.name}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Reset All Filters Button */}
-            {(selectedCategory !== 'all' || selectedExperience !== 'all' || selectedLayout !== 'all' || searchQuery || onlyFavorites) && (
-              <div className="pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedCategory('all');
-                    setSelectedExperience('all');
-                    setSelectedLayout('all');
-                    setSearchQuery('');
-                    setOnlyFavorites(false);
-                  }}
-                  className="w-full btn-secondary py-2 text-xs font-bold"
-                >
-                  Reset All Filters
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Right: Main Templates Grid */}
-          <div className="flex-1 w-full min-w-0">
-            {filteredTemplates.length === 0 ? (
-              <div className="card-surface border-dashed border-2 border-ink p-12 text-center space-y-3 bg-white">
-                <Filter className="w-8 h-8 text-ink-muted mx-auto" />
-                <h3 className="font-extrabold text-ink text-sm">No templates matched your criteria</h3>
-                <p className="text-xs text-ink-secondary max-w-sm mx-auto">
-                  Try clearing some filters or searching for broader role keywords.
-                </p>
-                <button
-                  onClick={() => {
-                    setSearchQuery("");
-                    setSelectedCategory("all");
-                    setSelectedExperience("all");
-                    setSelectedLayout("all");
-                    setOnlyFavorites(false);
-                  }}
-                  className="btn-secondary text-xs"
-                >
-                  Reset All Filters
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                {filteredTemplates.map((template) => {
-                  const isFav = favorites.includes(template.id);
-                  const isCompared = compareList.includes(template.id);
-
-                  return (
-                    <div key={template.id} className="relative group">
-                      <TemplateDraftCard
-                        template={template}
-                        isSelected={selectedTemplateId === template.id}
-                        onSelect={handleSelectTemplate}
-                        onOpenPreview={(tpl) => setPreviewTemplate(tpl)}
-                      />
-
-                      {/* Favorite Button Badge */}
-                      <button
-                        type="button"
-                        onClick={(e) => toggleFavorite(template.id, e)}
-                        className={`absolute top-2.5 right-2.5 z-10 p-1.5 rounded-full border border-ink/20 transition cursor-pointer shadow-xs ${
-                          isFav ? 'bg-rose-50 text-rose-500 border-rose-300' : 'bg-white/80 text-ink-muted hover:text-ink hover:bg-white'
-                        }`}
-                        title={isFav ? "Remove from favorites" : "Save to favorites"}
-                      >
-                        <Heart className={`w-3.5 h-3.5 ${isFav ? 'fill-rose-500' : ''}`} />
-                      </button>
-
-                      {/* Compare Checkbox */}
-                      <button
-                        type="button"
-                        onClick={() => handleToggleCompare(template.id)}
-                        className={`absolute bottom-2.5 right-2.5 z-10 px-2 py-0.5 rounded text-[10px] font-mono font-bold border transition cursor-pointer ${
-                          isCompared
-                            ? 'bg-ink text-volt border-ink shadow-xs'
-                            : 'bg-white/90 text-ink-muted border-ink/20 hover:border-ink hover:text-ink'
-                        }`}
-                      >
-                        {isCompared ? "✓ Comparing" : "+ Compare"}
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+        {/* Gallery Results Count */}
+        <div className="flex items-center justify-between text-xs text-slate-400 px-1">
+          <span>
+            Showing <strong className="text-white">{filteredTemplates.length}</strong> of {TOTAL_TEMPLATES_COUNT} templates
+          </span>
+          {(selectedCategory !== 'all' || searchQuery || selectedPhotoPolicy !== 'all' || onlyAtsFriendly || onlyFavorites) && (
+            <button
+              onClick={() => {
+                setSelectedCategory('all');
+                setSearchQuery('');
+                setSelectedPhotoPolicy('all');
+                setSelectedExperience('all');
+                setOnlyAtsFriendly(false);
+                setOnlyFavorites(false);
+              }}
+              className="text-violet-400 hover:underline"
+            >
+              Reset all filters
+            </button>
+          )}
         </div>
 
-        {/* Quick Preview Modal */}
-        <TemplateQuickPreviewModal
-          template={previewTemplate}
-          isOpen={Boolean(previewTemplate)}
-          onClose={() => setPreviewTemplate(null)}
-          onSelect={(templateId) => {
-            handleSelectTemplate(templateId);
-            setPreviewTemplate(null);
-          }}
-        />
-
-        {/* Comparison Modal */}
-        {showCompareModal && compareList.length > 0 && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/60 backdrop-blur-sm animate-fadeIn">
-            <div className="bg-white border-[1.5px] border-ink rounded-3xl w-full max-w-4xl max-h-[85vh] flex flex-col shadow-brutal-lg overflow-hidden text-ink">
-              <div className="px-6 py-4 border-b border-ink/10 flex items-center justify-between bg-canvas-light">
-                <div className="flex items-center gap-2">
-                  <Columns className="w-5 h-5 text-editorial-violet" />
-                  <h3 className="font-extrabold text-base">Template Side-by-Side Comparison</h3>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowCompareModal(false)}
-                  className="p-1 rounded-full hover:bg-black/5"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                {compareList.map(tplId => {
-                  const tpl = TEMPLATES.find(t => t.id === tplId);
-                  if (!tpl) return null;
-
-                  return (
-                    <div key={tpl.id} className="border border-ink/20 rounded-2xl p-5 space-y-4 bg-canvas/30">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h4 className="font-extrabold text-base text-ink">{tpl.name}</h4>
-                          <span className="text-xs text-ink-muted">{tpl.categoryName || tpl.category}</span>
-                        </div>
-                        <span className="font-mono font-bold text-xs px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
-                          ATS {tpl.atsScore}%
-                        </span>
-                      </div>
-
-                      <p className="text-xs text-ink-secondary">{tpl.description}</p>
-
-                      <div className="space-y-1.5 text-xs">
-                        <div className="flex justify-between py-1 border-b border-ink/10">
-                          <span className="text-ink-muted">Layout:</span>
-                          <span className="font-semibold capitalize">{tpl.layout}</span>
-                        </div>
-                        <div className="flex justify-between py-1 border-b border-ink/10">
-                          <span className="text-ink-muted">Typography:</span>
-                          <span className="font-semibold capitalize">{tpl.fontFamily}</span>
-                        </div>
-                        <div className="flex justify-between py-1 border-b border-ink/10">
-                          <span className="text-ink-muted">Divider Style:</span>
-                          <span className="font-semibold capitalize">{tpl.dividerStyle}</span>
-                        </div>
-                        <div className="flex justify-between py-1 border-b border-ink/10">
-                          <span className="text-ink-muted">Bullet Point:</span>
-                          <span className="font-semibold capitalize">{tpl.bulletStyle}</span>
-                        </div>
-                        <div className="flex justify-between py-1">
-                          <span className="text-ink-muted">Suitable Roles:</span>
-                          <span className="font-semibold text-right max-w-[200px] truncate">
-                            {tpl.roles ? tpl.roles.slice(0, 3).join(', ') : 'All'}
-                          </span>
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowCompareModal(false);
-                          handleSelectTemplate(tpl.id);
-                        }}
-                        className="btn-volt w-full py-2 text-xs font-bold shadow-brutal-sm cursor-pointer"
-                      >
-                        Use This Template
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
+        {/* Gallery Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {/* CARD 1: Create Blank Resume */}
+          <div
+            onClick={handleCreateBlankResume}
+            className="group rounded-2xl border-2 border-dashed border-slate-700 hover:border-violet-500 bg-slate-900/50 hover:bg-slate-900 p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 min-h-[460px] shadow-lg hover:shadow-2xl hover:-translate-y-1"
+          >
+            <div className="w-16 h-16 rounded-full bg-violet-600/15 border border-violet-500/30 flex items-center justify-center text-violet-400 mb-4 group-hover:scale-110 group-hover:bg-violet-600 group-hover:text-white transition-all">
+              <Plus className="w-8 h-8" />
             </div>
+            <h3 className="font-extrabold text-base text-white group-hover:text-violet-400 transition">
+              Create a Blank Resume
+            </h3>
+            <p className="text-xs text-slate-400 mt-2 max-w-[220px] leading-relaxed">
+              Start with a clean slate instead of a predefined template and design your own layout from scratch.
+            </p>
+            <div className="mt-6 px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 group-hover:bg-violet-600 text-slate-300 group-hover:text-white border border-slate-700 group-hover:border-violet-500 transition">
+              Start Blank Resume
+            </div>
+          </div>
+
+          {/* 100 Template Cards */}
+          {filteredTemplates.map((template) => (
+            <TemplateDraftCard
+              key={template.id}
+              template={template}
+              isSelected={selectedTemplateId === template.id}
+              onSelect={handleSelectTemplate}
+              onOpenPreview={setPreviewTemplate}
+              isFavorite={favorites.includes(template.id)}
+              onToggleFavorite={toggleFavorite}
+            />
+          ))}
+        </div>
+
+        {filteredTemplates.length === 0 && (
+          <div className="p-12 text-center bg-slate-900 rounded-3xl border border-slate-800 space-y-3">
+            <Info className="w-8 h-8 text-slate-500 mx-auto" />
+            <h3 className="font-bold text-base text-white">No templates matched your filters</h3>
+            <p className="text-xs text-slate-400">
+              Try adjusting your search query, photo style, or selected category.
+            </p>
+            <button
+              onClick={() => {
+                setSelectedCategory('all');
+                setSearchQuery('');
+                setSelectedPhotoPolicy('all');
+                setOnlyAtsFriendly(false);
+              }}
+              className="px-4 py-2 text-xs font-bold rounded-xl bg-violet-600 text-white hover:bg-violet-500 transition"
+            >
+              Show All 100 Templates
+            </button>
           </div>
         )}
-      </div>
+      </main>
+
+      {/* Quick Preview Modal */}
+      {previewTemplate && (
+        <TemplateQuickPreviewModal
+          template={previewTemplate}
+          isOpen={!!previewTemplate}
+          onClose={() => setPreviewTemplate(null)}
+          onSelect={(tpl) => {
+            setPreviewTemplate(null);
+            handleSelectTemplate(tpl);
+          }}
+        />
+      )}
+
+      {/* Profile Photo Upload Modal */}
+      <PhotoUploadModal
+        isOpen={photoModalOpen}
+        onClose={() => {
+          setPhotoModalOpen(false);
+          setPendingTemplate(null);
+        }}
+        onConfirm={handlePhotoConfirmed}
+        currentPhoto={resumeData?.personalInfo?.photo}
+        templateName={pendingTemplate?.name || 'Selected Template'}
+      />
     </div>
   );
 }
