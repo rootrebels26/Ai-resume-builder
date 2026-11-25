@@ -28,6 +28,13 @@ export class ErrorBoundary extends React.Component {
     window.location.assign('/');
   };
 
+  handleResetState = () => {
+    try {
+      localStorage.removeItem('active_wizard_state');
+    } catch (e) {}
+    window.location.assign('/builder');
+  };
+
   render() {
     if (!this.state.hasError) {
       return this.props.children;
@@ -46,6 +53,13 @@ export class ErrorBoundary extends React.Component {
               locally on your device and has not been lost.
             </p>
           </div>
+
+          {this.state.error && (
+            <div className="text-left bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-mono text-rose-600 max-h-32 overflow-y-auto">
+              <p className="font-bold">{this.state.error.name}: {this.state.error.message}</p>
+            </div>
+          )}
+
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-1">
             <button
               type="button"

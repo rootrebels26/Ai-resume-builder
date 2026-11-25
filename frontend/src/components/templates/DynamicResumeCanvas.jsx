@@ -161,8 +161,8 @@ export function DynamicResumeCanvas({
     );
   };
 
-  const effectivePageNumber = pageNumber || rawResumeData?.pageNumber || 1;
-  const isContinuation = Boolean(rawResumeData?.isContinuation || effectivePageNumber > 1);
+  const effectivePageNumber = pageNumber || resumeData?.pageNumber || 1;
+  const isContinuation = Boolean(resumeData?.isContinuation || effectivePageNumber > 1);
 
   // 1. Candidate Header Component (With optional photo support)
   const HeaderComponent = () => {
