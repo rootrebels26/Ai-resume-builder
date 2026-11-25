@@ -61,7 +61,7 @@ Education
 • Bachelor of Engineering (Information and Technology) – 2010 RGPV, Bhopal
 """
 
-if __name__ == "__main__":
+def test_aditya_extraction():
     from app.providers.local_heuristic import LocalHeuristicProvider
     from app.services.resume_parser import sanitize_and_hydrate_resume
 
@@ -69,18 +69,14 @@ if __name__ == "__main__":
     raw_dict = provider.parse_resume_document_sync(aditya_ocr)
     resume = sanitize_and_hydrate_resume(raw_dict, raw_text=aditya_ocr)
 
-    print("NAME:", resume.personalInfo.fullName)
-    print("PHONE:", resume.personalInfo.phone)
-    print("EMAIL:", resume.personalInfo.email)
-    print("LOCATION:", resume.personalInfo.location)
-    print("TITLE:", resume.personalInfo.professionalTitle)
-    print("LINKEDIN:", resume.personalInfo.linkedin)
-    print("EXPERIENCE COUNT:", len(resume.experience))
-    for i, exp in enumerate(resume.experience):
-        print(f"  [{i+1}] {exp.company} | {exp.position} | {exp.startDate} - {exp.endDate} | {exp.location} ({len(exp.responsibilities)} bullets)")
-    print("SKILLS COUNT:", len(resume.skills))
-    for sc in resume.skills:
-        print(f"  {sc.category}: {len(sc.items)} items -> {sc.items[:3]}")
-    print("EDUCATION COUNT:", len(resume.education))
-    for edu in resume.education:
-        print(f"  {edu.degree} @ {edu.institution} ({edu.endDate})")
+    assert resume.personalInfo.fullName == "Aditya Chandak"
+    assert "Email Contact" not in resume.professionalSummary
+    assert resume.professionalSummary.startswith("Data Solution Architect with 10+ years")
+    assert len(resume.experience) == 9
+    assert len(resume.skills) >= 7
+    assert len(resume.education) >= 1
+    assert len(resume.projects) >= 1
+
+if __name__ == "__main__":
+    test_aditya_extraction()
+    print("ALL ASSERTIONS PASSED!")

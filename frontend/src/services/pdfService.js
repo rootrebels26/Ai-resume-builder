@@ -7,12 +7,16 @@ export const pdfService = {
    * Renders each discrete .resume-a4-page sheet directly to an authentic A4 PDF page.
    * Completely eliminates blank pages, page-break dividers, and outer card shadows.
    */
-  async exportToPDF(element, filename = 'resume.pdf') {
+  async exportToPDF(element, filename = 'resume.pdf', options = {}) {
     if (!element) {
       throw new Error('Target element for PDF export was not found.');
     }
 
-    // 1. Locate all discrete A4 page sheets
+    const format = options.format || 'a4';
+    const pdfWidth = format === 'letter' ? 215.9 : 210;
+    const pdfHeight = format === 'letter' ? 279.4 : 297;
+
+    // 1. Locate all discrete A4/Letter page sheets
     let pageElements = Array.from(element.querySelectorAll('.resume-a4-page'));
     if (pageElements.length === 0) {
       if (element.classList && element.classList.contains('resume-a4-page')) {
@@ -22,11 +26,11 @@ export const pdfService = {
       }
     }
 
-    // 2. Initialize jsPDF: A4 portrait (210mm x 297mm)
+    // 2. Initialize jsPDF: portrait (A4 or US Letter)
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
-      format: 'a4',
+      format: format,
       compress: true
     });
 
@@ -54,10 +58,10 @@ export const pdfService = {
           
           return {
             href,
-            x: ((rect.left - pageRect.left) / pageRect.width) * 210,
-            y: ((rect.top - pageRect.top) / pageRect.height) * 297,
-            w: (rect.width / pageRect.width) * 210,
-            h: (rect.height / pageRect.height) * 297
+            x: ((rect.left - pageRect.left) / pageRect.width) * pdfWidth,
+            y: ((rect.top - pageRect.top) / pageRect.height) * pdfHeight,
+            w: (rect.width / pageRect.width) * pdfWidth,
+            h: (rect.height / pageRect.height) * pdfHeight
           };
         }).filter(Boolean);
 
@@ -86,11 +90,11 @@ export const pdfService = {
 
         // Add page in PDF if beyond the first sheet
         if (i > 0) {
-          pdf.addPage('a4', 'portrait');
+          pdf.addPage(format, 'portrait');
         }
 
-        // Place image precisely covering the 210mm x 297mm A4 page
-        pdf.addImage(imgData, 'PNG', 0, 0, 210, 297, undefined, 'FAST');
+        // Place image precisely covering the page
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
 
         // Overlay active PDF link annotations so GitHub, LinkedIn, portfolio, and project links are 100% clickable
         linkAnnotations.forEach(link => {

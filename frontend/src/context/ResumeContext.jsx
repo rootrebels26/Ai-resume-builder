@@ -190,6 +190,16 @@ export function ResumeProvider({ children }) {
   };
 
   const updatePreferences = (field, value) => {
+    if (typeof field === 'object' && field !== null) {
+      setResumeData(prev => ({
+        ...prev,
+        preferences: {
+          ...prev.preferences,
+          ...field
+        }
+      }));
+      return;
+    }
     setResumeData(prev => ({
       ...prev,
       preferences: {

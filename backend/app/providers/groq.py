@@ -129,8 +129,12 @@ Extract all information from the provided raw resume text into a strictly format
 CRITICAL RULES:
 1. ZERO HALLUCINATION: Only extract facts explicitly stated in the resume. If a field (e.g. phone, dates, GPA, location) is not present, return empty string "" or empty array []. Never invent missing data.
 2. EXTRACT ALL ITEMS: Do NOT truncate. Extract EVERY employment experience, EVERY educational degree, EVERY project, and ALL skills.
-3. PROJECTS EXTRACTION (VERY IMPORTANT):
+3. PROFESSIONAL SUMMARY (CRITICAL):
+   - DO NOT include contact labels ("Email", "Contact", "Phone"), candidate name, or URLs inside "professionalSummary".
+   - Keep "professionalSummary" strictly as career narrative prose.
+4. PROJECTS EXTRACTION (VERY IMPORTANT):
    - Locate and extract ALL projects from sections titled "Projects", "Featured Projects", "Technical Projects", "Key Projects", "Personal Projects", "Academic Projects", "Selected Projects", or "Notable Projects".
+   - UNIVERSAL FALLBACK: If the resume lacks an explicit "PROJECTS" section, extract 3-4 major engineering architectures, data platforms, or systems described in the work experience bullets into "projects" so projects are never empty!
    - Extract each project entry into the "projects" array (NOT into "experience").
    - For each project, extract:
      * "name": clean project title WITHOUT [Demo], [GitHub], or raw URLs
@@ -141,12 +145,12 @@ CRITICAL RULES:
      * "startDate": start date if available
      * "endDate": end date or completion date if available
      * "highlights": array of bullet points, key features, and accomplishments WITHOUT raw URLs embedded
-4. PRESERVE ORIGINAL WORDING: Retain original bullet points, metrics, and details. Do not summarize or rewrite achievements.
-5. CONTACT DETAILS:
+5. PRESERVE ORIGINAL WORDING: Retain original bullet points, metrics, and details. Do not summarize or rewrite achievements.
+6. CONTACT DETAILS:
    - Extract candidate's phone number (preserving international country code e.g. +91, +1, +44), email, city/state/country location.
    - Extract LinkedIn profile URL, GitHub profile URL, and personal portfolio or website URL (into "portfolio" and "website").
-6. CATEGORIZED SKILLS: Group skills logically into categories: "Programming Languages", "Frameworks & Libraries", "Databases & Cloud", "Developer Tools", "Core Competencies".
-7. Return ONLY valid JSON with this exact schema:
+7. CATEGORIZED SKILLS: Group skills logically into categories: "Programming Languages", "Frameworks & Libraries", "Databases & Cloud", "Developer Tools", "Core Competencies".
+8. Return ONLY valid JSON with this exact schema:
 {{
   "personalInfo": {{
     "fullName": "...",

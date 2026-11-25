@@ -1,777 +1,580 @@
 import React from 'react';
-import { User, Mail, Phone, MapPin, Globe, Linkedin, Github, Award, CheckCircle2, Star, Sparkles, TrendingUp, Cpu, Database, BarChart3, Briefcase } from 'lucide-react';
+import {
+  Mail, Phone, MapPin, Globe, Linkedin, Github, ExternalLink,
+  Award, Briefcase, GraduationCap, Wrench, FolderGit2, BookOpen, Star, Check
+} from 'lucide-react';
+
+/**
+ * Bullet point symbol resolver
+ */
+function getBulletChar(style) {
+  switch (style) {
+    case 'circle': return '○';
+    case 'dash': return '—';
+    case 'arrow': return '▸';
+    case 'check': return '✓';
+    case 'square': return '▪';
+    case 'disc':
+    default:
+      return '•';
+  }
+}
+
+/**
+ * Font Family resolver for miniature paper
+ */
+function getFontFamily(font) {
+  if (!font) return 'sans-serif';
+  const f = font.toLowerCase();
+  if (f.includes('mono') || f.includes('fira') || f.includes('jetbrains')) return 'ui-monospace, monospace';
+  if (f.includes('serif') || f.includes('merriweather') || f.includes('garamond') || f.includes('georgia') || f.includes('playfair')) return 'ui-serif, Georgia, serif';
+  return 'ui-sans-serif, system-ui, sans-serif';
+}
+
+/**
+ * Role-calibrated content generator for miniature draft previews
+ */
+function getRoleSampleContent(template) {
+  const cat = (template.category || '').toLowerCase();
+  const title = template.roles?.[0] || template.name || 'Senior Professional';
+
+  if (cat.includes('tech') || cat.includes('dev') || cat.includes('aiml') || cat.includes('data')) {
+    return {
+      roleTitle: title,
+      summary: 'Systems engineer with 6+ years architecting fault-tolerant microservices, distributed pipelines, and cloud systems with sub-50ms p99 latency.',
+      skills: ['Python', 'TypeScript', 'Go', 'React', 'Kubernetes', 'AWS', 'PostgreSQL', 'Docker', 'Redis', 'Kafka'],
+      expCompany: 'Apex Distributed Cloud Systems',
+      expRole: title,
+      expPeriod: '2022 — Present',
+      bullets: [
+        'Architected high-throughput message streaming platform processing 4.2M events/sec.',
+        'Cut infrastructure costs by 32% by optimizing Kubernetes autoscaling clusters.',
+        'Mentored 8 mid-level engineers in distributed state machine design and CI/CD best practices.'
+      ],
+      projectTitle: 'Distributed Stream Orchestrator',
+      projectStack: 'Go • Kafka • Redis • gRPC',
+      education: 'UC Berkeley — B.S. in Computer Science (GPA 3.88)',
+    };
+  }
+
+  if (cat.includes('exec') || cat.includes('lead')) {
+    return {
+      roleTitle: title,
+      summary: 'Executive leader delivering global transformation, scaling engineering organizations from 25 to 200+, and driving $45M+ ARR growth.',
+      skills: ['Strategic Leadership', 'P&L Management', 'Enterprise Architecture', 'Org Scaling', 'M&A Due Diligence', 'Executive Stakeholder Relations'],
+      expCompany: 'Vanguard Global Enterprise',
+      expRole: title,
+      expPeriod: '2020 — Present',
+      bullets: [
+        'Directed cross-functional strategy across 6 global business units, growing ARR by 42%.',
+        'Negotiated enterprise strategic alliances resulting in $18M recurring revenue pipeline.',
+        'Implemented Six Sigma governance reducing operational expenditure by 24% year-over-year.'
+      ],
+      projectTitle: 'Global Infrastructure Modernization',
+      projectStack: 'Strategic P&L • Enterprise Governance',
+      education: 'Harvard Business School — Executive Leadership | MIT B.S.',
+    };
+  }
+
+  if (cat.includes('finance') || cat.includes('business')) {
+    return {
+      roleTitle: title,
+      summary: 'Financial analyst with expertise in DCF modeling, M&A due diligence, capital structure optimization, and institutional investment analysis.',
+      skills: ['DCF & LBO Modeling', 'Financial Reporting', 'GAAP / IFRS', 'Capital Budgeting', 'Bloomberg Terminal', 'Valuation & Risk'],
+      expCompany: 'Sterling Capital Partners',
+      expRole: title,
+      expPeriod: '2021 — Present',
+      bullets: [
+        'Conducted valuation analysis on 14 M&A transactions valued at over $850M.',
+        'Built automated financial forecasting models improving quarterly variance accuracy by 18%.',
+        'Authored investment committee memoranda adopted for 4 flagship fund allocations.'
+      ],
+      projectTitle: 'M&A Leveraged Buyout Framework',
+      projectStack: 'Financial Modeling • Valuation Analysis',
+      education: 'Wharton School — B.S. in Economics & Finance (Magna Cum Laude)',
+    };
+  }
+
+  if (cat.includes('student') || cat.includes('fresh')) {
+    return {
+      roleTitle: title,
+      summary: 'High-achieving computer science student with hands-on capstone project experience in full-stack systems, machine learning, and algorithms.',
+      skills: ['Python', 'Java', 'C++', 'JavaScript', 'React', 'SQL', 'Git', 'Data Structures', 'Linux'],
+      expCompany: 'Silicon Valley Innovation Lab',
+      expRole: 'Software Engineering Intern',
+      expPeriod: 'Summer 2024',
+      bullets: [
+        'Developed REST API endpoints in Python & FastAPI serving 15,000+ internal requests daily.',
+        'Implemented automated unit test suites improving code coverage from 64% to 89%.',
+        'Awarded 1st place in University Hackathon for real-time collaborative code editor.'
+      ],
+      projectTitle: 'Campus Cloud Platform',
+      projectStack: 'React • Node.js • PostgreSQL',
+      education: 'Stanford University — B.S. Computer Science (Expected 2025 | GPA 3.92)',
+    };
+  }
+
+  if (cat.includes('academic') || cat.includes('research')) {
+    return {
+      roleTitle: title,
+      summary: 'Postdoctoral researcher focusing on applied machine learning, distributed state consensus, and algorithmic optimization with 8 peer-reviewed papers.',
+      skills: ['Algorithmic Proofs', 'PyTorch', 'Distributed Consensus', 'Statistical Inference', 'LaTeX', 'Experimental Design'],
+      expCompany: 'Institute for Advanced Computational Research',
+      expRole: 'Research Scientist & Postdoctoral Fellow',
+      expPeriod: '2022 — Present',
+      bullets: [
+        'Co-authored 4 first-author papers accepted at NeurIPS, ICML, and ACM SIGMETRICS.',
+        'Secured $450K NSF research grant for fault-tolerant state machine research.',
+        'Mentored 6 graduate students across empirical evaluations and statistical modeling.'
+      ],
+      projectTitle: 'High-Throughput Consensus Architecture',
+      projectStack: 'Peer-Reviewed Journal Publication (ACM)',
+      education: 'Princeton University — Ph.D. in Computer Science & Applied Math',
+    };
+  }
+
+  if (cat.includes('creative')) {
+    return {
+      roleTitle: title,
+      summary: 'Product designer specializing in cohesive design systems, human-centered interaction architecture, and high-conversion mobile UI workflows.',
+      skills: ['Design Systems', 'Figma', 'UI/UX Architecture', 'Prototyping', 'User Research', 'Typography', 'Framer', 'Interaction Design'],
+      expCompany: 'Aura Interactive Design Studio',
+      expRole: title,
+      expPeriod: '2021 — Present',
+      bullets: [
+        'Designed multi-platform enterprise design system adopted by 40+ engineering squads.',
+        'Conducted usability testing across 120+ participants, increasing onboarding completion by 29%.',
+        'Recognized with Awwwards Site of the Day for design craftsmanship.'
+      ],
+      projectTitle: 'Design System & Component Library',
+      projectStack: 'Figma • Design Tokens • Prototyping',
+      education: 'Rhode Island School of Design (RISD) — B.F.A. Graphic Design',
+    };
+  }
+
+  // General / ATS Standard fallback
+  return {
+    roleTitle: title,
+    summary: 'Accomplished professional with a proven track record of delivering measurable outcomes, leading high-velocity initiatives, and driving technical excellence.',
+    skills: ['Strategic Planning', 'Process Optimization', 'Cross-Functional Collaboration', 'Project Delivery', 'Data Analysis', 'Performance Metrics'],
+    expCompany: 'Apex Global Enterprises',
+    expRole: title,
+    expPeriod: '2021 — Present',
+    bullets: [
+      'Spearheaded enterprise initiatives resulting in 35% efficiency gains across core operations.',
+      'Collaborated with key stakeholders to align delivery timelines and exceed SLAs.',
+      'Authored standard operating procedures recognized as company-wide best practices.'
+    ],
+    projectTitle: 'Enterprise Systems Modernization',
+    projectStack: 'Process Engineering • SLA Delivery',
+    education: 'University of California, Berkeley — Bachelor of Science (Honors)',
+  };
+}
 
 /**
  * TemplateDraftPaper
- * Renders an authentic, realistic miniature resume document sheet for each template card.
- * Reflects genuine layout differences (ATS single-column, Modern two-column with sidebar,
- * Minimalist Swiss asymmetric, Developer monospace tags, Data Analyst metrics callouts,
- * AI/ML model architecture tags, Executive double-bordered corporate, etc.)
+ *
+ * Renders an authentic, realistic miniature resume document sheet for every template.
+ * Dynamically respects:
+ * - Template layout: single-column, two-column, sidebar-left, sidebar-right, header-card
+ * - Template palette: primary, accent, secondary, text, bg, border
+ * - Template typography: serif, sans-serif, monospace
+ * - Template divider style: bar, line, dashed, double, minimal
+ * - Template bullet style: disc, arrow, check, dash, square
+ * - Role-specific content & titles
  */
 export function TemplateDraftPaper({ template }) {
-  const { id, category, accentColor = "#1e293b", name } = template;
+  if (!template) return null;
 
-  // 0. FAANG / MAANG CATEGORY — Top-tier single column, Google XYZ metrics, 100% picture-free
-  if (category === 'maang') {
+  const palette = template.palette || template.defaultPalette || {};
+  const primaryColor = palette.primary || template.accentColor || '#0f172a';
+  const accentColor = palette.accent || palette.secondary || '#3b82f6';
+  const bgColor = palette.bg || palette.background || '#ffffff';
+  const textColor = palette.text || '#1e293b';
+  const borderColor = palette.border || '#e2e8f0';
+
+  const layout = template.layout || 'single-column';
+  const fontFamily = getFontFamily(template.fontFamily);
+  const bulletSymbol = getBulletChar(template.bulletStyle);
+  const dividerStyle = template.dividerStyle || 'line';
+
+  const content = getRoleSampleContent(template);
+
+  // Section Heading Divider styling
+  const renderHeading = (title) => {
+    let style = {
+      color: primaryColor,
+      fontFamily,
+    };
+    let borderStyle = {};
+
+    if (dividerStyle === 'bar') {
+      borderStyle = { borderLeft: `2.5px solid ${primaryColor}`, paddingLeft: '4px' };
+    } else if (dividerStyle === 'dashed') {
+      borderStyle = { borderBottom: `1px dashed ${primaryColor}`, paddingBottom: '1px' };
+    } else if (dividerStyle === 'double') {
+      borderStyle = { borderBottom: `2px double ${primaryColor}`, paddingBottom: '1px' };
+    } else if (dividerStyle === 'line') {
+      borderStyle = { borderBottom: `1px solid ${primaryColor}`, paddingBottom: '1px' };
+    }
+
     return (
-      <div className="w-full h-full bg-white text-slate-800 p-3 sm:p-3.5 flex flex-col justify-between text-[7.5px] leading-tight select-none font-sans overflow-hidden">
-        {/* Header */}
-        <div className="space-y-0.5 pb-1 border-b-2" style={{ borderColor: accentColor }}>
+      <div className="mb-1" style={borderStyle}>
+        <div
+          className="font-extrabold uppercase tracking-wider text-[6.5px]"
+          style={style}
+        >
+          {title}
+        </div>
+      </div>
+    );
+  };
+
+  // 1. HEADER CARD LAYOUT
+  if (layout === 'header-card') {
+    return (
+      <div
+        className="w-full h-full p-2.5 sm:p-3 flex flex-col justify-between text-[6.5px] leading-tight select-none overflow-hidden"
+        style={{ backgroundColor: bgColor, color: textColor, fontFamily }}
+      >
+        {/* Header Card Banner */}
+        <div
+          className="p-2 rounded border mb-2"
+          style={{
+            backgroundColor: `${primaryColor}10`,
+            borderColor: `${primaryColor}30`,
+            borderLeft: `4px solid ${primaryColor}`,
+          }}
+        >
           <div className="flex justify-between items-baseline">
-            <div className="font-extrabold text-[10.5px] tracking-tight text-slate-900">
-              Alex Rivera
+            <div className="font-extrabold text-[9.5px] tracking-tight" style={{ color: primaryColor }}>
+              ALEX RIVERA
             </div>
-            <span className="text-[5px] font-mono px-1 py-0.2 rounded bg-slate-100 text-slate-700 font-bold border border-slate-300">
-              FAANG L5 CALIBRATED
+            <span
+              className="text-[5px] font-mono px-1 py-0.2 rounded font-bold uppercase"
+              style={{ backgroundColor: `${accentColor}20`, color: accentColor }}
+            >
+              ATS {template.atsScore || 98}%
             </span>
           </div>
-          <div className="text-[6.5px] font-bold text-slate-700" style={{ color: accentColor }}>
-            Senior Distributed Systems & Platform Engineer
+          <div className="text-[6.5px] font-bold mt-0.5 truncate" style={{ color: accentColor }}>
+            {content.roleTitle}
           </div>
-          <div className="text-[5.5px] text-slate-500 flex items-center justify-between flex-wrap gap-x-1 pt-0.5">
-            <span>alex.rivera@dev</span>
-            <span>+1 (555) 234-5678</span>
+          <div className="text-[5px] opacity-75 flex gap-2 pt-0.5">
+            <span>alex.rivera@pro.io</span>
+            <span>•</span>
             <span>San Francisco, CA</span>
-            <span>github.com/alex</span>
+            <span>•</span>
             <span>linkedin.com/in/alex</span>
           </div>
         </div>
 
-        {/* Technical Arsenal (Top Placement for FAANG Hiring Committees) */}
-        <div className="space-y-0.5">
-          <div className="text-[6px] font-bold uppercase tracking-wider text-slate-900 flex items-center justify-between">
-            <span>Core Competencies & Stack</span>
-            <span className="text-[5px] text-slate-400 font-mono">100% ATS Parse Rate</span>
-          </div>
-          <div className="flex flex-wrap gap-0.5">
-            {['Go', 'Rust', 'Python', 'C++', 'Kafka', 'Redis', 'Kubernetes', 'AWS', 'GraphQL', 'gRPC'].map(s => (
-              <span key={s} className="bg-slate-100 text-slate-800 px-1 py-0.2 rounded text-[5px] font-medium border border-slate-200">
-                {s}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* Google XYZ Experience */}
-        <div className="space-y-1">
-          <div className="text-[6px] font-bold uppercase tracking-wider text-slate-900 flex justify-between">
-            <span>Production Experience</span>
-            <span className="text-[5px] text-slate-400 font-mono">[XYZ Impact Formula]</span>
-          </div>
-          <div className="space-y-0.5">
-            <div className="flex justify-between font-bold text-[6.5px] text-slate-900">
-              <span>Apex Cloud — Senior Distributed Systems Lead</span>
-              <span className="text-slate-500 font-normal">2021 – Present</span>
-            </div>
-            <div className="text-[5.5px] text-slate-600 space-y-0.5 pl-1.5 border-l-2" style={{ borderColor: accentColor }}>
-              <div>• Engineered telemetry pipeline measured by 350k QPS at 99.999% SLA by deploying Kafka & Go microservices.</div>
-              <div>• Spearheaded database partitioning, cutting p99 read latency from 140ms to 24ms across 12M daily queries.</div>
-              <div>• Automated canary rollouts and zero-downtime migrations, saving $1.4M annual cloud spend.</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Distributed Systems Project & Education */}
-        <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-100">
+        {/* Content Body */}
+        <div className="space-y-1.5 flex-1">
           <div>
-            <div className="text-[6px] font-bold uppercase text-slate-900">Distributed Projects</div>
-            <div className="text-[5.5px] text-slate-800 font-semibold">Raft Consensus Engine</div>
-            <div className="text-[5px] text-slate-500">Go • gRPC • Distributed WAL</div>
-          </div>
-          <div>
-            <div className="text-[6px] font-bold uppercase text-slate-900">Education & Honors</div>
-            <div className="text-[5.5px] text-slate-800 font-semibold">UC Berkeley — B.S. CS</div>
-            <div className="text-[5px] text-slate-500">GPA 3.85 • ACM-ICPC Finalist</div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // 0.1 CLOUD, DEVOPS & SRE CATEGORY
-  if (category === 'infra') {
-    return (
-      <div className="w-full h-full bg-white text-slate-800 p-3 sm:p-3.5 flex flex-col justify-between text-[7.5px] leading-tight select-none font-sans overflow-hidden">
-        {/* Header */}
-        <div className="text-center pb-1 mb-1 border-b border-slate-200">
-          <div className="font-bold text-[10px] text-slate-900 uppercase">Alex Rivera</div>
-          <div className="text-[6px] text-slate-700 font-semibold uppercase">Principal Cloud & Site Reliability Architect</div>
-          <div className="text-[5px] text-slate-500 pt-0.5 flex justify-center gap-2">
-            <span>alex.rivera@sre.dev</span>
-            <span>|</span>
-            <span>San Francisco, CA</span>
-            <span>|</span>
-            <span>github.com/alex</span>
-          </div>
-        </div>
-
-        {/* Infrastructure Stack */}
-        <div className="space-y-0.5">
-          <div className="text-[6px] font-bold uppercase tracking-wider text-slate-900">Infrastructure & SRE Stack</div>
-          <div className="flex flex-wrap gap-0.5">
-            {['Kubernetes', 'Terraform', 'AWS Multi-Region', 'Prometheus', 'Datadog', 'Istio', 'Docker', 'eBPF', 'ArgoCD'].map(s => (
-              <span key={s} className="bg-sky-50 text-sky-900 border border-sky-200 px-1 py-0.2 rounded text-[5px]">
-                {s}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* Experience */}
-        <div className="space-y-0.5">
-          <div className="text-[6px] font-bold uppercase tracking-wider text-slate-900">Reliability & Platform Engineering</div>
-          <div className="text-[5.5px] text-slate-600 space-y-0.5 pl-1.5 border-l-2 border-sky-600">
-            <div>• Maintained five-nines 99.999% availability across 4 multi-region AWS availability zones.</div>
-            <div>• Reduced Mean Time to Detection (MTTD) by 64% using eBPF distributed tracing and Datadog APM.</div>
-            <div>• Enacted GitOps continuous delivery with ArgoCD, decreasing release failure rate by 82%.</div>
-          </div>
-        </div>
-
-        {/* Credentials */}
-        <div className="pt-1 border-t border-slate-200 flex justify-between text-[5px] text-slate-600">
-          <span>AWS Certified Solutions Architect Pro</span>
-          <span>CKA Kubernetes Administrator</span>
-        </div>
-      </div>
-    );
-  }
-
-  // 0.2 STAFF & PRINCIPAL LEADERSHIP CATEGORY
-  if (category === 'lead') {
-    return (
-      <div className="w-full h-full bg-white text-slate-800 p-3 sm:p-3.5 flex flex-col justify-between text-[7.5px] leading-tight select-none font-sans overflow-hidden">
-        {/* Header */}
-        <div className="border-b-2 border-slate-900 pb-1 mb-1 text-center">
-          <div className="font-black text-[11px] uppercase tracking-widest text-slate-900">Alex Rivera</div>
-          <div className="text-[6.5px] font-bold uppercase tracking-wider text-slate-600">Staff Software Engineer & Systems Architect (L6+)</div>
-          <div className="text-[5.5px] text-slate-500 pt-0.5">
-            alex.rivera@eng.com | +1 (555) 234-5678 | San Francisco, CA | linkedin.com/in/alex
-          </div>
-        </div>
-
-        {/* Executive Impact */}
-        <div className="bg-slate-50 p-1.5 rounded border border-slate-200 text-[5.5px] text-slate-700 italic">
-          "Technical leader steering cross-organizational architecture across 40+ engineers. Author of 12 internal RFCs defining corporate data streaming and security standards."
-        </div>
-
-        {/* Leadership Experience */}
-        <div className="space-y-0.5">
-          <div className="text-[6px] font-bold uppercase text-slate-900">Architectural Leadership & Strategic Impact</div>
-          <div className="text-[5.5px] text-slate-600 space-y-0.5 pl-1.5 border-l-2 border-slate-900">
-            <div>• Led 3-year foundational platform migration to event-driven microservices, decoupling core revenue pipelines.</div>
-            <div>• Chaired Architecture Review Board reviewing 80+ engineering proposals annually.</div>
-            <div>• Mentored 14 senior and staff engineers toward promotion to Staff+ engineering tracks.</div>
-          </div>
-        </div>
-
-        {/* Patents & Education */}
-        <div className="pt-1 border-t border-slate-200 flex justify-between text-[5px] text-slate-600">
-          <span>US Patent: Distributed Resilient Transaction Journaling</span>
-          <span>UC Berkeley — M.S. Computer Science</span>
-        </div>
-      </div>
-    );
-  }
-
-  // 1. ATS CATEGORY — Single column, clean horizontal rules, high parsing hierarchy
-  if (category === 'ats') {
-    const isAcademic = id === 'ats-04' || id === 'ats-09';
-    const isBordered = id === 'ats-02' || id === 'ats-07';
-
-    return (
-      <div className={`w-full h-full bg-white text-slate-800 p-3 sm:p-3.5 flex flex-col justify-between text-[7.5px] leading-tight select-none font-sans overflow-hidden ${
-        isBordered ? 'border border-slate-300' : ''
-      }`}>
-        {/* Header */}
-        <div className={`space-y-0.5 pb-1 border-b ${isAcademic ? 'text-center' : 'text-left'}`} style={{ borderColor: accentColor }}>
-          <div className="font-extrabold text-[10px] tracking-wide text-slate-900 uppercase">
-            Alex Rivera
-          </div>
-          <div className="text-[7px] font-semibold text-slate-600">
-            Senior Full Stack & Cloud Systems Engineer
-          </div>
-          <div className="text-[6px] text-slate-500 flex items-center justify-between flex-wrap gap-x-1 pt-0.5">
-            <span>alex.rivera@dev</span>
-            <span>+1 (555) 234-5678</span>
-            <span>San Francisco, CA</span>
-            <span>linkedin.com/in/alex</span>
-          </div>
-        </div>
-
-        {/* Summary */}
-        <div className="space-y-0.5 pt-1">
-          <div className="text-[6.5px] font-bold uppercase tracking-wider text-slate-900 flex items-center gap-1">
-            <span className="w-1 h-1 rounded-full" style={{ backgroundColor: accentColor }} />
-            Professional Summary
-          </div>
-          <p className="text-[6px] text-slate-600 line-clamp-2 leading-snug">
-            Results-driven engineer with 6+ years building distributed cloud platforms. Reduced system latency by 35% and scaled services to 250k+ daily users.
-          </p>
-        </div>
-
-        {/* Experience */}
-        <div className="space-y-1 pt-0.5">
-          <div className="text-[6.5px] font-bold uppercase tracking-wider text-slate-900 flex items-center gap-1">
-            <span className="w-1 h-1 rounded-full" style={{ backgroundColor: accentColor }} />
-            Work Experience
-          </div>
-          <div className="space-y-0.5">
-            <div className="flex justify-between font-bold text-[6.5px] text-slate-900">
-              <span>Apex Cloud Solutions — Lead Engineer</span>
-              <span className="text-slate-500 font-normal">2021 – Present</span>
-            </div>
-            <div className="text-[5.5px] text-slate-600 space-y-0.5 pl-1.5 border-l" style={{ borderColor: accentColor }}>
-              <div>• Architected multi-tenant telemetry platform serving 250k+ daily users.</div>
-              <div>• Refactored REST microservices to GraphQL, reducing p95 latency by 35%.</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Education & Skills */}
-        <div className="grid grid-cols-2 gap-2 pt-0.5 border-t border-slate-100">
-          <div>
-            <div className="text-[6.5px] font-bold uppercase text-slate-900">Education</div>
-            <div className="text-[5.5px] text-slate-700 font-semibold">UC Berkeley — B.S. CS</div>
-            <div className="text-[5px] text-slate-500">GPA: 3.85 / 4.0 • Honors</div>
-          </div>
-          <div>
-            <div className="text-[6.5px] font-bold uppercase text-slate-900">Key Skills</div>
-            <div className="text-[5px] text-slate-600 flex flex-wrap gap-0.5">
-              <span className="bg-slate-100 px-1 py-0.2 rounded text-[5px]">React</span>
-              <span className="bg-slate-100 px-1 py-0.2 rounded text-[5px]">Node.js</span>
-              <span className="bg-slate-100 px-1 py-0.2 rounded text-[5px]">AWS</span>
-              <span className="bg-slate-100 px-1 py-0.2 rounded text-[5px]">Postgres</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // 2. MODERN PROFESSIONAL CATEGORY — Split two-column with accent sidebar
-  if (category === 'modern') {
-    return (
-      <div className="w-full h-full bg-white flex text-[7px] leading-tight select-none font-sans overflow-hidden">
-        {/* Left Accent Sidebar */}
-        <div className="w-[34%] p-2 text-white flex flex-col justify-between shrink-0" style={{ backgroundColor: accentColor }}>
-          <div className="space-y-2">
-            {/* Clean Typographic Header (100% Picture-Free) */}
-            <div className="space-y-0.5 pb-1.5 border-b border-white/20">
-              <div className="font-extrabold text-[8.5px] tracking-wider uppercase text-white leading-tight">
-                Alex Rivera
-              </div>
-              <div className="text-[5.5px] font-semibold text-white/80">
-                Senior Engineer
-              </div>
-            </div>
-
-            {/* Contact */}
-            <div className="space-y-1 text-[5.5px] text-white/90">
-              <div className="font-bold text-[6px] uppercase tracking-wider text-white/70 border-b border-white/20 pb-0.5">Contact</div>
-              <div className="truncate">alex.rivera@dev</div>
-              <div>+1 555-234-5678</div>
-              <div>San Francisco, CA</div>
-            </div>
-
-            {/* Skills Bars */}
-            <div className="space-y-1 text-[5.5px]">
-              <div className="font-bold text-[6px] uppercase tracking-wider text-white/70 border-b border-white/20 pb-0.5">Skills</div>
-              <div className="space-y-0.5">
-                <div className="flex justify-between text-[5px]"><span>React / TS</span><span>95%</span></div>
-                <div className="w-full h-0.5 bg-white/30 rounded"><div className="w-[95%] h-full bg-white rounded" /></div>
-              </div>
-              <div className="space-y-0.5">
-                <div className="flex justify-between text-[5px]"><span>Node / Python</span><span>90%</span></div>
-                <div className="w-full h-0.5 bg-white/30 rounded"><div className="w-[90%] h-full bg-white rounded" /></div>
-              </div>
-              <div className="space-y-0.5">
-                <div className="flex justify-between text-[5px]"><span>Cloud & DevOps</span><span>85%</span></div>
-                <div className="w-full h-0.5 bg-white/30 rounded"><div className="w-[85%] h-full bg-white rounded" /></div>
-              </div>
-            </div>
-          </div>
-
-          {/* Education in sidebar */}
-          <div className="text-[5px] text-white/80 border-t border-white/20 pt-1">
-            <div className="font-bold text-white text-[5.5px]">UC Berkeley</div>
-            <div>B.S. Computer Science</div>
-          </div>
-        </div>
-
-        {/* Right Main Column */}
-        <div className="w-[66%] p-2.5 flex flex-col justify-between bg-white text-slate-800">
-          <div>
-            <div className="font-extrabold text-[10px] text-slate-900 tracking-tight">Alex Rivera</div>
-            <div className="text-[6.5px] font-bold uppercase tracking-wider" style={{ color: accentColor }}>
-              Senior Full Stack Engineer
-            </div>
-            <p className="text-[5.5px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
-              Specialized in scaling enterprise cloud architectures and modern React user interfaces with zero-downtime deployments.
+            {renderHeading('Professional Profile')}
+            <p className="text-[5.5px] leading-snug opacity-90 line-clamp-2">
+              {content.summary}
             </p>
           </div>
 
-          {/* Experience Timeline */}
-          <div className="space-y-1.5 my-1">
-            <div className="text-[6.5px] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-100 pb-0.5">
-              Experience
-            </div>
-            <div className="relative pl-2 border-l-2" style={{ borderColor: accentColor }}>
-              <div className="font-bold text-[6px] text-slate-900">Apex Cloud — Lead Engineer</div>
-              <div className="text-[5px] text-slate-400">2021 – Present • San Francisco</div>
-              <div className="text-[5.5px] text-slate-600 mt-0.5 line-clamp-2">
-                • Scaled microservices to 250k daily active users.<br/>
-                • Improved p95 query latency by 35% with Redis.
-              </div>
-            </div>
-            <div className="relative pl-2 border-l-2 border-slate-200">
-              <div className="font-bold text-[6px] text-slate-900">NovaTech — Software Engineer</div>
-              <div className="text-[5px] text-slate-400">2018 – 2021</div>
-            </div>
-          </div>
-
-          {/* Highlights */}
-          <div className="bg-slate-50 p-1.5 rounded border border-slate-100 flex items-center justify-between text-[5.5px]">
-            <span className="font-semibold text-slate-700">Engineering Impact:</span>
-            <span className="font-bold text-emerald-600">+40% System Throughput</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // 3. MINIMALIST CATEGORY — Swiss typography, generous whitespace, razor-thin lines
-  if (category === 'minimalist') {
-    return (
-      <div className="w-full h-full bg-white text-slate-900 p-3.5 flex flex-col justify-between text-[7px] leading-tight select-none font-serif overflow-hidden">
-        <div>
-          <div className="text-center pb-2 border-b border-slate-200">
-            <div className="font-light text-[12px] tracking-widest uppercase text-slate-900 font-sans">
-              Alex Rivera
-            </div>
-            <div className="text-[6px] tracking-widest uppercase text-slate-500 mt-0.5 font-sans">
-              Senior Software Architect
-            </div>
-            <div className="text-[5px] text-slate-400 tracking-wider mt-1 font-sans">
-              SAN FRANCISCO • ALEX.RIVERA@DEV • +1 555-234-5678
-            </div>
-          </div>
-
-          {/* Asymmetric Swiss Layout */}
-          <div className="grid grid-cols-4 gap-2 pt-2">
-            <div className="col-span-1 text-[5.5px] text-slate-400 font-sans uppercase tracking-wider space-y-3">
-              <div>Profile</div>
-              <div>Experience</div>
-              <div className="pt-2">Education</div>
-            </div>
-
-            <div className="col-span-3 space-y-2 text-[6px] text-slate-700">
-              <p className="line-clamp-2 text-slate-600 font-sans">
-                Focused on architectural simplicity, distributed resilience, and human-centric software design.
-              </p>
-              
-              <div className="space-y-0.5">
-                <div className="flex justify-between font-sans font-bold text-slate-900 text-[6.5px]">
-                  <span>Apex Cloud Systems</span>
-                  <span className="font-normal text-slate-400">2021 — PRESENT</span>
-                </div>
-                <div className="text-[5.5px] text-slate-500 italic">Senior Staff Architect</div>
-                <p className="text-[5.5px] text-slate-600 line-clamp-2 font-sans">
-                  Led core platform re-architecture for 250k+ active tenants. Reduced distributed operational overhead by 40%.
-                </p>
-              </div>
-
-              <div className="space-y-0.5 pt-1">
-                <div className="flex justify-between font-sans font-bold text-slate-900 text-[6.5px]">
-                  <span>University of California, Berkeley</span>
-                  <span className="font-normal text-slate-400">2014 — 2018</span>
-                </div>
-                <div className="text-[5.5px] text-slate-500 italic">B.S. Computer Science — Honors</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Minimal Footer Line */}
-        <div className="pt-1 border-t border-slate-100 flex justify-between text-[5px] text-slate-400 font-sans">
-          <span>PORTFOLIO: alexrivera.dev</span>
-          <span>ATS COMPATIBLE: 100%</span>
-        </div>
-      </div>
-    );
-  }
-
-  // 4. STUDENT & FRESHER CATEGORY — Education & GPA first, Projects, Extracurriculars
-  if (category === 'student') {
-    return (
-      <div className="w-full h-full bg-white text-slate-800 p-3 flex flex-col justify-between text-[7px] leading-tight select-none font-sans overflow-hidden">
-        {/* Header */}
-        <div className="text-center pb-1.5 border-b-2" style={{ borderColor: accentColor }}>
-          <div className="font-extrabold text-[10px] text-slate-900 tracking-tight">Alex Rivera</div>
-          <div className="text-[6.5px] font-semibold text-slate-600">Computer Science Graduate • Software Developer</div>
-          <div className="text-[5.5px] text-slate-400 mt-0.5">alex.rivera@edu • San Francisco, CA • github.com/alexrivera</div>
-        </div>
-
-        {/* Education Highlight First */}
-        <div className="bg-amber-50/70 border border-amber-200/80 rounded p-1.5 space-y-0.5">
-          <div className="flex justify-between items-center">
-            <span className="font-bold text-[6.5px] text-amber-900 uppercase">Education & Honors</span>
-            <span className="px-1.5 py-0.2 bg-amber-500 text-white rounded font-bold text-[5.5px]">GPA 3.85 / 4.0</span>
-          </div>
-          <div className="font-bold text-[6.5px] text-slate-900">University of California, Berkeley</div>
-          <div className="text-[5.5px] text-slate-600">B.S. in Computer Science • Dean's Honors List</div>
-          <div className="text-[5px] text-slate-500">Coursework: Distributed Systems, Algorithms, Machine Learning</div>
-        </div>
-
-        {/* Projects */}
-        <div className="space-y-1">
-          <div className="font-bold text-[6.5px] uppercase tracking-wider text-slate-900 flex items-center justify-between">
-            <span>Academic & Open Source Projects</span>
-            <span className="text-[5px] text-brand-600 font-mono">1.2k Stars</span>
-          </div>
-          <div className="bg-slate-50 p-1 rounded border border-slate-100 space-y-0.5">
-            <div className="font-bold text-[6px] text-slate-800">AI Query Engine (Hackathon 1st Place)</div>
-            <div className="text-[5px] text-slate-600 line-clamp-2">
-              Engineered real-time vector search in React and Python. Scaled to 10k monthly active student queries.
-            </div>
-          </div>
-        </div>
-
-        {/* Internships & Skills */}
-        <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-100">
           <div>
-            <div className="font-bold text-[6px] uppercase text-slate-900">Internship</div>
-            <div className="text-[5.5px] font-semibold text-slate-800">Apex Cloud — Intern</div>
-            <div className="text-[5px] text-slate-500">Summer 2021</div>
-          </div>
-          <div>
-            <div className="font-bold text-[6px] uppercase text-slate-900">Core Skills</div>
-            <div className="text-[5px] text-slate-600 flex flex-wrap gap-0.5">
-              <span className="bg-slate-100 px-1 rounded">React</span>
-              <span className="bg-slate-100 px-1 rounded">Python</span>
-              <span className="bg-slate-100 px-1 rounded">Git</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // 5. SOFTWARE DEVELOPER CATEGORY — Code/Terminal accents, Tech Stack tags, Git metrics
-  if (category === 'developer') {
-    return (
-      <div className="w-full h-full bg-white text-slate-800 p-3 flex flex-col justify-between text-[7px] leading-tight select-none font-mono overflow-hidden">
-        {/* Terminal Header */}
-        <div className="text-center pb-1 mb-1 border-b border-slate-200">
-          <div className="font-bold text-[10px] text-slate-900 uppercase">&gt; Alex Rivera</div>
-          <div className="text-[6px] text-slate-700 font-semibold uppercase">Lead Full Stack & Infrastructure Engineer</div>
-          <div className="text-[5px] text-slate-500 pt-0.5 flex justify-center gap-2">
-            <span>alex.rivera@dev</span>
-            <span>|</span>
-            <span>San Francisco, CA</span>
-            <span>|</span>
-            <span>github.com/alexrivera</span>
-          </div>
-        </div>
-
-        {/* Tech Stack Pills */}
-        <div className="space-y-0.5">
-          <div className="text-[5.5px] text-slate-600 uppercase tracking-wider font-sans font-bold">Core Stack:</div>
-          <div className="flex flex-wrap gap-1">
-            {['React', 'Node.js', 'FastAPI', 'Docker', 'AWS', 'Kubernetes'].map(tech => (
-              <span key={tech} className="px-1 py-0.2 bg-slate-100 text-slate-800 rounded text-[5px] border border-slate-200">
-                {tech}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* Production Experience */}
-        <div className="space-y-1 font-sans">
-          <div className="text-[6.5px] font-bold text-slate-900 uppercase tracking-wider border-b border-slate-200 pb-0.5">
-            Production Scale
-          </div>
-          <div className="bg-slate-50 p-1.5 rounded border border-slate-200 space-y-0.5">
-            <div className="flex justify-between text-[6px] text-slate-900 font-mono font-semibold">
-              <span>Apex Cloud [Staff Engineer]</span>
-              <span className="text-slate-500">2021 – Present</span>
-            </div>
-            <div className="text-[5.5px] text-slate-700">
-              • Scaled real-time streaming pipeline to 15,000 req/sec.<br/>
-              • Reduced cluster AWS compute bill by $140,000 annually.
-            </div>
-          </div>
-        </div>
-
-        {/* Open Source Footer */}
-        <div className="flex justify-between items-center text-[5px] text-slate-500 pt-1 border-t border-slate-200">
-          <span>OS Contributor: Linux, Vite, FastAPI</span>
-          <span className="text-emerald-600 font-bold">● 100% Tests Passing</span>
-        </div>
-      </div>
-    );
-  }
-
-  // 6. DATA ANALYST & DATA SCIENTIST CATEGORY — Metrics callout bar, Data Stack, Analytical models
-  if (category === 'data') {
-    return (
-      <div className="w-full h-full bg-white text-slate-800 p-3 flex flex-col justify-between text-[7px] leading-tight select-none font-sans overflow-hidden">
-        {/* Header */}
-        <div className="pb-1 border-b" style={{ borderColor: accentColor }}>
-          <div className="flex justify-between items-center">
-            <div>
-              <div className="font-extrabold text-[10px] text-slate-900">Alex Rivera</div>
-              <div className="text-[6.5px] font-bold" style={{ color: accentColor }}>
-                Senior Data Scientist & Analytics Lead
-              </div>
-            </div>
-            <div className="text-[5px] text-slate-500 text-right">
-              alex@data-insights.ai<br/>San Francisco, CA
-            </div>
-          </div>
-        </div>
-
-        {/* Metrics Strip */}
-        <div className="grid grid-cols-3 gap-1 my-1">
-          <div className="bg-blue-50 border border-blue-200 rounded p-1 text-center">
-            <div className="font-extrabold text-[7px] text-blue-700">+42%</div>
-            <div className="text-[4.5px] text-blue-900 font-semibold uppercase">Pipeline Speed</div>
-          </div>
-          <div className="bg-emerald-50 border border-emerald-200 rounded p-1 text-center">
-            <div className="font-extrabold text-[7px] text-emerald-700">10M+</div>
-            <div className="text-[4.5px] text-emerald-900 font-semibold uppercase">Daily Rows</div>
-          </div>
-          <div className="bg-indigo-50 border border-indigo-200 rounded p-1 text-center">
-            <div className="font-extrabold text-[7px] text-indigo-700">$1.4M</div>
-            <div className="text-[4.5px] text-indigo-900 font-semibold uppercase">Cost Saved</div>
-          </div>
-        </div>
-
-        {/* Data Stack */}
-        <div className="space-y-0.5">
-          <div className="text-[6px] font-bold text-slate-700 uppercase">Data & ML Stack:</div>
-          <div className="flex flex-wrap gap-1">
-            {['SQL', 'Python', 'Snowflake', 'Tableau', 'dbt', 'Pandas'].map(tool => (
-              <span key={tool} className="px-1 py-0.2 bg-slate-100 text-slate-700 rounded text-[5px] border border-slate-200">
-                {tool}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* Experience */}
-        <div className="space-y-0.5">
-          <div className="text-[6.5px] font-bold uppercase text-slate-900">Analytics Impact</div>
-          <div className="text-[5.5px] text-slate-600 line-clamp-2">
-            • Built automated churn prediction model with 89% precision across $45M recurring ARR.<br/>
-            • Automated executive dashboards consumed weekly by C-suite.
-          </div>
-        </div>
-
-        {/* Education */}
-        <div className="pt-1 border-t border-slate-100 text-[5px] text-slate-500 flex justify-between">
-          <span>UC Berkeley — B.S. Data Science & Stats</span>
-          <span>Tableau Certified Pro</span>
-        </div>
-      </div>
-    );
-  }
-
-  // 7. AI & ML ENGINEER CATEGORY — Architecture tags, arXiv citations, LoRA/RAG metrics
-  if (category === 'aiml') {
-    return (
-      <div className="w-full h-full bg-white text-slate-800 p-3 flex flex-col justify-between text-[7px] leading-tight select-none font-sans overflow-hidden">
-        {/* Header */}
-        <div className="text-center pb-1 mb-1 border-b border-slate-200">
-          <div className="font-extrabold text-[10px] text-slate-900 uppercase">
-            Alex Rivera
-          </div>
-          <div className="text-[6.5px] font-bold text-slate-700 uppercase">
-            AI / GenAI & Deep Learning Engineer
-          </div>
-          <div className="text-[5px] text-slate-500 pt-0.5 flex justify-center gap-2">
-            <span>alex.rivera@ai.dev</span>
-            <span>|</span>
-            <span>San Francisco, CA</span>
-            <span>|</span>
-            <span>huggingface.co/alex</span>
-          </div>
-        </div>
-
-        {/* Model Architecture Badges */}
-        <div className="space-y-0.5 my-0.5">
-          <div className="text-[5.5px] text-slate-600 uppercase font-mono font-bold">Specializations:</div>
-          <div className="flex flex-wrap gap-1">
-            {['PyTorch', 'LLMs', 'LoRA', 'vLLM', 'CUDA', 'RAG'].map(badge => (
-              <span key={badge} className="px-1 py-0.2 bg-slate-100 text-slate-800 rounded text-[5px] border border-slate-200">
-                {badge}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* ML Achievements */}
-        <div className="space-y-1 bg-slate-50 p-1.5 rounded border border-slate-200">
-          <div className="font-bold text-[6px] text-slate-900 uppercase font-mono">Deployment Impact</div>
-          <div className="text-[5.5px] text-slate-700 space-y-0.5">
-            <div>• Fine-tuned 70B parameter open-weights models for sub-100ms reasoning.</div>
-            <div>• Engineered RAG vector architecture cutting hallucination by 58%.</div>
-          </div>
-        </div>
-
-        {/* Research / arXiv */}
-        <div className="text-[5px] text-slate-500 font-mono pt-1 border-t border-slate-200 flex justify-between">
-          <span>Paper: "Low-Latency Distributed LLM Inference"</span>
-          <span className="text-slate-700 font-semibold">UC Berkeley CS</span>
-        </div>
-      </div>
-    );
-  }
-
-  // 8. EXECUTIVE & LEADERSHIP CATEGORY — Formal double borders, P&L, Board & Competencies Matrix
-  if (category === 'executive') {
-    return (
-      <div className="w-full h-full bg-white text-slate-900 p-3 flex flex-col justify-between text-[7px] leading-tight select-none font-serif overflow-hidden border-2" style={{ borderColor: accentColor }}>
-        {/* Header with double rule */}
-        <div className="text-center pb-1.5 border-b-2" style={{ borderColor: accentColor }}>
-          <div className="font-bold text-[11px] tracking-wider uppercase text-slate-900 font-sans">
-            Alex Rivera, MBA
-          </div>
-          <div className="text-[6.5px] font-bold uppercase tracking-widest text-slate-600 font-sans mt-0.5">
-            Vice President of Global Engineering
-          </div>
-          <div className="text-[5px] text-slate-500 font-sans mt-0.5">
-            San Francisco, CA • Executive Office • alex.rivera@enterprise.com
-          </div>
-        </div>
-
-        {/* Executive Summary */}
-        <div className="text-[6px] text-slate-700 italic text-center line-clamp-2 px-2">
-          "Strategic technology executive driving global digital transformation, P&L management, and enterprise cloud migrations."
-        </div>
-
-        {/* Core Competencies Matrix (3 columns) */}
-        <div className="grid grid-cols-3 gap-1 bg-slate-50 p-1 rounded border border-slate-200 text-center text-[5px] font-sans">
-          <div><strong>$18M Budget P&L</strong><div className="text-slate-500">Resource Control</div></div>
-          <div><strong>60+ Headcount</strong><div className="text-slate-500">Global Org Scale</div></div>
-          <div><strong>M&A Integration</strong><div className="text-slate-500">Enterprise Due Diligence</div></div>
-        </div>
-
-        {/* Leadership History */}
-        <div className="space-y-0.5 font-sans">
-          <div className="flex justify-between font-bold text-[6px] text-slate-900">
-            <span>Apex Enterprise Technologies — VP Engineering</span>
-            <span className="text-slate-500">2019 – Present</span>
-          </div>
-          <div className="text-[5.5px] text-slate-600 line-clamp-2">
-            • Steered 4 global engineering hubs delivering $85M ARR product lines with 99.999% SLA.
-          </div>
-        </div>
-
-        {/* Board & Credentials */}
-        <div className="text-[5px] text-slate-500 font-sans pt-1 border-t border-slate-200 flex justify-between">
-          <span>MBA, UC Berkeley Haas</span>
-          <span>Advisory Board Member</span>
-        </div>
-      </div>
-    );
-  }
-
-  // 9. CREATIVE & DESIGNER CATEGORY — Colorful header banner, portfolio showcase
-  if (category === 'creative') {
-    return (
-      <div className="w-full h-full bg-white text-slate-800 flex flex-col justify-between text-[7px] leading-tight select-none font-sans overflow-hidden">
-        {/* Bold Colored Top Banner */}
-        <div className="p-2.5 text-white flex justify-between items-center" style={{ backgroundColor: accentColor }}>
-          <div>
-            <div className="font-black text-[11px] tracking-tight">ALEX RIVERA</div>
-            <div className="text-[6.5px] font-semibold text-white/90">Lead Product Designer & Creative Director</div>
-          </div>
-          <div className="text-[5px] text-white/80 text-right">
-            dribbble.com/alex<br/>portfolio.design
-          </div>
-        </div>
-
-        {/* Case Studies / Showcase */}
-        <div className="p-2.5 space-y-1.5 flex-1 flex flex-col justify-between">
-          <div className="space-y-1">
-            <div className="text-[6.5px] font-bold uppercase tracking-wider text-slate-900 flex justify-between">
-              <span>Featured Design Systems</span>
-              <span className="text-[5px] font-bold" style={{ color: accentColor }}>Figma Verified</span>
-            </div>
-            <div className="bg-slate-50 p-1.5 rounded border border-slate-100 space-y-0.5">
-              <div className="font-bold text-[6px] text-slate-900">Apex Multi-Brand Design System</div>
-              <div className="text-[5.5px] text-slate-600 line-clamp-2">
-                Unified 120+ components across Web & Mobile apps, accelerating sprint velocity by 65%.
-              </div>
-            </div>
-          </div>
-
-          {/* Visual Skill Tags */}
-          <div className="space-y-0.5">
-            <div className="text-[5.5px] font-bold text-slate-400 uppercase">Disciplines:</div>
-            <div className="flex flex-wrap gap-1">
-              {['Design Systems', 'UX Research', 'Micro-interactions', 'Prototyping'].map(s => (
-                <span key={s} className="px-1 py-0.2 rounded text-[5px] text-white" style={{ backgroundColor: accentColor }}>
+            {renderHeading('Core Competencies & Stack')}
+            <div className="flex flex-wrap gap-0.5">
+              {content.skills.slice(0, 7).map((s, idx) => (
+                <span
+                  key={idx}
+                  className="px-1 py-0.2 rounded text-[5px] font-medium"
+                  style={{ backgroundColor: `${primaryColor}12`, color: primaryColor }}
+                >
                   {s}
                 </span>
               ))}
             </div>
           </div>
 
-          <div className="pt-1 border-t border-slate-100 flex justify-between text-[5px] text-slate-400">
-            <span>B.S. Interaction Design — Berkeley</span>
-            <span>Awwwards Site of the Day</span>
+          <div>
+            {renderHeading('Key Experience')}
+            <div className="space-y-0.5">
+              <div className="flex justify-between font-bold text-[6px]">
+                <span style={{ color: primaryColor }}>{content.expRole}</span>
+                <span style={{ color: accentColor }}>{content.expPeriod}</span>
+              </div>
+              <div className="text-[5px] font-semibold opacity-80">{content.expCompany}</div>
+              <div className="text-[5.5px] opacity-85 leading-snug line-clamp-2">
+                {bulletSymbol} {content.bullets[0]}<br/>
+                {bulletSymbol} {content.bullets[1]}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Education */}
+        <div className="pt-1 border-t flex justify-between text-[5px] opacity-80" style={{ borderColor }}>
+          <span>{content.education}</span>
+          <span className="font-bold" style={{ color: accentColor }}>Verified ATS</span>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. SIDEBAR-LEFT LAYOUT
+  if (layout === 'sidebar-left') {
+    return (
+      <div
+        className="w-full h-full p-2 flex gap-2 text-[6.5px] leading-tight select-none overflow-hidden"
+        style={{ backgroundColor: bgColor, color: textColor, fontFamily }}
+      >
+        {/* Left Sidebar */}
+        <div
+          className="w-[36%] p-1.5 rounded flex flex-col justify-between shrink-0"
+          style={{
+            backgroundColor: `${primaryColor}08`,
+            borderRight: `1.5px solid ${primaryColor}20`,
+          }}
+        >
+          <div className="space-y-2">
+            <div>
+              <div className="font-extrabold text-[9px] tracking-tight leading-tight" style={{ color: primaryColor }}>
+                ALEX<br/>RIVERA
+              </div>
+              <div className="text-[5.5px] font-bold mt-1 leading-tight" style={{ color: accentColor }}>
+                {content.roleTitle}
+              </div>
+            </div>
+
+            <div className="space-y-1 text-[5px] opacity-80 pt-1 border-t" style={{ borderColor: `${primaryColor}15` }}>
+              <div>alex@pro.io</div>
+              <div>+1 555-234-5678</div>
+              <div>San Francisco, CA</div>
+            </div>
+
+            <div>
+              <div className="font-bold text-[6px] uppercase tracking-wider mb-1" style={{ color: primaryColor }}>
+                SKILLS
+              </div>
+              <div className="flex flex-wrap gap-0.5">
+                {content.skills.slice(0, 6).map((s, idx) => (
+                  <span
+                    key={idx}
+                    className="px-1 py-0.2 rounded text-[4.5px] font-bold"
+                    style={{ backgroundColor: `${primaryColor}18`, color: primaryColor }}
+                  >
+                    {s}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="text-[5px] opacity-75 pt-1 border-t" style={{ borderColor: `${primaryColor}15` }}>
+            <span className="font-bold">Education</span><br/>
+            {content.education.split('—')[0]}
+          </div>
+        </div>
+
+        {/* Right Main Column */}
+        <div className="flex-1 flex flex-col justify-between overflow-hidden">
+          <div className="space-y-1.5">
+            <div>
+              {renderHeading('Professional Summary')}
+              <p className="text-[5.5px] opacity-85 leading-snug line-clamp-2">
+                {content.summary}
+              </p>
+            </div>
+
+            <div>
+              {renderHeading('Work Experience')}
+              <div className="space-y-1">
+                <div className="flex justify-between font-bold text-[6px]">
+                  <span style={{ color: primaryColor }}>{content.expRole}</span>
+                  <span style={{ color: accentColor }}>{content.expPeriod}</span>
+                </div>
+                <div className="text-[5px] opacity-80">{content.expCompany}</div>
+                <div className="text-[5.5px] opacity-85 leading-snug space-y-0.5">
+                  <div>{bulletSymbol} {content.bullets[0]}</div>
+                  <div>{bulletSymbol} {content.bullets[1]}</div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              {renderHeading('Key Project')}
+              <div className="text-[6px] font-bold" style={{ color: primaryColor }}>
+                {content.projectTitle}
+              </div>
+              <div className="text-[5px] font-mono opacity-75" style={{ color: accentColor }}>
+                {content.projectStack}
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-1 border-t flex justify-between text-[5px] opacity-75" style={{ borderColor }}>
+            <span>Calibrated Hierarchy</span>
+            <span className="font-mono">ATS 99%</span>
           </div>
         </div>
       </div>
     );
   }
 
-  // 10. BUSINESS PROFESSIONAL CATEGORY — Corporate navy/slate, revenue impact badges
+  // 3. TWO-COLUMN LAYOUT
+  if (layout === 'two-column') {
+    return (
+      <div
+        className="w-full h-full p-2.5 sm:p-3 flex flex-col justify-between text-[6.5px] leading-tight select-none overflow-hidden"
+        style={{ backgroundColor: bgColor, color: textColor, fontFamily }}
+      >
+        {/* Top Header */}
+        <div className="pb-1.5 border-b" style={{ borderColor: `${primaryColor}30` }}>
+          <div className="flex justify-between items-baseline">
+            <div className="font-extrabold text-[10px] tracking-tight" style={{ color: primaryColor }}>
+              ALEX RIVERA
+            </div>
+            <div className="text-[6px] font-bold uppercase tracking-wider" style={{ color: accentColor }}>
+              {content.roleTitle}
+            </div>
+          </div>
+          <div className="flex justify-between text-[5px] opacity-75 pt-0.5">
+            <span>alex.rivera@dev • +1 (555) 234-5678</span>
+            <span>San Francisco, CA • linkedin.com/in/alex</span>
+          </div>
+        </div>
+
+        {/* 2 Columns Body */}
+        <div className="flex gap-2 flex-1 pt-1.5 overflow-hidden">
+          {/* Main Left Column (60%) */}
+          <div className="w-[62%] space-y-1.5">
+            <div>
+              {renderHeading('Experience')}
+              <div className="space-y-0.5">
+                <div className="flex justify-between font-bold text-[6px]">
+                  <span style={{ color: primaryColor }}>{content.expRole}</span>
+                </div>
+                <div className="text-[5px] opacity-80">{content.expCompany} ({content.expPeriod})</div>
+                <div className="text-[5.5px] opacity-85 leading-snug space-y-0.5 mt-0.5">
+                  <div>{bulletSymbol} {content.bullets[0]}</div>
+                  <div>{bulletSymbol} {content.bullets[1]}</div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              {renderHeading('Projects & Architecture')}
+              <div className="text-[6px] font-bold" style={{ color: primaryColor }}>{content.projectTitle}</div>
+              <div className="text-[5px] font-mono opacity-80" style={{ color: accentColor }}>{content.projectStack}</div>
+            </div>
+          </div>
+
+          {/* Right Column (38%) */}
+          <div className="w-[38%] space-y-1.5 pl-1.5 border-l" style={{ borderColor: `${borderColor}` }}>
+            <div>
+              {renderHeading('Skills')}
+              <div className="flex flex-wrap gap-0.5">
+                {content.skills.slice(0, 8).map((s, idx) => (
+                  <span
+                    key={idx}
+                    className="px-1 py-0.2 rounded text-[4.5px] font-medium"
+                    style={{ backgroundColor: `${primaryColor}12`, color: primaryColor }}
+                  >
+                    {s}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              {renderHeading('Education')}
+              <div className="text-[5.5px] font-bold" style={{ color: primaryColor }}>B.S. Computer Science</div>
+              <div className="text-[5px] opacity-80">UC Berkeley</div>
+            </div>
+
+            <div>
+              {renderHeading('Certifications')}
+              <div className="text-[5px] opacity-85">• AWS Certified Architect</div>
+              <div className="text-[5px] opacity-85">• Certified Kubernetes Admin</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="pt-1 border-t flex justify-between text-[5px] opacity-75" style={{ borderColor }}>
+          <span>High-Fidelity 2-Column</span>
+          <span className="font-mono font-bold" style={{ color: accentColor }}>ATS {template.atsScore || 98}%</span>
+        </div>
+      </div>
+    );
+  }
+
+  // 4. SINGLE-COLUMN ATS STANDARD (Default & ATS Professional Tier)
   return (
-    <div className="w-full h-full bg-white text-slate-800 p-3 flex flex-col justify-between text-[7px] leading-tight select-none font-sans overflow-hidden">
+    <div
+      className="w-full h-full p-2.5 sm:p-3 flex flex-col justify-between text-[6.5px] leading-tight select-none overflow-hidden"
+      style={{ backgroundColor: bgColor, color: textColor, fontFamily }}
+    >
       {/* Header */}
-      <div className="pb-1 border-b-2" style={{ borderColor: accentColor }}>
-        <div className="flex justify-between items-end">
-          <div>
-            <div className="font-extrabold text-[10px] text-slate-900">Alex Rivera</div>
-            <div className="text-[6.5px] font-bold text-slate-600">Senior Business Strategy & Operations Manager</div>
-          </div>
-          <div className="text-[5px] text-slate-500 text-right">
-            San Francisco, CA<br/>alex.rivera@biz.com
-          </div>
+      <div className="pb-1 text-center space-y-0.5 border-b" style={{ borderColor: `${primaryColor}30` }}>
+        <div className="font-extrabold text-[10.5px] tracking-tight uppercase" style={{ color: primaryColor }}>
+          Alex Rivera
+        </div>
+        <div className="text-[6.5px] font-bold tracking-wide uppercase" style={{ color: accentColor }}>
+          {content.roleTitle}
+        </div>
+        <div className="text-[5px] opacity-80 flex justify-center gap-1.5 flex-wrap">
+          <span>alex.rivera@pro.io</span>
+          <span>•</span>
+          <span>+1 (555) 234-5678</span>
+          <span>•</span>
+          <span>San Francisco, CA</span>
+          <span>•</span>
+          <span>linkedin.com/in/alex</span>
         </div>
       </div>
 
-      {/* Revenue Impact Highlights */}
-      <div className="bg-slate-50 p-1.5 rounded border border-slate-200 flex justify-between items-center text-[5.5px]">
+      {/* Linear Single Column Sections */}
+      <div className="space-y-1.5 flex-1 pt-1 overflow-hidden">
         <div>
-          <div className="font-bold text-[7px] text-emerald-600">+$3.2M ARR</div>
-          <div className="text-[4.5px] text-slate-500 uppercase">Growth Delivered</div>
+          {renderHeading('Professional Summary')}
+          <p className="text-[5.5px] leading-snug opacity-90 line-clamp-2">
+            {content.summary}
+          </p>
         </div>
-        <div className="border-l pl-2 border-slate-200">
-          <div className="font-bold text-[7px] text-slate-900">42 Enterprise</div>
-          <div className="text-[4.5px] text-slate-500 uppercase">Accounts Scaled</div>
+
+        <div>
+          {renderHeading('Core Technical Competencies')}
+          <div className="text-[5.5px] opacity-90 leading-tight">
+            <span className="font-bold" style={{ color: primaryColor }}>Stack & Tools: </span>
+            <span>{content.skills.join(' • ')}</span>
+          </div>
         </div>
-        <div className="border-l pl-2 border-slate-200">
-          <div className="font-bold text-[7px] text-indigo-600">35% Margin</div>
-          <div className="text-[4.5px] text-slate-500 uppercase">Cost Optimization</div>
+
+        <div>
+          {renderHeading('Professional Experience')}
+          <div className="space-y-0.5">
+            <div className="flex justify-between font-bold text-[6px]">
+              <span style={{ color: primaryColor }}>{content.expRole} — {content.expCompany}</span>
+              <span style={{ color: accentColor }}>{content.expPeriod}</span>
+            </div>
+            <div className="text-[5.5px] opacity-90 leading-snug space-y-0.5">
+              <div>{bulletSymbol} {content.bullets[0]}</div>
+              <div>{bulletSymbol} {content.bullets[1]}</div>
+              <div className="line-clamp-1">{bulletSymbol} {content.bullets[2]}</div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          {renderHeading('Key Projects & Systems')}
+          <div className="flex justify-between items-baseline text-[5.5px]">
+            <span className="font-bold" style={{ color: primaryColor }}>{content.projectTitle}</span>
+            <span className="font-mono text-[5px]" style={{ color: accentColor }}>{content.projectStack}</span>
+          </div>
         </div>
       </div>
 
-      {/* Experience */}
-      <div className="space-y-0.5">
-        <div className="text-[6.5px] font-bold uppercase text-slate-900">Corporate Strategy History</div>
-        <div className="text-[5.5px] text-slate-600 line-clamp-2">
-          • Directed go-to-market operational roadmaps expanding regional market share by 28%.<br/>
-          • Partnered with C-suite stakeholders to execute cross-functional organizational pivots.
-        </div>
-      </div>
-
-      {/* Education */}
-      <div className="pt-1 border-t border-slate-100 flex justify-between text-[5px] text-slate-500">
-        <span>UC Berkeley — B.S. Business Administration</span>
-        <span>PMP & Six Sigma Certified</span>
+      {/* Footer */}
+      <div className="pt-1 border-t flex justify-between text-[5px] opacity-80" style={{ borderColor }}>
+        <span>{content.education}</span>
+        <span className="font-mono font-bold" style={{ color: accentColor }}>ATS {template.atsScore || 99}%</span>
       </div>
     </div>
   );

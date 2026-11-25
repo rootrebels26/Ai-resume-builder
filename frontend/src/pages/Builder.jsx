@@ -10,7 +10,8 @@ import {
 import { useResume } from '../context/ResumeContext';
 import { ResumeTemplate } from '../components/templates/ResumeTemplate';
 import { A4PageSheet } from '../components/templates/A4PageSheet';
-import { TEMPLATES, isFullBleedTemplate } from '../constants/templatesList';
+import { TEMPLATES, isFullBleedTemplate } from '../constants/templateRegistry';
+import { CanvaDesignPanel } from '../components/design/CanvaDesignPanel';
 import { pdfService } from '../services/pdfService';
 import { storageService } from '../services/storageService';
 import { aiService } from '../services/aiService';
@@ -51,7 +52,8 @@ export function Builder() {
   const [activeTab, setActiveTab] = useState('personal');
   const [editorPhase, setEditorPhase] = useState('edit'); // 'edit' | 'optimize' | 'ats_and_download'
   const [zoomScale, setZoomScale] = useState(0.85);
-  const [mobileView, setMobileView] = useState('editor'); // 'editor' | 'preview'
+  const [showDesignStudio, setShowDesignStudio] = useState(true);
+  const [mobileView, setMobileView] = useState('editor'); // 'editor' | 'preview' | 'design'
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState(null); // { type: 'summary'|'bullet'|'skills', options: [...] }
   const [isExporting, setIsExporting] = useState(false);
@@ -666,7 +668,9 @@ export function Builder() {
       const candidate = (resumeData.personalInfo?.fullName || 'Resume').replace(/\s+/g, '_');
       const role = (resumeData.personalInfo?.professionalTitle || 'CV').replace(/\s+/g, '_');
       const filename = `${candidate}_${role}.pdf`;
-      await pdfService.exportToPDF(previewRef.current, filename);
+      await pdfService.exportToPDF(previewRef.current, filename, {
+        format: resumeData?.preferences?.paperFormat || 'a4'
+      });
     } catch (e) {
       console.error('PDF export error:', e);
     } finally {
@@ -795,7 +799,7 @@ export function Builder() {
           </button>
         </div>
 
-        {/* Center: Mobile Switcher (Editor / Preview) */}
+        {/* Center: Mobile Switcher (Editor / Preview / Design) */}
         <div className="md:hidden flex rounded-full bg-white p-0.5 border border-ink shadow-brutal-sm">
           <button
             onClick={() => setMobileView('editor')}
@@ -813,10 +817,32 @@ export function Builder() {
           >
             Preview
           </button>
+          <button
+            onClick={() => setMobileView('design')}
+            className={`px-3 py-1 text-xs font-bold rounded-full transition ${
+              mobileView === 'design' ? 'bg-ink text-white' : 'text-ink-muted'
+            }`}
+          >
+            Design
+          </button>
         </div>
 
         {/* Right: Template Selector & Actions */}
         <div className="flex items-center gap-2">
+          {/* Design Studio Toggle Button */}
+          <button
+            type="button"
+            onClick={() => setShowDesignStudio(!showDesignStudio)}
+            className={`hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold transition cursor-pointer shadow-brutal-sm ${
+              showDesignStudio
+                ? 'bg-ink text-volt border-ink'
+                : 'bg-white text-ink border-ink/20 hover:border-ink'
+            }`}
+            title="Toggle Canva Design Studio Panel"
+          >
+            <Palette className="w-3.5 h-3.5" />
+            <span className="hidden xl:inline">Design Studio</span>
+          </button>
           {/* Template Selector dropdown */}
           <div className="hidden lg:flex items-center gap-2">
             <span className="text-xs font-mono font-bold text-ink-muted uppercase">Template:</span>
@@ -942,7 +968,7 @@ export function Builder() {
         {/* LEFT PANEL: Section Forms & Ergonomic Inputs            */}
         {/* ======================================================== */}
         <div
-          className={`w-full md:w-1/2 lg:w-1/2 xl:w-5/12 bg-white border-r border-ink/15 flex flex-col min-h-0 h-full ${
+          className={`w-full ${showDesignStudio ? 'md:w-5/12 lg:w-4/12 xl:w-3.5/12' : 'md:w-1/2 lg:w-5/12'} bg-white border-r border-ink/15 flex flex-col min-h-0 h-full ${
             mobileView === 'editor' ? 'flex' : 'hidden md:flex'
           }`}
         >
@@ -2609,17 +2635,17 @@ export function Builder() {
         </div>
 
         {/* ======================================================== */}
-        {/* RIGHT PANEL: Live A4 Document Studio                    */}
+        {/* CENTER PANEL: Live Canvas Preview Studio                 */}
         {/* ======================================================== */}
         <div
-          className={`w-full md:w-1/2 lg:w-1/2 xl:w-7/12 flex-1 bg-canvas p-4 sm:p-8 overflow-y-auto min-h-0 h-full flex flex-col items-center justify-start relative select-none ${
+          className={`flex-1 min-w-0 bg-canvas p-4 sm:p-6 overflow-y-auto min-h-0 h-full flex flex-col items-center justify-start relative select-none ${
             mobileView === 'preview' ? 'flex' : 'hidden md:flex'
           }`}
         >
           {/* Floating Canvas Toolbar */}
-          <div className="sticky top-0 z-10 mb-6 bg-white px-4 py-2 rounded-full border-[1.5px] border-ink shadow-brutal-sm flex items-center gap-3 text-xs text-ink shrink-0">
-            {/* Zoom Controls */}
-            <div className="flex items-center gap-1">
+          <div className="sticky top-0 z-10 mb-6 bg-white px-4 py-2 rounded-full border-[1.5px] border-ink shadow-brutal-sm flex flex-wrap items-center justify-center gap-3 text-xs text-ink shrink-0">
+            {/* Zoom Controls with Slider */}
+            <div className="flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => setZoomScale((z) => Math.max(0.45, Number((z - 0.05).toFixed(2))))}
@@ -2628,11 +2654,21 @@ export function Builder() {
               >
                 <ZoomOut className="w-3.5 h-3.5" />
               </button>
+              <input
+                type="range"
+                min="0.45"
+                max="1.35"
+                step="0.05"
+                value={zoomScale}
+                onChange={(e) => setZoomScale(parseFloat(e.target.value))}
+                className="w-16 h-1.5 accent-ink cursor-pointer hidden sm:block"
+                title="Canvas Zoom Slider"
+              />
               <button
                 type="button"
                 onClick={() => setZoomScale(0.85)}
-                className="px-2 font-mono text-[11px] font-bold text-ink hover:text-editorial-violet"
-                title="Reset Zoom"
+                className="px-1.5 font-mono text-[11px] font-bold text-ink hover:text-editorial-violet"
+                title="Reset Zoom to 85%"
               >
                 {Math.round(zoomScale * 100)}%
               </button>
@@ -2648,8 +2684,20 @@ export function Builder() {
 
             <div className="h-3.5 w-px bg-ink/20" />
 
+            {/* Paper Format Toggle (A4 vs US Letter) */}
+            <button
+              type="button"
+              onClick={() => updatePreferences({ paperFormat: resumeData.preferences?.paperFormat === 'letter' ? 'a4' : 'letter' })}
+              className="px-2.5 py-1 rounded-full border border-ink/20 bg-white hover:border-ink text-[11px] font-mono font-bold text-ink cursor-pointer"
+              title="Toggle Paper Size (A4 vs US Letter)"
+            >
+              {resumeData.preferences?.paperFormat === 'letter' ? 'Letter (8.5×11")' : 'A4 (210×297mm)'}
+            </button>
+
+            <div className="h-3.5 w-px bg-ink/20" />
+
             {/* Quick Color Swatches on Preview */}
-            <div className="flex items-center gap-1.5">
+            <div className="hidden sm:flex items-center gap-1.5">
               {COLOR_PRESETS.slice(0, 5).map((s) => (
                 <button
                   key={s.color}
@@ -2781,6 +2829,23 @@ export function Builder() {
             </div>
           </div>
         </div>
+
+        {/* ======================================================== */}
+        {/* RIGHT PANEL: Canva-Style Design Studio Controls         */}
+        {/* ======================================================== */}
+        {showDesignStudio && (
+          <div
+            className={`w-full md:w-72 lg:w-80 xl:w-88 shrink-0 bg-white border-l border-ink/15 flex flex-col min-h-0 h-full ${
+              mobileView === 'design' ? 'flex' : 'hidden md:flex'
+            }`}
+          >
+            <CanvaDesignPanel
+              preferences={resumeData.preferences}
+              onUpdatePreferences={updatePreferences}
+              atsScore={displayAtsScore}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

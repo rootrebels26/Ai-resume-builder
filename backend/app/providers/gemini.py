@@ -29,26 +29,36 @@ class GeminiProvider(BaseAIProvider):
     async def _call_gemini(self, prompt: str, schema_class: type = None):
         if not self.api_key:
             return None
+        import httpx
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model_name}:generateContent?key={self.api_key}"
+        payload = {
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {
+                "temperature": 0.2
+            }
+        }
         try:
-            import google.generativeai as genai
-            genai.configure(api_key=self.api_key)
-            model = genai.GenerativeModel(self.model_name)
-            response = await asyncio.wait_for(model.generate_content_async(prompt), timeout=8.0)
-            raw_text = response.text.strip()
-
-            # Clean markdown code block if present
-            code_block_match = re.search(r'```(?:json)?\s*([\s\S]*?)\s*```', raw_text)
-            if code_block_match:
-                json_str = code_block_match.group(1).strip()
-            else:
-                json_match = re.search(r'(\{[\s\S]*\}|\[[\s\S]*\])', raw_text)
-                json_str = json_match.group(1).strip() if json_match else raw_text
-
-            data = json.loads(json_str)
-            return data
+            async with httpx.AsyncClient(timeout=6.0) as client:
+                res = await client.post(url, json=payload)
+                if res.status_code == 200:
+                    res_data = res.json()
+                    candidates = res_data.get("candidates", [])
+                    if candidates and "content" in candidates[0]:
+                        parts = candidates[0]["content"].get("parts", [])
+                        if parts and "text" in parts[0]:
+                            raw_text = parts[0]["text"].strip()
+                            code_block_match = re.search(r'```(?:json)?\s*([\s\S]*?)\s*```', raw_text)
+                            if code_block_match:
+                                json_str = code_block_match.group(1).strip()
+                            else:
+                                json_match = re.search(r'(\{[\s\S]*\}|\[[\s\S]*\])', raw_text)
+                                json_str = json_match.group(1).strip() if json_match else raw_text
+                            return json.loads(json_str)
+                else:
+                    logger.warning("Gemini REST API returned %s: %s", res.status_code, res.text[:200])
         except Exception as e:
-            logger.warning("Gemini API call failed, falling back to local heuristic: %s", e)
-            return None
+            logger.warning("Gemini REST call failed or timed out, falling back to local heuristic: %s", e)
+        return None
 
     async def generate_summary(self, request: GenerateSummaryRequest) -> GenerateSummaryResponse:
         prompt = f"""You are an expert career coach. Given this profile, generate 3 distinct professional resume summaries and 1 headline.
@@ -213,25 +223,30 @@ CRITICAL EXTRACTION RULES:
    - Identify the candidate's actual full name at the top of the resume.
    - Extract phone number (preserving international country code e.g. +91, +1, +44), email, city/state/country location.
    - Extract LinkedIn profile URL, GitHub profile URL, and personal portfolio or website URL (into "portfolio" and "website").
-3. PROFESSIONAL TITLE & TARGET ROLE (CRITICAL):
-   - Accurately determine the candidate's real professional title (e.g. "Full Stack Developer", "Backend Engineer", "Data Scientist", "Software Engineer", "DevOps Engineer").
+3. PROFESSIONAL SUMMARY (CRITICAL):
+   - DO NOT prepend or include contact words or labels ("Email", "Contact", "Phone"), candidate name, links, or contact numbers inside "professionalSummary".
+   - "professionalSummary" must ONLY contain pure biographical and career narrative prose.
+4. PROFESSIONAL TITLE & TARGET ROLE (CRITICAL):
+   - Accurately determine the candidate's real professional title (e.g. "Full Stack Developer", "Backend Engineer", "Data Scientist", "Azure Data Engineer", "Software Engineer", "DevOps Engineer").
    - If a title is explicitly in the header, use it.
    - If not in the header, inspect the most recent job title in their experience or primary technologies and set an accurate title. DO NOT default to a generic placeholder.
-4. EXPERIENCE & BULLETS:
+5. EXPERIENCE & BULLETS:
    - Extract EVERY position with exact company name, job title, start/end dates, location, and bullet point responsibilities.
-5. PROJECTS (CRITICAL FOR ACCURATE URL DECOUPLING):
+6. PROJECTS (CRITICAL):
    - Locate and extract all technical and personal projects.
+   - UNIVERSAL FALLBACK: If the resume does NOT have a separate "PROJECTS" section, extract the top 3-4 major engineering systems, platforms, or data architectures described in their work experience into "projects" so the projects list is never empty!
    - CRITICAL: DO NOT dump live demo URLs, GitHub links, or labels like "[Demo]", "[GitHub]", "Live: https://..." into the "description" text or "highlights" bullets!
    - Put live deployment URLs strictly in "liveUrl" (e.g. Render, Vercel, Netlify, AWS, custom domain).
    - Put repository URLs strictly in "githubUrl".
    - Keep "name" as the clean project title, and "description" as clean, professional narrative text describing the architecture, purpose, and impact.
    - Extract "technologies" as an array of individual technology strings.
-6. SKILLS:
+7. SKILLS:
    - If the resume explicitly organizes skills into named categories (e.g. "AI & Agents", "Data", "Languages", "ML / Frameworks", "Tools & Cloud", "Core CS"), PRESERVE those exact category names and items!
    - Otherwise, group skills into clean categories: "Programming Languages", "Frameworks & AI/ML", "Cloud & DevOps", "Databases & Tools", "Core Competencies".
-7. EDUCATION:
+8. EDUCATION:
    - Extract institution, full degree (including field of study, e.g. "BS in Data Science and Applications"), start/end dates, CGPA, and coursework in description.
-8. CERTIFICATIONS:
+   - If education is mentioned anywhere in the document, extract it.
+9. CERTIFICATIONS:
    - Extract EVERY certification. If multiple certifications are listed on the same bullet line separated by '|', split them into separate certification objects!
    - Extract name, issuer (organization/platform e.g. Anthropic, Learn Depth, Simplilearn, HackerRank), and issue date.
 

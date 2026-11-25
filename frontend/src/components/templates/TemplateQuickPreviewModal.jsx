@@ -42,7 +42,7 @@ export function TemplateQuickPreviewModal({ template, isOpen, onClose, onSelect 
           <div className="flex items-center gap-3 min-w-0">
             <div
               className="w-4 h-4 rounded-full shrink-0 border border-ink shadow-2xs"
-              style={{ backgroundColor: template.accentColor }}
+              style={{ backgroundColor: template.palette?.accent || template.palette?.primary || template.accentColor || '#0f172a' }}
             />
             <div className="min-w-0">
               <div className="flex items-center gap-2">

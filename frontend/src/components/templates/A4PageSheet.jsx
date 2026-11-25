@@ -19,7 +19,8 @@ export function A4PageSheet({
   isMultiPage = false,
   pageLayoutMode = 'auto',
   resumeData,
-  templateId
+  templateId,
+  designOverrides = {},
 }) {
   const containerRef = useRef(null);
   const contentRef = useRef(null);
@@ -28,6 +29,9 @@ export function A4PageSheet({
   const isOnePage = pageLayoutMode === '1_page';
   const effectiveTemplateId = templateId || resumeData?.templateId || pageData?.templateId || 'ats-01';
   const isFullBleed = isFullBleedTemplate(effectiveTemplateId);
+  const paperFormat = resumeData?.preferences?.paperFormat || 'a4';
+  const sheetWidth = paperFormat === 'letter' ? '215.9mm' : '210mm';
+  const sheetHeight = paperFormat === 'letter' ? '279.4mm' : '297mm';
 
   useLayoutEffect(() => {
     if (!isOnePage) {
@@ -113,8 +117,8 @@ export function A4PageSheet({
         isOnePage ? 'one-page-fit-active' : ''
       }`}
       style={{
-        width: '210mm',
-        height: '297mm', // Strict physical A4 page height
+        width: sheetWidth,
+        height: sheetHeight,
         padding: isFullBleed
           ? '0'
           : isOnePage
@@ -136,6 +140,9 @@ export function A4PageSheet({
           <ResumeTemplate
             templateId={effectiveTemplateId}
             resumeData={pageData}
+            designOverrides={designOverrides}
+            pageNumber={pageIdx + 1}
+            totalPages={pageCount}
           />
         </div>
       </div>
