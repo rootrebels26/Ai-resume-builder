@@ -661,9 +661,6 @@ export function Builder() {
   const handleDownloadPDF = async () => {
     if (!previewRef.current) return;
     setIsExporting(true);
-    const prevZoom = zoomScale;
-    setZoomScale(1);
-    await new Promise((r) => setTimeout(r, 100));
     try {
       const candidate = (resumeData.personalInfo?.fullName || 'Resume').replace(/\s+/g, '_');
       const role = (resumeData.personalInfo?.professionalTitle || 'CV').replace(/\s+/g, '_');
@@ -674,7 +671,6 @@ export function Builder() {
     } catch (e) {
       console.error('PDF export error:', e);
     } finally {
-      setZoomScale(prevZoom);
       setIsExporting(false);
     }
   };
@@ -2823,6 +2819,7 @@ export function Builder() {
                     pageLayoutMode={pageLayoutMode}
                     resumeData={resumeData}
                     templateId={resumeData.templateId || 'ats-01'}
+                    designOverrides={resumeData?.preferences || {}}
                   />
                 </React.Fragment>
               ))}

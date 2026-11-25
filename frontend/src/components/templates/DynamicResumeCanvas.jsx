@@ -49,6 +49,7 @@ export function DynamicResumeCanvas({
   designOverrides = {},
   pageNumber = 1,
   totalPages = 1,
+  isOnePage = false,
 }) {
   if (!resumeData) return null;
 
@@ -64,8 +65,9 @@ export function DynamicResumeCanvas({
   
   // Font scale (compact: 0.9, normal: 1, large: 1.1)
   const fontScale = designOverrides.fontScale || prefs.fontScale || 1;
-  const baseFontSize = (templateDef.typography?.baseSize || 13) * fontScale;
-  const lineHeight = designOverrides.lineHeight || prefs.lineHeight || templateDef.typography?.lineHeight || 1.45;
+  const baseFontSize = (templateDef.typography?.baseSize || 13) * fontScale * (isOnePage ? 0.95 : 1);
+  const defaultLineHeight = isOnePage ? 1.28 : (templateDef.typography?.lineHeight || 1.45);
+  const lineHeight = designOverrides.lineHeight || prefs.lineHeight || defaultLineHeight;
 
   // Colors
   const tplPalette = templateDef.palette || templateDef.defaultPalette || {};
@@ -135,7 +137,7 @@ export function DynamicResumeCanvas({
     }
 
     return (
-      <div className={`mt-3.5 first:mt-0 ${dividerClass}`} style={dividerInlineStyle}>
+      <div className={`${isOnePage ? 'mt-2' : 'mt-3.5'} first:mt-0 ${dividerClass}`} style={dividerInlineStyle}>
         <h2
           className="font-bold tracking-tight uppercase flex items-center gap-1.5"
           style={{
@@ -158,7 +160,7 @@ export function DynamicResumeCanvas({
 
     return (
       <header
-        className={`pb-3 mb-3 ${isHeaderCard ? 'p-5 rounded-lg mb-4' : 'border-b'}`}
+        className={`${isOnePage ? 'pb-2 mb-2' : 'pb-3 mb-3'} ${isHeaderCard ? 'p-4 rounded-lg mb-3' : 'border-b'}`}
         style={{
           borderColor: isHeaderCard ? 'transparent' : borderColor,
           backgroundColor: isHeaderCard ? `${primaryColor}10` : 'transparent',
@@ -166,7 +168,7 @@ export function DynamicResumeCanvas({
         }}
       >
         <div className="flex flex-col gap-1.5">
-          <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+          <div className="flex flex-row items-baseline justify-between gap-1">
             <h1
               className="font-extrabold tracking-tight"
               style={{
@@ -180,7 +182,7 @@ export function DynamicResumeCanvas({
             </h1>
             {personalInfo.professionalTitle && (
               <span
-                className="font-semibold text-sm sm:text-base tracking-wide uppercase"
+                className="font-semibold text-sm tracking-wide uppercase shrink-0"
                 style={{
                   color: accentColor,
                   fontFamily: headingFont,
@@ -263,7 +265,7 @@ export function DynamicResumeCanvas({
   const renderSummary = () => {
     if (!isVisible('summary') || !professionalSummary) return null;
     return (
-      <section className="mb-3">
+      <section className={isOnePage ? "mb-2" : "mb-3"}>
         <SectionHeading title="Professional Summary" icon={Briefcase} />
         <p
           className="leading-relaxed text-justify"
@@ -282,16 +284,16 @@ export function DynamicResumeCanvas({
     const isCategorized = skills.some(s => typeof s === 'object' && s.category);
 
     return (
-      <section className="mb-3">
+      <section className={isOnePage ? "mb-2" : "mb-3"}>
         <SectionHeading title="Technical & Core Skills" icon={Wrench} />
         {isCategorized ? (
-          <div className="space-y-1.5" style={{ fontSize: `${baseFontSize}px` }}>
+          <div className={isOnePage ? "space-y-1" : "space-y-1.5"} style={{ fontSize: `${baseFontSize}px` }}>
             {skills.map((catGroup, idx) => (
-              <div key={idx} className="flex flex-col sm:flex-row sm:items-baseline gap-1">
-                <span className="font-semibold shrink-0" style={{ color: primaryColor, minWidth: '140px' }}>
+              <div key={idx} className="flex flex-row items-baseline gap-1">
+                <span className="font-semibold shrink-0" style={{ color: primaryColor, minWidth: '135px' }}>
                   {catGroup.category || catGroup.name}:
                 </span>
-                <span className="leading-snug" style={{ color: textColor }}>
+                <span className="leading-snug flex-1" style={{ color: textColor }}>
                   {Array.isArray(catGroup.items)
                     ? catGroup.items.join(' • ')
                     : catGroup.items || catGroup.skills || ''}
@@ -327,18 +329,18 @@ export function DynamicResumeCanvas({
     if (!isVisible('experience') || !experience || experience.length === 0) return null;
 
     return (
-      <section className="mb-3">
+      <section className={isOnePage ? "mb-2" : "mb-3"}>
         <SectionHeading title="Professional Experience" icon={Briefcase} />
-        <div className="space-y-3">
+        <div className={isOnePage ? "space-y-1.5" : "space-y-2.5"}>
           {experience.map((job, idx) => {
             const responsibilities = Array.isArray(job.responsibilities)
               ? job.responsibilities
               : (job.description ? job.description.split('\n').filter(Boolean) : []);
 
             return (
-              <div key={idx} className="space-y-1">
-                <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-0.5">
-                  <div className="flex flex-wrap items-baseline gap-1.5">
+              <div key={idx} className="space-y-0.5">
+                <div className="flex flex-row items-baseline justify-between gap-1">
+                  <div className="flex flex-wrap items-baseline gap-1.5 min-w-0">
                     <span
                       className="font-bold tracking-tight"
                       style={{ fontSize: `${(baseFontSize * 1.05).toFixed(1)}px`, color: primaryColor }}
@@ -357,7 +359,7 @@ export function DynamicResumeCanvas({
                 </div>
 
                 {responsibilities.length > 0 && (
-                  <ul className="space-y-1 pl-3.5 mt-1" style={{ fontSize: `${baseFontSize}px`, color: textColor }}>
+                  <ul className="space-y-0.5 pl-3.5 mt-0.5" style={{ fontSize: `${baseFontSize}px`, color: textColor }}>
                     {responsibilities.map((bullet, bIdx) => (
                       <li key={bIdx} className="relative leading-relaxed pl-1.5">
                         <span className="absolute -left-3.5 top-0 font-bold opacity-75" style={{ color: accentColor }}>
@@ -380,9 +382,9 @@ export function DynamicResumeCanvas({
     if (!isVisible('projects') || !projects || projects.length === 0) return null;
 
     return (
-      <section className="mb-3">
+      <section className={isOnePage ? "mb-2" : "mb-3"}>
         <SectionHeading title="Key Projects & Systems" icon={FolderGit2} />
-        <div className="space-y-2.5">
+        <div className={isOnePage ? "space-y-1.5" : "space-y-2"}>
           {projects.map((proj, idx) => {
             const highlights = Array.isArray(proj.highlights)
               ? proj.highlights
@@ -390,8 +392,8 @@ export function DynamicResumeCanvas({
 
             return (
               <div key={idx} className="space-y-0.5">
-                <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-0.5">
-                  <div className="flex items-center gap-2">
+                <div className="flex flex-row items-baseline justify-between gap-1">
+                  <div className="flex items-center gap-2 min-w-0">
                     <span
                       className="font-bold tracking-tight"
                       style={{ fontSize: `${(baseFontSize * 1.02).toFixed(1)}px`, color: primaryColor }}
@@ -403,7 +405,7 @@ export function DynamicResumeCanvas({
                         href={normalizeUrl(proj.link)}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-0.5 text-xs hover:underline"
+                        className="inline-flex items-center gap-0.5 text-xs hover:underline shrink-0"
                         style={{ color: accentColor }}
                       >
                         <ExternalLink className="w-2.5 h-2.5" />
@@ -448,11 +450,11 @@ export function DynamicResumeCanvas({
     if (!isVisible('education') || !education || education.length === 0) return null;
 
     return (
-      <section className="mb-3">
+      <section className={isOnePage ? "mb-2" : "mb-3"}>
         <SectionHeading title="Education" icon={GraduationCap} />
-        <div className="space-y-2">
+        <div className={isOnePage ? "space-y-1" : "space-y-1.5"}>
           {education.map((edu, idx) => (
-            <div key={idx} className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-0.5">
+            <div key={idx} className="flex flex-row items-baseline justify-between gap-1">
               <div>
                 <div
                   className="font-bold"
@@ -481,9 +483,9 @@ export function DynamicResumeCanvas({
     if (!isVisible('certifications') || !certifications || certifications.length === 0) return null;
 
     return (
-      <section className="mb-3">
+      <section className={isOnePage ? "mb-2" : "mb-3"}>
         <SectionHeading title="Certifications & Credentials" icon={Award} />
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5" style={{ fontSize: `${baseFontSize}px` }}>
+        <div className="grid grid-cols-2 gap-1.5" style={{ fontSize: `${baseFontSize}px` }}>
           {certifications.map((cert, idx) => {
             const certName = typeof cert === 'string' ? cert : (cert.name || cert.title);
             const issuer = typeof cert === 'object' ? cert.issuer : null;
@@ -491,7 +493,7 @@ export function DynamicResumeCanvas({
 
             return (
               <div key={idx} className="flex items-baseline justify-between gap-1">
-                <div>
+                <div className="truncate">
                   <span className="font-semibold" style={{ color: primaryColor }}>• {certName}</span>
                   {issuer && <span className="text-xs opacity-75 ml-1">({issuer})</span>}
                 </div>
@@ -646,7 +648,7 @@ export function DynamicResumeCanvas({
 
     const sideContent = (
       <div
-        className="w-full sm:w-[35%] shrink-0 space-y-1"
+        className="w-[35%] shrink-0 space-y-1"
         style={{
           borderLeft: isSidebarLeft ? 'none' : `1px solid ${borderColor}`,
           borderRight: isSidebarLeft ? `1px solid ${borderColor}` : 'none',
@@ -662,7 +664,7 @@ export function DynamicResumeCanvas({
     );
 
     return (
-      <div className="flex flex-col sm:flex-row gap-4 items-start">
+      <div className="flex flex-row gap-4 items-start w-full">
         {isSidebarLeft ? (
           <>
             {sideContent}
@@ -680,13 +682,13 @@ export function DynamicResumeCanvas({
 
   return (
     <div
-      className="resume-dynamic-canvas font-normal"
+      className="resume-dynamic-canvas font-normal w-full"
       style={{
         fontFamily,
         lineHeight,
         color: textColor,
         backgroundColor: bgColor,
-        padding: pagePadding,
+        padding: 0,
         boxSizing: 'border-box',
         minHeight: '100%',
       }}

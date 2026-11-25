@@ -68,18 +68,16 @@ export function LiveResumeCanvas({ className = "" }) {
   const handleDownloadPDF = async () => {
     if (!canvasPrintRef.current) return;
     setIsExporting(true);
-    const prevZoom = zoomScale;
-    setZoomScale(1);
-    await new Promise((r) => setTimeout(r, 100));
     try {
       const name = resumeData?.personalInfo?.fullName || 'Resume';
       const role = selectedJob?.role || 'Professional';
       const filename = `${name.replace(/\s+/g, '_')}_${role.replace(/\s+/g, '_')}.pdf`;
-      await pdfService.exportToPDF(canvasPrintRef.current, filename);
+      await pdfService.exportToPDF(canvasPrintRef.current, filename, {
+        format: resumeData?.preferences?.paperFormat || 'a4'
+      });
     } catch (e) {
       console.error('PDF Export error:', e);
     } finally {
-      setZoomScale(prevZoom);
       setIsExporting(false);
     }
   };
@@ -275,6 +273,7 @@ export function LiveResumeCanvas({ className = "" }) {
                   pageLayoutMode={pageLayoutMode}
                   resumeData={resumeData}
                   templateId={selectedTemplateId || resumeData?.templateId || 'ats-01'}
+                  designOverrides={resumeData?.preferences || {}}
                 />
               </React.Fragment>
             ))}

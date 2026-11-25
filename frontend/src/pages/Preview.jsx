@@ -13,7 +13,9 @@ export function Preview() {
   const handleDownloadPDF = async () => {
     if (printRef.current) {
       const filename = `${(resumeData.personalInfo.fullName || 'Resume').replace(/\s+/g, '_')}.pdf`;
-      await pdfService.exportToPDF(printRef.current, filename);
+      await pdfService.exportToPDF(printRef.current, filename, {
+        format: resumeData?.preferences?.paperFormat || 'a4'
+      });
     }
   };
 

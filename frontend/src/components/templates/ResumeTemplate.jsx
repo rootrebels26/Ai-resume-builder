@@ -25,7 +25,8 @@ export function ResumeTemplate({
   resumeData: rawResumeData,
   designOverrides = {},
   pageNumber = 1,
-  totalPages = 1
+  totalPages = 1,
+  isOnePage = false
 }) {
   if (!rawResumeData) return null;
   const resumeData = sanitizeResumeData(rawResumeData);
@@ -40,6 +41,7 @@ export function ResumeTemplate({
         designOverrides={designOverrides}
         pageNumber={pageNumber}
         totalPages={totalPages}
+        isOnePage={isOnePage}
       />
     );
   }

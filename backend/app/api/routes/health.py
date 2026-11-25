@@ -1,11 +1,21 @@
 import time
+from datetime import datetime, timezone
+from typing import Dict, Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Response
 from app.core.config import settings
 
 router = APIRouter()
 
 _STARTED_AT = time.time()
+
+# In-memory cache for timestamp route
+_TIMESTAMP_CACHE: Dict[str, Any] = {
+    "iso": None,
+    "unix": None,
+    "cached_at": 0.0
+}
+TIMESTAMP_CACHE_TTL_SECONDS = 10.0
 
 
 def _ai_configured() -> bool:
@@ -51,5 +61,43 @@ async def readiness():
         "success": True,
         "data": {"status": "ready", "checks": checks},
         "message": None,
+        "error": None
+    }
+
+
+@router.get("/timestamp")
+async def get_current_timestamp(response: Response):
+    """
+    Returns current UTC timestamp with 10-second server-side caching 
+    and standard HTTP Cache-Control headers.
+    """
+    now = time.time()
+    cache_age = now - _TIMESTAMP_CACHE["cached_at"]
+
+    if _TIMESTAMP_CACHE["iso"] is None or cache_age >= TIMESTAMP_CACHE_TTL_SECONDS:
+        now_dt = datetime.now(timezone.utc)
+        _TIMESTAMP_CACHE["iso"] = now_dt.isoformat()
+        _TIMESTAMP_CACHE["unix"] = now_dt.timestamp()
+        _TIMESTAMP_CACHE["cached_at"] = now
+        is_cache_hit = False
+        remaining_ttl = int(TIMESTAMP_CACHE_TTL_SECONDS)
+    else:
+        is_cache_hit = True
+        remaining_ttl = max(0, int(TIMESTAMP_CACHE_TTL_SECONDS - cache_age))
+
+    # Add standard HTTP cache headers
+    response.headers["Cache-Control"] = f"public, max-age={remaining_ttl}"
+    response.headers["X-Cache"] = "HIT" if is_cache_hit else "MISS"
+
+    return {
+        "success": True,
+        "data": {
+            "timestamp": _TIMESTAMP_CACHE["iso"],
+            "unix_timestamp": _TIMESTAMP_CACHE["unix"],
+            "cached": is_cache_hit,
+            "cache_ttl_seconds": TIMESTAMP_CACHE_TTL_SECONDS,
+            "remaining_ttl_seconds": remaining_ttl
+        },
+        "message": "Timestamp retrieved successfully.",
         "error": None
     }
