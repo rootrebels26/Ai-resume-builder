@@ -47,5 +47,26 @@ export const resumeService = {
   // Health check
   async checkHealth() {
     return await apiClient.get('/health');
+  },
+
+  // Smart Condense to 1 Page or 2 Pages
+  async smartCondense(resumeData, targetPages = 1) {
+    try {
+      const res = await apiClient.post('/resume/smart-condense', {
+        resume_data: resumeData,
+        target_pages: targetPages
+      });
+      if (res.success && res.data) {
+        return res;
+      }
+    } catch (e) {
+      console.warn('Backend smart condense failed, using local smart condenser:', e);
+    }
+    const { smartCondenseResume } = await import('../utils/smartCondenser');
+    return {
+      success: true,
+      data: smartCondenseResume(resumeData, targetPages),
+      message: `Resume intelligently condensed for ${targetPages} page(s).`
+    };
   }
 };

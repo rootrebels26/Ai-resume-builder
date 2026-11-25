@@ -156,6 +156,30 @@ export function DynamicResumeCanvas({
 
   // 1. Candidate Header Component (Zero Photo)
   const HeaderComponent = () => {
+    // On continuation pages (Page 2+), render a compact header so maximum space is dedicated to experience & projects
+    if (pageNumber > 1) {
+      return (
+        <header
+          className="pb-1.5 mb-2 flex flex-row items-baseline justify-between border-b"
+          style={{ borderColor: `${primaryColor}20` }}
+        >
+          <div className="flex items-baseline gap-2">
+            <span className="font-extrabold text-sm tracking-tight" style={{ color: primaryColor, fontFamily: headingFont }}>
+              {personalInfo.fullName || 'Candidate'}
+            </span>
+            {personalInfo.professionalTitle && (
+              <span className="text-xs font-semibold opacity-75" style={{ color: accentColor }}>
+                • {personalInfo.professionalTitle}
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] font-mono font-medium opacity-60">
+            Page {pageNumber} of {totalPages}
+          </span>
+        </header>
+      );
+    }
+
     const isHeaderCard = activeLayout === 'header-card';
 
     return (
@@ -635,6 +659,30 @@ export function DynamicResumeCanvas({
     const isSidebarLeft = activeLayout === 'sidebar-left';
     const mainSections = ['summary', 'experience', 'projects'];
     const sideSections = ['skills', 'education', 'certifications', 'publications', 'awards', 'languages'];
+
+    // Check if there is actual content in the sidebar for this page
+    const hasSideItems = sideSections.some(secKey => {
+      if (secKey === 'skills') return skills && skills.length > 0 && isVisible('skills');
+      if (secKey === 'education') return education && education.length > 0 && isVisible('education');
+      if (secKey === 'certifications') return certifications && certifications.length > 0 && isVisible('certifications');
+      if (secKey === 'publications') return publications && publications.length > 0 && isVisible('publications');
+      if (secKey === 'awards') return awards && awards.length > 0 && isVisible('awards');
+      if (secKey === 'languages') return languages && languages.length > 0 && isVisible('languages');
+      return false;
+    });
+
+    if (!hasSideItems) {
+      // If no sidebar items exist on this page, let main content occupy the full width seamlessly!
+      return (
+        <div className="w-full space-y-1">
+          {sectionOrder.map(secKey => {
+            const renderer = sectionMap[secKey];
+            return renderer ? <React.Fragment key={secKey}>{renderer()}</React.Fragment> : null;
+          })}
+          {renderCustomSections()}
+        </div>
+      );
+    }
 
     const mainContent = (
       <div className="flex-1 space-y-1 min-w-0">

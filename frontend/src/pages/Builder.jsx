@@ -89,12 +89,44 @@ export function Builder() {
   const tabsRef = useRef(null);
 
   const [pageLayoutMode, setPageLayoutMode] = useState('auto'); // 'auto' | '1_page' | '2_pages'
+  const [isSmartCondensing, setIsSmartCondensing] = useState(false);
+  const [condenseNotice, setCondenseNotice] = useState(null);
+  const [undoSnapshot, setUndoSnapshot] = useState(null);
+
+  const handleSmartCondense = async (targetPages) => {
+    setIsSmartCondensing(true);
+    setCondenseNotice(null);
+    try {
+      // Save snapshot for 1-click Undo
+      setUndoSnapshot(JSON.parse(JSON.stringify(resumeData)));
+      const res = await resumeService.smartCondense(resumeData, targetPages);
+      if (res.success && res.data) {
+        setResumeData(res.data);
+        setPageLayoutMode(targetPages === 1 ? '1_page' : '2_pages');
+        setCondenseNotice(`✨ Resume smartly calibrated to ${targetPages} Page${targetPages > 1 ? 's' : ''} with zero lost details! No cut text.`);
+        setTimeout(() => setCondenseNotice(null), 8000);
+      }
+    } catch (err) {
+      console.error('Smart condense failed:', err);
+    } finally {
+      setIsSmartCondensing(false);
+    }
+  };
+
+  const handleUndoCondense = () => {
+    if (undoSnapshot) {
+      setResumeData(undoSnapshot);
+      setUndoSnapshot(null);
+      setCondenseNotice(null);
+    }
+  };
 
   const paginationOptions = useMemo(() => ({
     forceTwoPages: pageLayoutMode === '2_pages',
     forceSinglePage: pageLayoutMode === '1_page',
-    templateId: resumeData.templateId || 'ats-01'
-  }), [pageLayoutMode, resumeData.templateId]);
+    templateId: resumeData.templateId || 'ats-01',
+    layout: resumeData.preferences?.layout || 'single-column'
+  }), [pageLayoutMode, resumeData.templateId, resumeData.preferences?.layout]);
 
   const { pages, pageCount, isMultiPage } = useResumePagination(resumeData, paginationOptions);
 
@@ -2724,8 +2756,32 @@ export function Builder() {
                 )}
               </div>
 
-              {/* Layout Mode Control: 1 Page Fit & + Add 1 More Page */}
-              <div className="flex items-center gap-1.5">
+              {/* Layout Mode Control: AI Pro Condenser, 1 Page Fit & + Add 1 More Page */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                {/* AI 1-Page Smart Condense Button */}
+                <button
+                  type="button"
+                  disabled={isSmartCondensing}
+                  onClick={() => handleSmartCondense(1)}
+                  title="AI Smart-Condense: Calibrates STAR bullets to fit cleanly into 1 page with ZERO lost details"
+                  className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-purple-400 bg-purple-50 hover:bg-purple-100 text-purple-900 text-[11px] font-bold font-mono transition cursor-pointer shadow-brutal-sm disabled:opacity-50"
+                >
+                  <Sparkles className="w-3 h-3 text-purple-600" />
+                  <span>{isSmartCondensing ? 'Condensing...' : '✨ AI 1-Page Pro'}</span>
+                </button>
+
+                {/* AI 2-Pages Smart Condense Button */}
+                <button
+                  type="button"
+                  disabled={isSmartCondensing}
+                  onClick={() => handleSmartCondense(2)}
+                  title="AI Smart-Condense: Balances sections across 2 pages with NO cut text"
+                  className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-blue-400 bg-blue-50 hover:bg-blue-100 text-blue-900 text-[11px] font-bold font-mono transition cursor-pointer shadow-brutal-sm disabled:opacity-50"
+                >
+                  <Sparkles className="w-3 h-3 text-blue-600" />
+                  <span>✨ AI 2-Pages Pro</span>
+                </button>
+
                 {/* 1 Page Fit button - Always visible and toggleable */}
                 <button
                   type="button"
@@ -2775,6 +2831,25 @@ export function Builder() {
                 </button>
               </div>
             </div>
+
+            {/* AI Optimization Notice Banner with 1-Click Undo */}
+            {condenseNotice && (
+              <div className="w-full bg-emerald-50 border border-emerald-300 px-4 py-2 text-xs font-semibold text-emerald-950 flex items-center justify-between rounded-lg shadow-brutal-xs animate-fadeIn">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>{condenseNotice}</span>
+                </div>
+                {undoSnapshot && (
+                  <button
+                    type="button"
+                    onClick={handleUndoCondense}
+                    className="font-bold underline text-emerald-800 hover:text-emerald-950 cursor-pointer ml-3 text-xs"
+                  >
+                    Undo Changes
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Genuine A4 Document Paper Sheet Container */}
