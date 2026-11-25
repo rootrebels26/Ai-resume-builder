@@ -190,79 +190,57 @@ export function Templates() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0B0F19] text-slate-100 flex flex-col">
-      {/* Top Navigation Bar */}
-      <nav className="border-b border-slate-800 bg-[#0B0F19]/90 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-8 py-3.5 flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <Link to="/" className="flex items-center gap-2 text-white font-extrabold text-base tracking-tight hover:opacity-90">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-violet-500/30">
-              <Sparkles className="w-4 h-4 text-white" />
-            </div>
-            <span>ResumeStudio</span>
-          </Link>
-
-          <div className="hidden md:flex items-center gap-1 text-xs font-semibold text-slate-400">
-            <Link to="/templates" className="px-3 py-1.5 rounded-lg text-white bg-slate-800/80">
-              Templates
-            </Link>
-            <Link to="/dashboard" className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-slate-800/40 transition">
-              My Resumes
-            </Link>
-            <Link to="/builder" className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-slate-800/40 transition flex items-center gap-1.5">
-              <Wand2 className="w-3.5 h-3.5 text-violet-400" />
-              <span>AI Optimization</span>
-            </Link>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setShowRecommender(!showRecommender)}
-            className="px-3 py-1.5 text-xs font-bold rounded-xl bg-violet-600 hover:bg-violet-500 text-white transition flex items-center gap-1.5 shadow-md shadow-violet-600/20"
-          >
-            <Compass className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Role Matcher</span>
-          </button>
-          <Link
-            to="/builder"
-            className="px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 transition"
-          >
-            Open Builder
-          </Link>
-        </div>
-      </nav>
-
+    <div className="min-h-screen bg-canvas text-ink flex flex-col">
       <main className="flex-1 max-w-[1500px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Gallery Introduction */}
-        <div className="text-center max-w-3xl mx-auto space-y-3 pt-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-950/60 border border-violet-700/50 text-[11px] font-mono text-violet-300">
-            <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
-            <span>CANVA-INSPIRED TEMPLATE ENGINE • EXACTLY {TOTAL_TEMPLATES_COUNT} TEMPLATES</span>
+        <div className="text-center max-w-3xl mx-auto space-y-3 pt-2">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#cfff58] text-[#171713] border border-black shadow-[2px_2px_0_#171713] text-xs font-mono font-bold">
+            <span className="size-2 rounded-full bg-green-600 animate-pulse" />
+            <span>100 INDUSTRY-CERTIFIED ATS TEMPLATES</span>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
-            Find the Perfect Resume Template
+          <h1 className="text-3xl sm:text-5xl font-black text-ink tracking-tight font-display">
+            Find Your Resume Template
           </h1>
-          <p className="text-sm sm:text-base text-slate-400 leading-relaxed max-w-2xl mx-auto">
-            Choose a professionally designed resume template based on your career, experience, and target job. Engineered for 100% ATS readability and Canva-style visual polish.
+          <p className="text-sm sm:text-base text-ink-muted leading-relaxed max-w-2xl mx-auto font-sans">
+            Choose from 100 professionally designed, ATS-optimized resume templates. Tailored for software engineering, data science, leadership, finance, and creative fields.
           </p>
+
+          <div className="pt-1 flex items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => setShowRecommender(!showRecommender)}
+              className="px-4 py-2 text-xs font-bold rounded-xl bg-[#5e48d7] hover:bg-[#4d3ab8] text-white transition flex items-center gap-2 border border-black shadow-[2px_2px_0_#171713] cursor-pointer"
+            >
+              <Compass className="w-3.5 h-3.5" />
+              <span>{showRecommender ? 'Hide Role Matcher' : 'Find Best Template for My Role'}</span>
+            </button>
+            <Link
+              to="/builder"
+              className="px-4 py-2 text-xs font-bold rounded-xl bg-white hover:bg-black/5 text-ink transition flex items-center gap-1.5 border border-black shadow-[2px_2px_0_#171713]"
+            >
+              <Wand2 className="w-3.5 h-3.5 text-[#5e48d7]" />
+              <span>Open Builder</span>
+            </Link>
+          </div>
         </div>
 
         {/* Role-Wise Template Recommendation Engine Drawer */}
         {showRecommender && (
-          <div className="p-6 bg-slate-900 border border-violet-500/40 rounded-3xl shadow-2xl space-y-5 animate-in fade-in duration-200">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div className="p-6 bg-white border-[1.5px] border-ink rounded-3xl shadow-brutal-sm space-y-5 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between border-b border-ink/10 pb-3">
               <div className="flex items-center gap-2.5">
-                <Compass className="w-5 h-5 text-violet-400" />
+                <div className="w-8 h-8 rounded-xl bg-[#5e48d7]/10 border border-[#5e48d7]/30 flex items-center justify-center text-[#5e48d7]">
+                  <Compass className="w-4 h-4" />
+                </div>
                 <div>
-                  <h3 className="font-bold text-base text-white">Role-Wise Template Recommendation Engine</h3>
-                  <p className="text-xs text-slate-400">Answer 3 questions to get instant curated template recommendations</p>
+                  <h3 className="font-bold text-base text-ink">Role-Wise Template Recommendation Engine</h3>
+                  <p className="text-xs text-ink-muted">Answer 3 questions to get instant curated template recommendations</p>
                 </div>
               </div>
               <button
                 onClick={() => setShowRecommender(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+                className="p-1.5 rounded-lg text-ink-muted hover:text-ink hover:bg-black/5 transition cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -270,7 +248,7 @@ export function Templates() {
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                <label className="block text-xs font-bold text-ink mb-1.5">
                   Target Job Role
                 </label>
                 <input
@@ -278,18 +256,18 @@ export function Templates() {
                   value={recommenderRole}
                   onChange={(e) => setRecommenderRole(e.target.value)}
                   placeholder="e.g. Data Scientist, Azure Architect, Full Stack SWE..."
-                  className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-violet-500"
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-canvas-light border-[1.5px] border-ink text-ink placeholder-ink-muted/60 focus:outline-none focus:border-[#5e48d7] shadow-brutal-xs"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                <label className="block text-xs font-bold text-ink mb-1.5">
                   Experience Level
                 </label>
                 <select
                   value={recommenderLevel}
                   onChange={(e) => setRecommenderLevel(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-950 border border-slate-700 text-white focus:outline-none focus:border-violet-500"
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-canvas-light border-[1.5px] border-ink text-ink focus:outline-none focus:border-[#5e48d7] shadow-brutal-xs font-medium"
                 >
                   <option value="student">Student / Campus</option>
                   <option value="fresher">Fresher / Graduate</option>
@@ -301,13 +279,13 @@ export function Templates() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                <label className="block text-xs font-bold text-ink mb-1.5">
                   Profile Photo Preference
                 </label>
                 <select
                   value={recommenderPhotoPref}
                   onChange={(e) => setRecommenderPhotoPref(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-950 border border-slate-700 text-white focus:outline-none focus:border-violet-500"
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-canvas-light border-[1.5px] border-ink text-ink focus:outline-none focus:border-[#5e48d7] shadow-brutal-xs font-medium"
                 >
                   <option value="any">Any Template Style</option>
                   <option value="no_photo">No Photo (100% Traditional ATS)</option>
@@ -316,14 +294,14 @@ export function Templates() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-2">
-              <span className="text-xs text-slate-400">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2">
+              <span className="text-xs text-ink-muted">
                 Matches role titles against all 100 specialized template definitions
               </span>
               <button
                 type="button"
                 onClick={handleRunRecommendation}
-                className="px-5 py-2 text-xs font-bold rounded-xl bg-violet-600 hover:bg-violet-500 text-white transition flex items-center gap-2 shadow-lg shadow-violet-600/25"
+                className="px-5 py-2 text-xs font-bold rounded-xl bg-[#5e48d7] hover:bg-[#4d3ab8] text-white transition flex items-center gap-2 border border-black shadow-[2px_2px_0_#171713] cursor-pointer"
               >
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Find Recommended Templates</span>
@@ -332,14 +310,14 @@ export function Templates() {
 
             {/* Recommendation Results */}
             {recommendationResult && (
-              <div className="pt-4 border-t border-slate-800 space-y-3">
+              <div className="pt-4 border-t border-ink/10 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-violet-300 uppercase tracking-wider">
+                  <span className="text-xs font-bold text-[#5e48d7] uppercase tracking-wider">
                     Top Recommended Matches for "{recommenderRole}":
                   </span>
                   <button
                     onClick={() => setRecommendationResult(null)}
-                    className="text-xs text-slate-400 hover:text-white"
+                    className="text-xs text-ink-muted hover:text-ink underline cursor-pointer"
                   >
                     Clear Results
                   </button>
@@ -349,16 +327,16 @@ export function Templates() {
                     <div
                       key={tpl.id}
                       onClick={() => handleSelectTemplate(tpl)}
-                      className="p-3 bg-slate-950 rounded-xl border border-slate-800 hover:border-violet-500 cursor-pointer transition text-left group"
+                      className="p-3 bg-white rounded-xl border-[1.5px] border-ink hover:border-[#5e48d7] cursor-pointer transition text-left group shadow-brutal-xs hover:shadow-brutal hover:-translate-y-0.5"
                     >
-                      <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1">
+                      <div className="flex items-center justify-between text-[10px] text-ink-muted mb-1">
                         <span className="truncate">{tpl.category}</span>
-                        <span className="text-emerald-400 font-mono font-bold">ATS {tpl.atsScore || 98}%</span>
+                        <span className="text-emerald-700 font-mono font-bold">ATS {tpl.atsScore || 98}%</span>
                       </div>
-                      <h4 className="text-xs font-bold text-white group-hover:text-violet-400 truncate">
+                      <h4 className="text-xs font-bold text-ink group-hover:text-[#5e48d7] truncate">
                         {tpl.name}
                       </h4>
-                      <p className="text-[10px] text-slate-500 mt-1 truncate">
+                      <p className="text-[10px] text-ink-muted mt-1 truncate">
                         {tpl.layout}
                       </p>
                     </div>
@@ -375,18 +353,18 @@ export function Templates() {
           <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
             {/* Search Input */}
             <div className="relative flex-1 max-w-xl">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search 100 templates by title, role (e.g. Data Scientist, SWE, Director)..."
-                className="w-full pl-10 pr-9 py-2.5 text-xs rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition"
+                className="w-full pl-10 pr-9 py-2.5 text-xs rounded-xl bg-white border-[1.5px] border-ink text-ink placeholder-ink-muted/60 focus:outline-none focus:ring-2 focus:ring-[#5e48d7]/20 shadow-brutal-xs transition font-medium"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink cursor-pointer"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -399,7 +377,7 @@ export function Templates() {
               <select
                 value={selectedPhotoPolicy}
                 onChange={(e) => setSelectedPhotoPolicy(e.target.value)}
-                className="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 focus:outline-none focus:border-violet-500"
+                className="px-3 py-2 rounded-xl bg-white border-[1.5px] border-ink text-ink focus:outline-none font-semibold shadow-brutal-xs"
               >
                 <option value="all">All Photo Styles</option>
                 <option value="no_photo">No Photo (ATS Safe)</option>
@@ -411,7 +389,7 @@ export function Templates() {
               <select
                 value={selectedExperience}
                 onChange={(e) => setSelectedExperience(e.target.value)}
-                className="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 focus:outline-none focus:border-violet-500"
+                className="px-3 py-2 rounded-xl bg-white border-[1.5px] border-ink text-ink focus:outline-none font-semibold shadow-brutal-xs"
               >
                 <option value="all">All Experience Levels</option>
                 <option value="student">Student / Campus</option>
@@ -426,7 +404,7 @@ export function Templates() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 focus:outline-none focus:border-violet-500"
+                className="px-3 py-2 rounded-xl bg-white border-[1.5px] border-ink text-ink focus:outline-none font-semibold shadow-brutal-xs"
               >
                 <option value="popular">Recommended</option>
                 <option value="ats">Highest ATS Score</option>
@@ -437,13 +415,13 @@ export function Templates() {
               <button
                 type="button"
                 onClick={() => setOnlyAtsFriendly(!onlyAtsFriendly)}
-                className={`px-3 py-2 rounded-xl border transition flex items-center gap-1.5 font-semibold ${
+                className={`px-3 py-2 rounded-xl border-[1.5px] transition flex items-center gap-1.5 font-bold cursor-pointer ${
                   onlyAtsFriendly
-                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
-                    : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
+                    ? 'bg-[#cfff58] text-[#171713] border-black shadow-[2px_2px_0_#171713]'
+                    : 'bg-white text-ink border-ink/40 hover:border-ink shadow-brutal-xs'
                 }`}
               >
-                <ShieldCheck className="w-3.5 h-3.5" />
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
                 <span>ATS 98%+</span>
               </button>
 
@@ -451,13 +429,13 @@ export function Templates() {
               <button
                 type="button"
                 onClick={() => setOnlyFavorites(!onlyFavorites)}
-                className={`px-3 py-2 rounded-xl border transition flex items-center gap-1.5 font-semibold ${
+                className={`px-3 py-2 rounded-xl border-[1.5px] transition flex items-center gap-1.5 font-bold cursor-pointer ${
                   onlyFavorites
-                    ? 'bg-rose-500/20 text-rose-400 border-rose-500/40'
-                    : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
+                    ? 'bg-rose-100 text-rose-800 border-rose-500 shadow-brutal-xs'
+                    : 'bg-white text-ink border-ink/40 hover:border-ink shadow-brutal-xs'
                 }`}
               >
-                <Heart className={`w-3.5 h-3.5 ${onlyFavorites ? 'fill-rose-400' : ''}`} />
+                <Heart className={`w-3.5 h-3.5 ${onlyFavorites ? 'fill-rose-500 text-rose-500' : 'text-ink-muted'}`} />
                 <span>Favorites ({favorites.length})</span>
               </button>
             </div>
@@ -471,15 +449,15 @@ export function Templates() {
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition border shrink-0 ${
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition border-[1.5px] shrink-0 cursor-pointer ${
                     isActive
-                      ? 'bg-violet-600 text-white border-violet-500 shadow-md shadow-violet-600/30'
-                      : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:text-white hover:bg-slate-800'
+                      ? 'bg-[#171713] text-white border-black shadow-[2px_2px_0_rgba(0,0,0,0.25)]'
+                      : 'bg-white text-ink border-ink/30 hover:border-ink hover:bg-canvas-light shadow-brutal-xs'
                   }`}
                 >
                   <span>{cat.name}</span>
-                  <span className={`ml-1.5 text-[10px] font-mono px-1.5 py-0.2 rounded-md ${
-                    isActive ? 'bg-violet-700 text-white' : 'bg-slate-800 text-slate-400'
+                  <span className={`ml-1.5 text-[10px] font-mono px-1.5 py-0.5 rounded-md ${
+                    isActive ? 'bg-[#5e48d7] text-white' : 'bg-black/5 text-ink-muted'
                   }`}>
                     {cat.count}
                   </span>
@@ -490,9 +468,9 @@ export function Templates() {
         </div>
 
         {/* Gallery Results Count */}
-        <div className="flex items-center justify-between text-xs text-slate-400 px-1">
+        <div className="flex items-center justify-between text-xs text-ink-muted px-1">
           <span>
-            Showing <strong className="text-white">{filteredTemplates.length}</strong> of {TOTAL_TEMPLATES_COUNT} templates
+            Showing <strong className="text-ink font-bold">{filteredTemplates.length}</strong> of {TOTAL_TEMPLATES_COUNT} templates
           </span>
           {(selectedCategory !== 'all' || searchQuery || selectedPhotoPolicy !== 'all' || onlyAtsFriendly || onlyFavorites) && (
             <button
@@ -504,7 +482,7 @@ export function Templates() {
                 setOnlyAtsFriendly(false);
                 setOnlyFavorites(false);
               }}
-              className="text-violet-400 hover:underline"
+              className="text-[#5e48d7] font-semibold hover:underline cursor-pointer"
             >
               Reset all filters
             </button>
@@ -516,18 +494,18 @@ export function Templates() {
           {/* CARD 1: Create Blank Resume */}
           <div
             onClick={handleCreateBlankResume}
-            className="group rounded-2xl border-2 border-dashed border-slate-700 hover:border-violet-500 bg-slate-900/50 hover:bg-slate-900 p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 min-h-[460px] shadow-lg hover:shadow-2xl hover:-translate-y-1"
+            className="group rounded-2xl border-2 border-dashed border-ink/30 hover:border-ink bg-white hover:bg-canvas-light/60 p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 min-h-[460px] shadow-brutal-xs hover:shadow-brutal hover:-translate-y-0.5"
           >
-            <div className="w-16 h-16 rounded-full bg-violet-600/15 border border-violet-500/30 flex items-center justify-center text-violet-400 mb-4 group-hover:scale-110 group-hover:bg-violet-600 group-hover:text-white transition-all">
+            <div className="w-16 h-16 rounded-2xl bg-[#cfff58] border border-black flex items-center justify-center text-ink mb-4 shadow-[2px_2px_0_#171713] group-hover:scale-105 transition-all">
               <Plus className="w-8 h-8" />
             </div>
-            <h3 className="font-extrabold text-base text-white group-hover:text-violet-400 transition">
+            <h3 className="font-extrabold text-base text-ink group-hover:text-[#5e48d7] transition">
               Create a Blank Resume
             </h3>
-            <p className="text-xs text-slate-400 mt-2 max-w-[220px] leading-relaxed">
-              Start with a clean slate instead of a predefined template and design your own layout from scratch.
+            <p className="text-xs text-ink-muted mt-2 max-w-[220px] leading-relaxed">
+              Start with a clean slate instead of a predefined template and customize your own layout from scratch.
             </p>
-            <div className="mt-6 px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 group-hover:bg-violet-600 text-slate-300 group-hover:text-white border border-slate-700 group-hover:border-violet-500 transition">
+            <div className="mt-6 px-4 py-2 rounded-xl text-xs font-bold bg-[#171713] text-white border border-black shadow-[2px_2px_0_rgba(0,0,0,0.2)] group-hover:bg-[#5e48d7] transition">
               Start Blank Resume
             </div>
           </div>
@@ -547,10 +525,10 @@ export function Templates() {
         </div>
 
         {filteredTemplates.length === 0 && (
-          <div className="p-12 text-center bg-slate-900 rounded-3xl border border-slate-800 space-y-3">
-            <Info className="w-8 h-8 text-slate-500 mx-auto" />
-            <h3 className="font-bold text-base text-white">No templates matched your filters</h3>
-            <p className="text-xs text-slate-400">
+          <div className="p-12 text-center bg-white rounded-3xl border-[1.5px] border-ink shadow-brutal-sm space-y-3">
+            <Info className="w-8 h-8 text-ink-muted mx-auto" />
+            <h3 className="font-bold text-base text-ink">No templates matched your filters</h3>
+            <p className="text-xs text-ink-muted">
               Try adjusting your search query, photo style, or selected category.
             </p>
             <button
@@ -560,7 +538,7 @@ export function Templates() {
                 setSelectedPhotoPolicy('all');
                 setOnlyAtsFriendly(false);
               }}
-              className="px-4 py-2 text-xs font-bold rounded-xl bg-violet-600 text-white hover:bg-violet-500 transition"
+              className="px-4 py-2 text-xs font-bold rounded-xl bg-[#5e48d7] text-white hover:bg-[#4d3ab8] border border-black shadow-[2px_2px_0_#171713] transition cursor-pointer"
             >
               Show All 100 Templates
             </button>
