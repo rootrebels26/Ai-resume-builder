@@ -771,15 +771,16 @@ export function Builder() {
           {/* STAGE 1: EDITING ALL DETAILS (Vertical Rail + Form)      */}
           {/* ======================================================== */}
           {editorPhase === 'edit' && (
-            <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
-              <SectionSidebar
-                tabs={tabs}
-                activeTab={activeTab}
-                onSelectTab={setActiveTab}
-              />
+            <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+              <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
+                <SectionSidebar
+                  tabs={tabs}
+                  activeTab={activeTab}
+                  onSelectTab={setActiveTab}
+                />
 
-              {/* Tab Content Form Container */}
-              <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-5 space-y-6 min-h-0">
+                {/* Tab Content Form Container */}
+                <div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-4 sm:p-5 space-y-6 min-h-0">
             {/* 1. PERSONAL INFORMATION */}
             {activeTab === 'personal' && (
               <div className="space-y-4">
@@ -1769,21 +1770,22 @@ export function Builder() {
                 </div>
               </div>
             )}
-          </div>
+              </div>
+              </div>
 
               {/* Bottom Complete & Proceed to AI Optimizer Sticky Card */}
-              <div className="p-4 bg-canvas border-t border-ink/15 space-y-2 shrink-0">
-                <div className="flex items-center justify-between text-xs text-ink-muted">
-                  <span>Done filling user details?</span>
-                  <span className="font-bold text-ink font-mono">Stage 1 of 3</span>
+              <div className="p-3.5 bg-canvas border-t border-ink/15 flex items-center justify-between gap-3 shrink-0">
+                <div className="text-[11px] text-ink-muted leading-tight">
+                  <div className="font-bold text-ink">Stage 1 of 3</div>
+                  <div>Ready to tailor with AI?</div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setEditorPhase('optimize')}
-                  className="btn-volt w-full py-2.5 px-4 text-xs font-extrabold shadow-brutal flex items-center justify-center gap-2 cursor-pointer"
+                  className="btn-volt py-2 px-4 text-xs font-extrabold shadow-[2px_2px_0_#171713] flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
                 >
-                  <span>Complete & Proceed to AI Optimization</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <span>AI Optimize</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
@@ -2414,8 +2416,10 @@ export function Builder() {
             mobileView === 'preview' ? 'flex' : 'hidden md:flex'
           }`}
         >
-          {/* Minimal Preview Canvas Toolbar */}
+          {/* Canva-Style Canvas Properties Toolbar */}
           <PreviewCanvasToolbar
+            preferences={resumeData.preferences}
+            onUpdatePreferences={updatePreferences}
             zoomScale={zoomScale}
             setZoomScale={setZoomScale}
             pageCount={pageCount}
@@ -2426,6 +2430,7 @@ export function Builder() {
             condenseNotice={condenseNotice}
             undoSnapshot={undoSnapshot}
             onUndoCondense={handleUndoCondense}
+            onOpenDesignPanel={() => setShowDesignStudio(true)}
           />
 
           {/* Genuine A4 Document Paper Sheet Container */}
