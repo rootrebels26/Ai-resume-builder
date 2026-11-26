@@ -30,6 +30,8 @@ export function A4PageSheet({
   const [fitScale, setFitScale] = useState(1);
 
   const isOnePage = pageLayoutMode === '1_page';
+  const isTwoPage = pageLayoutMode === '2_pages';
+  const shouldAutoFit = isOnePage || isTwoPage;
   const effectiveTemplateId = templateId || resumeData?.templateId || pageData?.templateId || 'ats-01';
   const isFullBleed = isFullBleedTemplate(effectiveTemplateId);
   const paperFormat = resumeData?.preferences?.paperFormat || designOverrides?.paperFormat || 'a4';
@@ -53,7 +55,7 @@ export function A4PageSheet({
   const sheetBg = designOverrides.backgroundColor || resumeData?.preferences?.backgroundColor || '#ffffff';
 
   useLayoutEffect(() => {
-    if (!isOnePage) {
+    if (!shouldAutoFit) {
       setFitScale(1);
       if (contentRef.current) {
         contentRef.current.style.transform = 'none';
@@ -108,11 +110,11 @@ export function A4PageSheet({
       cancelAnimationFrame(rafId);
       clearTimeout(timerId);
     };
-  }, [isOnePage, pageData, resumeData, effectiveTemplateId, designOverrides, marginSize]);
+  }, [shouldAutoFit, pageData, resumeData, effectiveTemplateId, designOverrides, marginSize]);
 
   // Also re-check on container resize (e.g. window resizing or responsive layout updates)
   useEffect(() => {
-    if (!isOnePage) return;
+    if (!shouldAutoFit) return;
     const container = containerRef.current;
     if (!container || typeof ResizeObserver === 'undefined') return;
 
@@ -145,7 +147,7 @@ export function A4PageSheet({
 
     ro.observe(container);
     return () => ro.disconnect();
-  }, [isOnePage]);
+  }, [shouldAutoFit]);
 
   return (
     <div

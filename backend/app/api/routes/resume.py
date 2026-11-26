@@ -94,7 +94,10 @@ async def smart_condense_endpoint(request: SmartCondenseRequest):
             job_dict = dict(job)
             responsibilities = job_dict.get("responsibilities", [])
             if isinstance(responsibilities, list):
-                max_b = (4 if idx == 0 else (3 if idx == 1 else 2)) if target == 1 else (5 if idx < 2 else 3)
+                if target == 1:
+                    max_b = 4 if idx == 0 else (3 if idx == 1 else 2)
+                else:
+                    max_b = (4 if idx < 2 else 2) if len(experience) > 5 else (5 if idx < 2 else 3)
                 cleaned_b = [b.lstrip("•-*—▸ ") for b in responsibilities if len(b) > 15]
                 job_dict["responsibilities"] = cleaned_b[:max_b]
                 job_dict["description"] = "\n".join(job_dict["responsibilities"])
@@ -104,21 +107,22 @@ async def smart_condense_endpoint(request: SmartCondenseRequest):
     # 3. Projects Budgeting
     projects = data.get("projects", [])
     if isinstance(projects, list):
-        max_p = 3 if target == 1 else 5
+        max_p = 3 if target == 1 else 4
         condensed_proj = []
         for p in projects[:max_p]:
             p_dict = dict(p)
             highlights = p_dict.get("highlights", [])
             if isinstance(highlights, list):
-                max_h = 1 if target == 1 else 2
+                max_h = 1 if (target == 1 or len(experience) > 5) else 2
                 p_dict["highlights"] = highlights[:max_h]
             condensed_proj.append(p_dict)
         data["projects"] = condensed_proj
 
     # 4. Calibrate Preferences
     prefs = dict(data.get("preferences") or {})
-    prefs["fontScale"] = 0.95 if target == 1 else 1.0
-    prefs["lineHeight"] = 1.28 if target == 1 else 1.38
+    prefs["fontScale"] = 0.94 if target == 1 else 0.95
+    prefs["lineHeight"] = 1.28 if target == 1 else 1.32
+    prefs["marginSize"] = "compact"
     prefs["marginSize"] = "compact" if target == 1 else "normal"
     data["preferences"] = prefs
 

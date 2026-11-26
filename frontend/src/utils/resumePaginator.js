@@ -20,9 +20,9 @@ export function paginateResume(rawResumeData, options = {}) {
   const forceTwoPages = options.forceTwoPages === true;
   const forceSinglePage = options.forceSinglePage === true;
 
-  // Calibrated safety thresholds to guarantee zero text slicing above the footer
-  const NATURAL_PAGE_1_MAX = options.page1Max || 780;
-  const PAGE_CONT_MAX = options.pageContMax || 780;
+  // Calibrated safety thresholds for 96 DPI A4 (1122.5px height - ~121px margins - ~28px footer ≈ 973px)
+  const NATURAL_PAGE_1_MAX = options.page1Max || 900;
+  const PAGE_CONT_MAX = options.pageContMax || 900;
 
   const layout = options.layout || resumeData.preferences?.layout || 'single-column';
   const isSidebarOrTwoCol = layout === 'two-column' || layout === 'sidebar-left' || layout === 'sidebar-right';
@@ -122,10 +122,13 @@ export function paginateResume(rawResumeData, options = {}) {
     }];
   }
 
-  // When forceTwoPages is requested:
-  const PAGE_1_MAX = (forceTwoPages && totalCalculatedHeight < NATURAL_PAGE_1_MAX)
-    ? Math.max(420, Math.round(totalCalculatedHeight * 0.55))
+  // When forceTwoPages is requested: split content evenly (~50/50) and strictly cap at 2 pages
+  const PAGE_1_MAX = forceTwoPages
+    ? Math.max(420, Math.round(totalCalculatedHeight * 0.52))
     : NATURAL_PAGE_1_MAX;
+  const EFFECTIVE_CONT_MAX = forceTwoPages
+    ? Number.MAX_SAFE_INTEGER
+    : PAGE_CONT_MAX;
 
   // Multi-page distribution
   const pages = [];
@@ -147,6 +150,10 @@ export function paginateResume(rawResumeData, options = {}) {
   let currentHeight = headerH;
 
   const advancePage = () => {
+    // In strict 2-page mode, never advance beyond Page 2 (pages.length === 1 means currentPage is Page 2)
+    if (forceTwoPages && pages.length >= 1) {
+      return;
+    }
     pages.push(currentPage);
     currentPage = {
       ...resumeData,
@@ -175,7 +182,7 @@ export function paginateResume(rawResumeData, options = {}) {
       pageNumber: pages.length + 1
     };
     currentHeight = 0; // Header is completely omitted on continuation pages (Page 2+), giving full height to sections
-    currentLimit = PAGE_CONT_MAX;
+    currentLimit = EFFECTIVE_CONT_MAX;
   };
 
   // Check section ordering preferences
