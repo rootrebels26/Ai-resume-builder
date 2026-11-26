@@ -28,8 +28,8 @@ class TestVisualRegressionAndExportConsistency(unittest.TestCase):
         print(f"\nLoaded {len(cls.templates)} templates for visual regression audit.")
 
     def test_01_all_100_templates_present(self):
-        """Validates all 100 templates exist across 10 categories."""
-        self.assertEqual(len(self.templates), 100, "Must contain exactly 100 templates.")
+        """Validates all 105 templates exist across 10 categories (100 base + 5 pro)."""
+        self.assertEqual(len(self.templates), 105, "Must contain 105 templates.")
         categories = {}
         for t in self.templates:
             cat = t.get("category")
@@ -37,7 +37,7 @@ class TestVisualRegressionAndExportConsistency(unittest.TestCase):
         
         self.assertEqual(len(categories), 10, "Must have exactly 10 categories.")
         for cat, count in categories.items():
-            self.assertEqual(count, 10, f"Category '{cat}' must have exactly 10 templates.")
+            self.assertGreaterEqual(count, 10, f"Category '{cat}' must have at least 10 templates.")
 
     def test_02_page_geometry_a4_and_letter(self):
         """
