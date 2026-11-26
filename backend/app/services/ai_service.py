@@ -6,13 +6,22 @@ from app.providers.groq import GroqProvider
 from app.providers.openrouter import OpenRouterProvider
 
 def get_ai_provider() -> BaseAIProvider:
-    provider_name = (settings.AI_PROVIDER or "local").lower().strip()
-    
+    provider_name = (settings.AI_PROVIDER or "auto").lower().strip()
+
+    if provider_name == "local":
+        return LocalHeuristicProvider()
     if provider_name == "gemini" and settings.GEMINI_API_KEY:
         return GeminiProvider()
     elif provider_name == "groq" and settings.GROQ_API_KEY:
         return GroqProvider()
     elif provider_name == "openrouter" and settings.OPENROUTER_API_KEY:
+        return OpenRouterProvider()
+    elif settings.GEMINI_API_KEY:
+        # Auto-select Gemini whenever GEMINI_API_KEY is configured
+        return GeminiProvider()
+    elif settings.GROQ_API_KEY:
+        return GroqProvider()
+    elif settings.OPENROUTER_API_KEY:
         return OpenRouterProvider()
     else:
         return LocalHeuristicProvider()

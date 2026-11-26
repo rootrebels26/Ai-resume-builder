@@ -44,6 +44,7 @@ async def parse_resume(file: UploadFile = File(...)):
         "success": True,
         "data": {
             "filename": clean_name,
+            "raw_text": raw_text,
             "raw_text_length": len(raw_text),
             "layout": {
                 "page_count": layout.get("page_count", 1),

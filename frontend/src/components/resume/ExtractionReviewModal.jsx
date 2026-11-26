@@ -14,6 +14,7 @@ export function ExtractionReviewModal({
 
   const {
     filename = 'Uploaded Resume',
+    raw_text = '',
     resume_data: initialResumeData = {},
     validation = {},
     confidence_score = 85,
@@ -161,6 +162,18 @@ export function ExtractionReviewModal({
           >
             Certifications ({(resumeData.certifications || []).length})
           </button>
+          {raw_text && (
+            <button
+              onClick={() => setActiveTab('raw_text')}
+              className={`py-2 px-3 rounded-t-xl border-t border-x transition-colors ${
+                activeTab === 'raw_text'
+                  ? 'bg-white border-ink/20 text-ink shadow-brutal-sm'
+                  : 'border-transparent text-ink-muted hover:text-ink'
+              }`}
+            >
+              Extracted Text
+            </button>
+          )}
         </div>
 
         {/* Modal Body Content */}
@@ -456,6 +469,20 @@ export function ExtractionReviewModal({
                   );
                 })
               )}
+            </div>
+          )}
+
+          {/* TAB: FULL EXTRACTED TEXT (STAGE 1) */}
+          {activeTab === 'raw_text' && raw_text && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-ink-muted">
+                  Full text extracted from <strong className="text-ink">{filename}</strong> before AI structuring ({raw_text.length.toLocaleString()} characters):
+                </p>
+              </div>
+              <pre className="p-4 rounded-2xl bg-canvas border border-ink/15 text-[11px] font-mono text-ink whitespace-pre-wrap leading-relaxed max-h-[420px] overflow-y-auto">
+                {raw_text}
+              </pre>
             </div>
           )}
         </div>

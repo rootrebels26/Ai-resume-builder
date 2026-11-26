@@ -624,11 +624,27 @@ async def parse_resume_document_pipeline(
 ) -> Tuple[ResumeData, Dict[str, Any]]:
     """
     Executes the multi-stage document extraction:
-    1. Interprets document semantics via AI provider (Groq LLM / fallback).
-    2. Hydrates into schema-compliant ResumeData.
-    3. Runs ExtractionValidator to produce confidence scores, section ratings, and actionable notices.
+    1. Interprets extracted full text via AI provider (Gemini / Groq / OpenRouter / Local fallback).
+    2. Safety-net merge: recovers any empty core sections using deterministic heuristic extraction.
+    3. Hydrates into schema-compliant ResumeData.
+    4. Runs ExtractionValidator to produce confidence scores, section ratings, and actionable notices.
     """
     parsed_dict = await ai_service.parse_resume_document(raw_text, layout_metadata)
+    if not isinstance(parsed_dict, dict):
+        parsed_dict = {}
+
+    # Safety-net merge: if the AI provider missed any core section that exists in raw_text, recover it deterministically
+    if raw_text and (
+        not parsed_dict.get("experience")
+        or not parsed_dict.get("education")
+        or not parsed_dict.get("skills")
+    ):
+        from app.providers.local_heuristic import LocalHeuristicProvider
+        heuristic_dict = LocalHeuristicProvider().parse_resume_document_sync(raw_text)
+        for key in ("experience", "education", "skills", "projects", "certifications"):
+            if not parsed_dict.get(key) and heuristic_dict.get(key):
+                parsed_dict[key] = heuristic_dict[key]
+
     resume_data = sanitize_and_hydrate_resume(parsed_dict, raw_text=raw_text)
     validation = ExtractionValidator.validate(raw_text, resume_data.model_dump(), layout_metadata)
     return resume_data, validation

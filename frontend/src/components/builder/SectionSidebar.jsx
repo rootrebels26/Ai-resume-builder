@@ -11,7 +11,7 @@ export function SectionSidebar({ tabs, activeTab, onSelectTab }) {
       {/* Desktop Vertical Rail */}
       <aside
         aria-label="Resume Sections"
-        className="hidden md:flex flex-col w-[142px] shrink-0 bg-[#FAF8F5] border-r border-ink/10 p-2.5 gap-1 overflow-y-auto select-none"
+        className="hidden md:flex flex-col w-[128px] shrink-0 bg-[#FAF8F5] border-r border-ink/10 p-2 gap-1 overflow-y-auto select-none"
       >
         <span className="px-2.5 pt-1 pb-1.5 text-[10px] font-mono font-bold uppercase tracking-wider text-ink-muted">
           Sections

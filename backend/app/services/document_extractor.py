@@ -147,17 +147,25 @@ class DocumentExtractor:
             if len(raw_page_text.strip()) > 40:
                 is_scanned_doc = False
 
-            # Detect multi-column layout on this page:
+            # Detect multi-column layout on this page (strictly body blocks below header):
             is_two_column = False
             left_blocks = []
             right_blocks = []
 
-            if len(enriched_text_blocks) >= 4:
-                col_split = page_width * 0.42
-                left_col = [b for b in enriched_text_blocks if b[0] < col_split and b[2] < (page_width * 0.65)]
-                right_col = [b for b in enriched_text_blocks if b[0] >= col_split]
+            body_blocks = [b for b in enriched_text_blocks if b[1] >= page_height * 0.16]
+            if len(body_blocks) >= 6:
+                col_split = page_width * 0.45
+                left_col = [b for b in body_blocks if b[2] <= page_width * 0.52]
+                right_col = [b for b in body_blocks if b[0] >= col_split]
 
-                if len(left_col) >= 2 and len(right_col) >= 2:
+                # Confirm left and right columns actually sit side-by-side (vertical Y overlap)
+                has_vertical_overlap = any(
+                    not (lb[3] <= rb[1] or rb[3] <= lb[1])
+                    for lb in left_col
+                    for rb in right_col
+                )
+
+                if len(left_col) >= 3 and len(right_col) >= 3 and has_vertical_overlap:
                     is_two_column = True
                     left_blocks = sorted(left_col, key=lambda b: (b[1], b[0]))
                     right_blocks = sorted(right_col, key=lambda b: (b[1], b[0]))

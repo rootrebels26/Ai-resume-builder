@@ -763,7 +763,7 @@ export function Builder() {
         {/* LEFT PANEL: Section Rail + Ergonomic Forms               */}
         {/* ======================================================== */}
         <div
-          className={`w-full ${showDesignStudio ? 'md:w-[440px] lg:w-[490px]' : 'md:w-[480px] lg:w-[540px]'} shrink-0 bg-white border-r border-ink/15 flex flex-col min-h-0 h-full ${
+          className={`w-full ${showDesignStudio ? 'md:w-[460px] lg:w-[520px]' : 'md:w-[520px] lg:w-[600px] xl:w-[640px]'} shrink-0 bg-white border-r border-ink/15 flex flex-col min-h-0 h-full ${
             mobileView === 'editor' ? 'flex' : 'hidden md:flex'
           }`}
         >
@@ -1336,8 +1336,8 @@ export function Builder() {
                         </button>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0">
-                        <div className="min-w-0">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 min-w-0">
+                        <div className="sm:col-span-2 min-w-0">
                           <label className="label-base">Institution / University</label>
                           <input
                             type="text"
@@ -1349,7 +1349,7 @@ export function Builder() {
                             className="input-base"
                           />
                         </div>
-                        <div className="min-w-0">
+                        <div className="sm:col-span-2 min-w-0">
                           <label className="label-base">Degree / Certificate</label>
                           <input
                             type="text"
@@ -1357,11 +1357,11 @@ export function Builder() {
                             onChange={(e) =>
                               updateItemInSection('education', edu.id, { degree: e.target.value })
                             }
-                            placeholder="e.g. Bachelor of Science"
+                            placeholder="e.g. Bachelor of Engineering"
                             className="input-base"
                           />
                         </div>
-                        <div className="min-w-0">
+                        <div className="sm:col-span-2 min-w-0">
                           <label className="label-base">Field of Study</label>
                           <input
                             type="text"
@@ -1369,35 +1369,33 @@ export function Builder() {
                             onChange={(e) =>
                               updateItemInSection('education', edu.id, { fieldOfStudy: e.target.value })
                             }
-                            placeholder="e.g. Computer Science"
+                            placeholder="e.g. Computer Science & Engineering"
                             className="input-base"
                           />
                         </div>
-                        <div className="grid grid-cols-2 gap-2 min-w-0">
-                          <div className="min-w-0">
-                            <label className="label-base truncate">Graduation Year</label>
-                            <input
-                              type="text"
-                              value={edu.endDate || ''}
-                              onChange={(e) =>
-                                updateItemInSection('education', edu.id, { endDate: e.target.value })
-                              }
-                              placeholder="2022"
-                              className="input-base"
-                            />
-                          </div>
-                          <div className="min-w-0">
-                            <label className="label-base truncate">GPA / Honors</label>
-                            <input
-                              type="text"
-                              value={edu.cgpa || ''}
-                              onChange={(e) =>
-                                updateItemInSection('education', edu.id, { cgpa: e.target.value })
-                              }
-                              placeholder="3.8 / 4.0"
-                              className="input-base"
-                            />
-                          </div>
+                        <div className="min-w-0">
+                          <label className="label-base">Graduation Year</label>
+                          <input
+                            type="text"
+                            value={edu.endDate || ''}
+                            onChange={(e) =>
+                              updateItemInSection('education', edu.id, { endDate: e.target.value })
+                            }
+                            placeholder="2022"
+                            className="input-base"
+                          />
+                        </div>
+                        <div className="min-w-0">
+                          <label className="label-base">GPA / Honors</label>
+                          <input
+                            type="text"
+                            value={edu.cgpa || ''}
+                            onChange={(e) =>
+                              updateItemInSection('education', edu.id, { cgpa: e.target.value })
+                            }
+                            placeholder="3.8 / 4.0"
+                            className="input-base"
+                          />
                         </div>
                       </div>
                     </div>
@@ -1409,11 +1407,33 @@ export function Builder() {
             {/* 5. SKILLS */}
             {activeTab === 'skills' && (
               <div className="space-y-4">
-                <div className="border-b border-slate-100 pb-3">
-                  <h3 className="font-bold text-sm text-slate-900">Categorized Skills</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Match job keywords with categorized skills (comma-separated).
-                  </p>
+                <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                  <div>
+                    <h3 className="font-bold text-sm text-slate-900">
+                      Categorized Skills ({(resumeData.skills || []).length})
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Add skill categories, rename them, or add/remove individual skills.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newCat = {
+                        id: `skills-${Date.now()}`,
+                        category: 'New Skill Category',
+                        items: []
+                      };
+                      setResumeData((prev) => ({
+                        ...prev,
+                        skills: [...(prev.skills || []), newCat]
+                      }));
+                    }}
+                    className="btn-secondary py-1.5 px-3 text-xs font-bold shrink-0 cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Category</span>
+                  </button>
                 </div>
 
                 {/* Inline Missing Skills from Target Job */}
@@ -1448,38 +1468,105 @@ export function Builder() {
                   </div>
                 )}
 
+                {(resumeData.skills || []).length === 0 && (
+                  <div className="p-6 text-center border-2 border-dashed border-ink/20 rounded-2xl space-y-2">
+                    <p className="text-xs text-ink-muted">No skill categories added yet.</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setResumeData((prev) => ({
+                          ...prev,
+                          skills: [{ id: `skills-${Date.now()}`, category: 'Technical Skills', items: [] }]
+                        }));
+                      }}
+                      className="btn-volt py-1.5 px-3 text-xs font-bold cursor-pointer"
+                    >
+                      + Add Technical Skills Category
+                    </button>
+                  </div>
+                )}
+
                 <div className="space-y-3.5">
                   {(resumeData.skills || []).map((cat, idx) => (
                     <div
-                      key={idx}
-                      className="card-surface p-4 space-y-2 text-xs border-slate-200"
+                      key={cat.id || idx}
+                      className="card-surface p-4 space-y-3 text-xs border-slate-200"
                     >
-                      <div className="flex justify-between items-center">
-                        <span className="font-bold text-slate-900 text-xs">{cat.category}</span>
-                        <span className="text-[11px] text-slate-400">
-                          {(cat.items || []).length} items
+                      {/* Editable Category Title + Delete Category */}
+                      <div className="flex items-center justify-between gap-2">
+                        <input
+                          type="text"
+                          value={cat.category || ''}
+                          onChange={(e) => {
+                            const newSkills = [...resumeData.skills];
+                            newSkills[idx] = { ...cat, category: e.target.value };
+                            setResumeData((prev) => ({ ...prev, skills: newSkills }));
+                          }}
+                          placeholder="Category name (e.g. Cloud & DevOps)"
+                          className="input-base font-bold text-slate-900 py-1.5 px-3 text-xs flex-1"
+                        />
+                        <span className="text-[11px] font-mono text-slate-400 shrink-0">
+                          {(cat.items || []).length}
                         </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setResumeData((prev) => ({
+                              ...prev,
+                              skills: (prev.skills || []).filter((_, i) => i !== idx)
+                            }));
+                          }}
+                          title="Delete skill category"
+                          className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition cursor-pointer shrink-0"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
-                      <input
-                        type="text"
-                        value={(cat.items || []).join(', ')}
-                        onChange={(e) => {
+
+                      {/* Add Skill Input (supports Enter or comma-separated batch add) */}
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          const input = e.currentTarget.elements.skillInput;
+                          const raw = input.value.trim();
+                          if (!raw) return;
+                          const toAdd = raw.split(',').map((s) => s.trim()).filter(Boolean);
+                          if (toAdd.length === 0) return;
+                          const existing = cat.items || [];
+                          const merged = [...existing];
+                          toAdd.forEach((s) => {
+                            if (!merged.some((m) => m.toLowerCase() === s.toLowerCase())) {
+                              merged.push(s);
+                            }
+                          });
                           const newSkills = [...resumeData.skills];
-                          newSkills[idx] = {
-                            ...cat,
-                            items: e.target.value.split(',').map((s) => s.trim()).filter(Boolean)
-                          };
+                          newSkills[idx] = { ...cat, items: merged };
                           setResumeData((prev) => ({ ...prev, skills: newSkills }));
+                          input.value = '';
                         }}
-                        placeholder="e.g. React, TypeScript, Python, Docker (comma separated)"
-                        className="input-base"
-                      />
-                      {/* Badge visualization */}
-                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        className="flex items-center gap-2"
+                      >
+                        <input
+                          name="skillInput"
+                          type="text"
+                          placeholder="Type a skill (or comma-separated list) & press Enter..."
+                          className="input-base py-1.5 px-3 text-xs flex-1"
+                        />
+                        <button
+                          type="submit"
+                          className="btn-secondary py-1.5 px-3 text-xs font-bold shrink-0 cursor-pointer"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Add</span>
+                        </button>
+                      </form>
+
+                      {/* Skill Chips with 1-Click Delete */}
+                      <div className="flex flex-wrap gap-1.5 pt-0.5">
                         {(cat.items || []).map((skill, sIdx) => (
                           <span
                             key={sIdx}
-                            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[11px] font-medium"
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-800 text-[11px] font-medium"
                           >
                             <span>{skill}</span>
                             <button
@@ -1492,7 +1579,8 @@ export function Builder() {
                                 };
                                 setResumeData((prev) => ({ ...prev, skills: newSkills }));
                               }}
-                              className="text-slate-400 hover:text-rose-600"
+                              title={`Remove ${skill}`}
+                              className="text-slate-400 hover:text-rose-600 font-bold cursor-pointer leading-none"
                             >
                               ✕
                             </button>

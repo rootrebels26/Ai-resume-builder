@@ -91,4 +91,41 @@ class OpenRouterProvider(BaseAIProvider):
         return await self.fallback.tailor_resume(request)
 
     async def parse_resume_document(self, text: str, layout_metadata: dict = None) -> dict:
+        if not self.api_key or not text or len(text.strip()) < 20:
+            return await self.fallback.parse_resume_document(text, layout_metadata)
+
+        prompt = f"""You are a Principal Document Intelligence & Resume Parsing Specialist.
+Extract ALL information from the provided full resume text and organize it professionally into a strictly formatted JSON object.
+
+RULES:
+1. ZERO HALLUCINATION: Extract only facts explicitly present in the resume text.
+2. EXTRACT EVERY SECTION COMPLETELY: Do not truncate jobs, bullets, projects, skills, certifications, or education.
+3. PROFESSIONAL SUMMARY: Keep only clean career narrative prose (no contact info, phone, email, or headers).
+4. PROJECTS: If the resume has no separate Projects section, extract 3-4 major systems/platforms from experience into "projects".
+5. SKILLS: Preserve explicit skill category names if present; otherwise group cleanly into "Programming Languages", "Frameworks & Libraries", "Cloud & DevOps", "Databases & Tools", "Core Competencies".
+6. Return ONLY valid JSON with this exact schema:
+{{
+  "personalInfo": {{
+    "fullName": "", "email": "", "phone": "", "location": "",
+    "professionalTitle": "", "website": "", "linkedin": "", "github": "", "portfolio": ""
+  }},
+  "professionalSummary": "",
+  "education": [{{ "institution": "", "degree": "", "fieldOfStudy": "", "startDate": "", "endDate": "", "cgpa": "", "description": "" }}],
+  "experience": [{{ "company": "", "position": "", "employmentType": "Full-time", "location": "", "startDate": "", "endDate": "", "current": false, "responsibilities": [], "achievements": [] }}],
+  "internships": [],
+  "projects": [{{ "name": "", "description": "", "technologies": [], "githubUrl": "", "liveUrl": "", "startDate": "", "endDate": "", "highlights": [] }}],
+  "skills": [{{ "category": "", "items": [] }}],
+  "certifications": [{{ "name": "", "issuer": "", "date": "" }}],
+  "achievements": [],
+  "languages": [{{ "name": "", "proficiency": "" }}]
+}}
+
+FULL EXTRACTED RESUME TEXT:
+\"\"\"
+{text[:24000]}
+\"\"\"
+"""
+        res = await self._call_openrouter(prompt)
+        if isinstance(res, dict) and (res.get("personalInfo") or res.get("experience") or res.get("skills")):
+            return res
         return await self.fallback.parse_resume_document(text, layout_metadata)

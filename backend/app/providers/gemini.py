@@ -26,19 +26,23 @@ class GeminiProvider(BaseAIProvider):
         self.model_name = model_name or settings.AI_MODEL or "gemini-2.5-flash"
         self.fallback = LocalHeuristicProvider()
 
-    async def _call_gemini(self, prompt: str, schema_class: type = None):
+    async def _call_gemini(self, prompt: str, schema_class: type = None, timeout_seconds: float = 25.0):
         if not self.api_key:
             return None
         import httpx
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model_name}:generateContent?key={self.api_key}"
+        gen_config = {
+            "temperature": 0.2,
+            "responseMimeType": "application/json",
+        }
+        if "2.5" in self.model_name:
+            gen_config["thinkingConfig"] = {"thinkingBudget": 0}
         payload = {
             "contents": [{"parts": [{"text": prompt}]}],
-            "generationConfig": {
-                "temperature": 0.2
-            }
+            "generationConfig": gen_config,
         }
         try:
-            async with httpx.AsyncClient(timeout=6.0) as client:
+            async with httpx.AsyncClient(timeout=timeout_seconds) as client:
                 res = await client.post(url, json=payload)
                 if res.status_code == 200:
                     res_data = res.json()
@@ -74,7 +78,7 @@ Return ONLY valid JSON matching this schema:
   "selected_summary": "summary 1",
   "suggested_headline": "Headline string"
 }}"""
-        res = await self._call_gemini(prompt)
+        res = await self._call_gemini(prompt, timeout_seconds=35.0)
         if res and "summaries" in res:
             try:
                 return GenerateSummaryResponse(**res)
@@ -97,7 +101,7 @@ Return ONLY valid JSON matching this schema:
     {{"text": "bullet 3 focused on technical depth", "rationale": "reason 3", "metrics_included": false}}
   ]
 }}"""
-        res = await self._call_gemini(prompt)
+        res = await self._call_gemini(prompt, timeout_seconds=35.0)
         if res and "options" in res:
             try:
                 return ImproveBulletResponse(**res)
@@ -117,7 +121,7 @@ Return ONLY valid JSON matching this schema:
   "bullet_points": ["bullet 1", "bullet 2", "bullet 3"],
   "suggested_technologies": ["tech 1", "tech 2"]
 }}"""
-        res = await self._call_gemini(prompt)
+        res = await self._call_gemini(prompt, timeout_seconds=35.0)
         if res and "improved_description" in res:
             try:
                 return ImproveProjectResponse(**res)
@@ -153,7 +157,7 @@ Return ONLY valid JSON matching this schema:
   "gaps": ["Gap 1", "Gap 2"],
   "recommendations": ["Recommendation 1", "Recommendation 2"]
 }}"""
-        res = await self._call_gemini(prompt)
+        res = await self._call_gemini(prompt, timeout_seconds=35.0)
         if res and "match_percentage" in res:
             try:
                 return MatchResumeResponse(**res)
@@ -201,7 +205,7 @@ Return ONLY valid JSON matching this schema:
   "recommended_skills_to_add": ["Skill1", "Skill2", "Skill3"],
   "tailored_resume_data": {{}}
 }}"""
-        res = await self._call_gemini(prompt)
+        res = await self._call_gemini(prompt, timeout_seconds=35.0)
         if res and "tailored_summary" in res:
             try:
                 if not res.get("tailored_resume_data"):
@@ -323,7 +327,7 @@ Return ONLY valid JSON matching this exact structure:
 RAW RESUME TEXT:
 {text[:28000]}
 """
-        res = await self._call_gemini(prompt)
+        res = await self._call_gemini(prompt, timeout_seconds=35.0)
         if res and isinstance(res, dict) and ("personalInfo" in res or "experience" in res or "education" in res):
             pinfo = res.get("personalInfo", {})
             if isinstance(pinfo, dict) and not pinfo.get("professionalTitle"):

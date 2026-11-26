@@ -381,19 +381,21 @@ export function DynamicResumeCanvas({
 
             return (
               <div key={idx} className="space-y-0.5">
-                <div className="flex flex-row items-baseline justify-between gap-1">
-                  <div className="flex flex-wrap items-baseline gap-1.5 min-w-0">
+                <div className="flex flex-row items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1 leading-snug">
                     <span
                       className="font-bold tracking-tight"
                       style={{ fontSize: `${(baseFontSize * 1.05).toFixed(1)}px`, color: primaryColor }}
                     >
                       {job.position || job.title || 'Role'}
                     </span>
-                    <span className="text-sm font-semibold opacity-85" style={{ color: textColor }}>
-                      — {job.company}
-                    </span>
+                    {job.company && (
+                      <span className="text-sm font-semibold opacity-85" style={{ color: textColor }}>
+                        {' '}— {job.company}
+                      </span>
+                    )}
                   </div>
-                  <div className="text-xs font-medium shrink-0" style={{ color: accentColor }}>
+                  <div className="text-xs font-medium shrink-0 text-right whitespace-nowrap pt-0.5" style={{ color: accentColor }}>
                     <span>{job.startDate || job.period || ''}</span>
                     {(job.endDate || job.isCurrent) && <span> — {job.isCurrent ? 'Present' : job.endDate}</span>}
                     {job.location && <span className="opacity-75"> | {job.location}</span>}

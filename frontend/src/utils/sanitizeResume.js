@@ -32,6 +32,7 @@ export function cleanSummaryText(str) {
 
 export function sanitizeResumeData(data) {
   if (!data || typeof data !== 'object') return data;
+  const isPaginatedSlice = Boolean(data.pageNumber || data.isContinuation);
   const cleaned = { ...data };
 
   if (cleaned.professionalSummary) {
@@ -78,8 +79,8 @@ export function sanitizeResumeData(data) {
   }
 
   // Universal fallback for projects: if 0 projects but experience exists, derive key systems
-  // (Guard: NEVER re-derive on continuation pages Page 2+ to prevent duplicating sections)
-  if (!cleaned.isContinuation && cleaned.projects.length === 0 && Array.isArray(cleaned.experience) && cleaned.experience.length > 0) {
+  // (Guard: NEVER re-derive on paginated slices to prevent duplicating sections)
+  if (!isPaginatedSlice && cleaned.projects.length === 0 && Array.isArray(cleaned.experience) && cleaned.experience.length > 0) {
     const actionWords = ['architected', 'designed', 'developed', 'engineered', 'built', 'created', 'implemented', 'orchestrated', 'automated'];
     const derived = [];
     for (const exp of cleaned.experience) {
@@ -126,8 +127,8 @@ export function sanitizeResumeData(data) {
     cleaned.education = [];
   }
 
-  // Universal fallback for education: ensure at least 1 education entry exists
-  if (cleaned.education.length === 0) {
+  // Universal fallback for education ONLY on the full resume (never inject into paginated slices)
+  if (!isPaginatedSlice && cleaned.education.length === 0) {
     const title = cleaned.personalInfo?.professionalTitle || '';
     const isTech = /engineer|architect|developer|data|scientist/i.test(title);
     cleaned.education = [{
@@ -142,8 +143,8 @@ export function sanitizeResumeData(data) {
     }];
   }
 
-  // Fallback for summary if missing
-  if (!cleaned.professionalSummary || cleaned.professionalSummary.length < 20) {
+  // Fallback for summary ONLY on the full resume (never on continuation/paginated slices)
+  if (!isPaginatedSlice && (!cleaned.professionalSummary || cleaned.professionalSummary.length < 20)) {
     const profRole = cleaned.personalInfo?.professionalTitle || (cleaned.experience?.[0]?.position) || 'Professional';
     cleaned.professionalSummary = `Accomplished ${profRole} with proven expertise in designing, architecting, and delivering enterprise solutions, mentoring engineering teams, and driving operational excellence.`;
   }
