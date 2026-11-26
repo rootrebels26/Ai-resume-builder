@@ -14,6 +14,9 @@ function hashId(str = '') {
 }
 
 export function getTemplateVisualArchetype(templateDef = {}, activeLayout) {
+  if (templateDef.visualArchetype) {
+    return templateDef.visualArchetype;
+  }
   const layout = activeLayout || templateDef.layout || 'single-column';
   const id = String(templateDef.id || '').toLowerCase();
   const h = hashId(id);
@@ -35,6 +38,9 @@ export function getTemplateVisualArchetype(templateDef = {}, activeLayout) {
 }
 
 export function getTemplateHeaderStyle(templateDef = {}, activeLayout) {
+  if (templateDef.headerStyle) {
+    return templateDef.headerStyle;
+  }
   const layout = activeLayout || templateDef.layout || 'single-column';
   if (layout === 'header-card') return 'banner';
   if (layout === 'sidebar-left' || layout === 'sidebar-right') return 'left';

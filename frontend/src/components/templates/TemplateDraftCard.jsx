@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef, memo } from 'react';
 import { Eye, Sparkles, Check, Heart, Camera, ShieldCheck } from 'lucide-react';
 import { DynamicResumeCanvas } from './DynamicResumeCanvas';
 import { INITIAL_RESUME_DATA } from '../../constants/initialResumeData';
+import { isFullBleedTemplate } from '../../constants/templatesList';
+import { getPreviewAvatarForTemplate } from '../../utils/previewAvatar';
 
 // Shared immutable preview payload so cards never trigger unnecessary re-renders
 const PREVIEW_RESUME_DATA = { ...INITIAL_RESUME_DATA, preferences: {} };
@@ -110,7 +112,7 @@ export const TemplateDraftCard = memo(function TemplateDraftCard({
               style={{
                 width: '793.7px',
                 minHeight: '1122.5px',
-                padding: '12mm 14mm',
+                padding: isFullBleedTemplate(template?.id) ? '0' : '12mm 14mm',
                 boxSizing: 'border-box',
                 transform: 'scale(0.252)',
                 transformOrigin: 'top left',
@@ -119,7 +121,13 @@ export const TemplateDraftCard = memo(function TemplateDraftCard({
             >
               <DynamicResumeCanvas
                 templateId={template.id}
-                resumeData={PREVIEW_RESUME_DATA}
+                resumeData={{
+                  ...PREVIEW_RESUME_DATA,
+                  personalInfo: {
+                    ...PREVIEW_RESUME_DATA.personalInfo,
+                    photo: PREVIEW_RESUME_DATA.personalInfo?.photo || getPreviewAvatarForTemplate(template),
+                  },
+                }}
                 designOverrides={{
                   layout: template.layout || 'single-column',
                   primaryColor: template.palette?.primary || template.colors?.primary || template.accentColor || '#0f172a',

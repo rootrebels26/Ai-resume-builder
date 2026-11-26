@@ -174,7 +174,7 @@ export function A4PageSheet({
         >
           <ResumeTemplate
             templateId={effectiveTemplateId}
-            resumeData={pageData}
+            resumeData={pageData || resumeData}
             designOverrides={designOverrides}
             pageNumber={pageIdx + 1}
             totalPages={pageCount}

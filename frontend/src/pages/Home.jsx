@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useResume } from '../context/ResumeContext';
 import { useAuth } from '../context/AuthContext';
-import { TEMPLATES } from '../constants/templatesList';
-import { TemplateDraftPaper } from '../components/templates/TemplateDraftPaper';
+import { TEMPLATE_REGISTRY } from '../constants/templateRegistry';
+import { ScaledTemplatePreview } from '../components/templates/ScaledTemplatePreview';
 
 function Icon({ name, size = 20 }) {
   const paths = {
@@ -24,15 +24,15 @@ function Icon({ name, size = 20 }) {
 
 const roles = ['Product designer', 'Marketing lead', 'Software engineer'];
 
-// 6 Featured Real Layouts matching Templates folder
+// 6 Featured Real Layouts from TEMPLATE_REGISTRY (1:1 with Builder & Preview)
 const actualTemplates = [
-  TEMPLATES.find(t => t.id === 'modern-01') || TEMPLATES[10], // Apex Modern Blue
-  TEMPLATES.find(t => t.id === 'ats-01') || TEMPLATES[0],     // Classic ATS Standard
-  TEMPLATES.find(t => t.id === 'modern-08') || TEMPLATES[17], // Cobalt Impact
-  TEMPLATES.find(t => t.id === 'modern-07') || TEMPLATES[16], // Charcoal Horizon
-  TEMPLATES.find(t => t.id === 'modern-02') || TEMPLATES[11], // Emerald Horizon
-  TEMPLATES.find(t => t.id === 'developer-01') || TEMPLATES[25], // Dev Terminal Monospace
-];
+  TEMPLATE_REGISTRY.find(t => t.id === 'ats-classic') || TEMPLATE_REGISTRY[0],
+  TEMPLATE_REGISTRY.find(t => t.id === 'tech-senior-swe') || TEMPLATE_REGISTRY[10],
+  TEMPLATE_REGISTRY.find(t => t.id === 'tech-frontend-ui') || TEMPLATE_REGISTRY[11],
+  TEMPLATE_REGISTRY.find(t => t.id === 'data-scientist-core') || TEMPLATE_REGISTRY[20],
+  TEMPLATE_REGISTRY.find(t => t.id === 'biz-product-manager') || TEMPLATE_REGISTRY[30],
+  TEMPLATE_REGISTRY.find(t => t.id === 'cre-ui-ux') || TEMPLATE_REGISTRY[90],
+].filter(Boolean);
 
 export function Home() {
   const navigate = useNavigate();
@@ -366,9 +366,9 @@ export function Home() {
                 aria-hidden={distance > 2}
                 onClick={() => handleCreateResume(template.id)}
               >
-                {/* Genuine A4 Document Paper Sheet Preview from Templates Library */}
-                <div className="w-full aspect-[210/297] rounded-lg bg-white border border-black/15 overflow-hidden shadow-paper select-none">
-                  <TemplateDraftPaper template={template} />
+                {/* Genuine A4 Document Paper Sheet Preview (1:1 DynamicResumeCanvas) */}
+                <div className="w-full rounded-lg bg-white border border-black/15 overflow-hidden shadow-paper select-none">
+                  <ScaledTemplatePreview template={template} />
                 </div>
 
                 <div className="mt-3.5 flex items-center justify-between gap-2">

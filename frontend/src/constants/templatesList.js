@@ -1,5 +1,28 @@
+const FULL_BLEED_BANNER_IDS = new Set([
+  'pro-paul-navy-sidebar',
+  'pro-harper-navy-banner',
+  'fin-wealth-advisor',
+  'biz-bizdev-partnerships',
+  'stu-marketing-intern',
+  'crt-commercial-photographer',
+  'dev-mobile-ios',
+  'dev-tech-lead',
+  'ds-data-architect',
+  'ds-research-lead',
+  'biz-product-manager',
+  'biz-general-manager',
+  'crt-talent-actor',
+  'mkt-sales-director',
+  'stu-campus-leader',
+  'hc-medical-director',
+  'hc-school-principal',
+  'crt-creative-director',
+  'crt-media-broadcast',
+]);
+
 export const isFullBleedTemplate = (templateId) => {
-  return typeof templateId === 'string' && templateId.startsWith('modern-');
+  if (typeof templateId !== 'string') return false;
+  return templateId.startsWith('modern-') || FULL_BLEED_BANNER_IDS.has(templateId);
 };
 
 export const TEMPLATE_CATEGORIES = [
@@ -533,7 +556,7 @@ export const TEMPLATES = [
     badge: "Tech Fellow",
     rating: 5.0
   },
-// 1. ATS-Friendly (10)
+  // 1. ATS-Friendly (10)
   {
     id: "ats-01",
     name: "Classic ATS Standard",

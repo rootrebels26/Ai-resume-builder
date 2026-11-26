@@ -6,6 +6,7 @@ import {
 import { ResumeTemplate } from './ResumeTemplate';
 import { INITIAL_RESUME_DATA } from '../../constants/initialResumeData';
 import { isFullBleedTemplate } from '../../constants/templatesList';
+import { getPreviewAvatarForTemplate } from '../../utils/previewAvatar';
 
 export function TemplateQuickPreviewModal({ template, isOpen, onClose, onSelect }) {
   // Default to 0.65 so the full A4 page fits into view on initial open
@@ -133,32 +134,39 @@ export function TemplateQuickPreviewModal({ template, isOpen, onClose, onSelect 
           </div>
         </div>
 
-        {/* Modal Body: A4 Resume Preview Stage */}
+        {/* Modal Body: A4 Resume Preview Stage (1:1 parity with A4PageSheet & TemplateDraftCard) */}
         <div className="flex-1 bg-canvas overflow-y-auto overflow-x-auto p-4 sm:p-8 flex justify-center items-start">
           <div
             style={{
-              width: `${210 * zoomLevel}mm`,
-              minHeight: `${297 * zoomLevel}mm`,
-              display: 'flex',
-              justifyContent: 'center',
-              marginBottom: '60px'
+              width: `${793.7 * zoomLevel}px`,
+              height: `${1122.5 * zoomLevel}px`,
+              position: 'relative',
+              marginBottom: '40px'
             }}
           >
             <div
-              className="resume-a4-page bg-white shadow-paper rounded-sm border border-slate-200/90 text-slate-900 transition-transform origin-top"
+              className="resume-a4-page bg-white shadow-paper rounded-sm border border-slate-200/90 text-slate-900"
               style={{
-                width: '210mm',
-                height: '297mm',
-                padding: isFullBleedTemplate(template?.id) ? '0' : '18mm',
+                width: '793.7px',
+                minHeight: '1122.5px',
+                padding: isFullBleedTemplate(template.id) ? '0' : '12mm 14mm',
                 boxSizing: 'border-box',
-                overflow: 'hidden',
+                backgroundColor: template.palette?.bg || template.palette?.background || '#ffffff',
                 transform: `scale(${zoomLevel})`,
-                transformOrigin: 'top center'
+                transformOrigin: 'top left',
+                transition: 'transform 180ms ease-out'
               }}
             >
               <ResumeTemplate
                 templateId={template.id}
-                resumeData={{ ...INITIAL_RESUME_DATA, preferences: {} }}
+                resumeData={{
+                  ...INITIAL_RESUME_DATA,
+                  preferences: {},
+                  personalInfo: {
+                    ...INITIAL_RESUME_DATA.personalInfo,
+                    photo: INITIAL_RESUME_DATA.personalInfo?.photo || getPreviewAvatarForTemplate(template),
+                  },
+                }}
                 designOverrides={{
                   layout: template.layout || 'single-column',
                   primaryColor: template.palette?.primary || template.colors?.primary || template.accentColor || '#0f172a',

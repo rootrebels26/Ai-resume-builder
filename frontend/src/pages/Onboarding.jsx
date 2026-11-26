@@ -7,8 +7,8 @@ import {
   Search, Eye, X
 } from 'lucide-react';
 import { useResume } from '../context/ResumeContext';
-import { TEMPLATES, TEMPLATE_CATEGORIES, TOTAL_TEMPLATES_COUNT } from '../constants/templatesList';
-import { TemplateDraftPaper } from '../components/templates/TemplateDraftPaper';
+import { TEMPLATE_REGISTRY as TEMPLATES, TEMPLATE_CATEGORIES, TOTAL_TEMPLATES_COUNT } from '../constants/templateRegistry';
+import { ScaledTemplatePreview } from '../components/templates/ScaledTemplatePreview';
 import { TemplateQuickPreviewModal } from '../components/templates/TemplateQuickPreviewModal';
 import { resumeService } from '../services/resumeService';
 import { ExtractionReviewModal } from '../components/resume/ExtractionReviewModal';
@@ -652,8 +652,12 @@ export function Onboarding() {
                           onClick={() => handleSelectTemplate(tpl.id)}
                           className="bg-canvas p-2.5 rounded-lg border border-ink/10 flex items-center justify-center overflow-hidden aspect-[210/297] my-1 relative cursor-pointer"
                         >
-                          <div className="w-full h-full rounded shadow-sm overflow-hidden transform transition-transform group-hover:scale-[1.02]">
-                            <TemplateDraftPaper template={{ ...tpl, accentColor: chosenColor }} />
+                          <div className="w-full rounded shadow-sm overflow-hidden transform transition-transform group-hover:scale-[1.02]">
+                            <ScaledTemplatePreview
+                              template={tpl}
+                              resumeData={extractedData}
+                              accentColor={chosenColor}
+                            />
                           </div>
 
                           {/* Hover Quick Preview Button */}
@@ -741,8 +745,12 @@ export function Onboarding() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
                 {/* Left: Chosen Template Miniature */}
                 <div className="md:col-span-1 flex flex-col items-center">
-                  <div className="w-full max-w-[190px] aspect-[210/297] rounded-xl bg-white shadow-paper border border-ink overflow-hidden p-1">
-                    <TemplateDraftPaper template={{ ...activeTemplateObj, accentColor: chosenColor }} />
+                  <div className="w-full max-w-[190px] rounded-xl bg-white shadow-paper border border-ink overflow-hidden">
+                    <ScaledTemplatePreview
+                      template={activeTemplateObj}
+                      resumeData={extractedData}
+                      accentColor={chosenColor}
+                    />
                   </div>
                   <span className="mt-2 text-xs font-extrabold text-ink">{activeTemplateObj.name}</span>
                   <span className="text-[10px] font-mono text-ink-muted uppercase">{activeTemplateObj.layout}</span>
