@@ -673,15 +673,20 @@ def assemble_resume_from_sections(
         if sec_type == "header":
             b = res.get("basics") or {}
             if isinstance(b, dict):
-                personal.fullName = str(b.get("full_name") or "").strip()
-                personal.professionalTitle = str(b.get("headline") or "").strip()
-                personal.email = str(b.get("email") or "").strip()
-                personal.phone = str(b.get("phone") or "").strip()
+                if not personal.fullName and b.get("full_name"):
+                    personal.fullName = str(b.get("full_name")).strip()
+                if not personal.professionalTitle and b.get("headline"):
+                    personal.professionalTitle = str(b.get("headline")).strip()
+                if not personal.email and b.get("email"):
+                    personal.email = str(b.get("email")).strip()
+                if not personal.phone and b.get("phone"):
+                    personal.phone = str(b.get("phone")).strip()
                 loc = b.get("location")
-                if isinstance(loc, dict):
-                    personal.location = str(loc.get("raw") or ", ".join(p for p in [loc.get("city"), loc.get("region"), loc.get("country")] if p) or "").strip()
-                elif isinstance(loc, str):
-                    personal.location = loc.strip()
+                if not personal.location:
+                    if isinstance(loc, dict):
+                        personal.location = str(loc.get("raw") or ", ".join(p for p in [loc.get("city"), loc.get("region"), loc.get("country")] if p) or "").strip()
+                    elif isinstance(loc, str):
+                        personal.location = loc.strip()
 
                 for lnk in b.get("links") or []:
                     if not isinstance(lnk, dict):

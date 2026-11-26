@@ -2,6 +2,10 @@ import re
 from typing import List, Dict, Any
 
 SECTION_SYNONYMS: Dict[str, List[str]] = {
+    "header": [
+        "contact", "contact info", "contact information", "contact details",
+        "personal details", "personal info", "personal information"
+    ],
     "summary": [
         "summary", "professional summary", "profile", "about me",
         "objective", "career objective", "career summary", "executive summary",
@@ -131,6 +135,7 @@ class SectionSegmenter:
 
             if _is_probable_heading(stripped):
                 norm = _normalize_heading_candidate(stripped)
+                has_header_content = any(l.strip() for l in current_lines)
                 if norm in synonym_map:
                     matched_type = synonym_map[norm]
                     heading_raw = stripped.rstrip(':').strip()
@@ -144,12 +149,18 @@ class SectionSegmenter:
                     matched_type = "experience"
                     heading_raw = stripped.rstrip(':').strip()
                 elif norm in CUSTOM_HEADING_ALLOWLIST or (
-                    stripped.isupper() and 1 <= len(norm.split()) <= 3 and not any(ch.isdigit() for ch in norm)
+                    (current_type != "header" or has_header_content)
+                    and stripped.isupper()
+                    and 1 <= len(norm.split()) <= 3
+                    and not any(ch.isdigit() for ch in norm)
                 ):
                     matched_type = "custom"
                     heading_raw = stripped.rstrip(':').strip()
 
             if matched_type:
+                if matched_type == "header" and current_type == "header":
+                    # Subheading inside header (e.g. CONTACT in sidebar) — keep in header block
+                    continue
                 # Flush previous block if it has content
                 body_text = "\n".join(current_lines).strip()
                 if body_text or current_type == "header":

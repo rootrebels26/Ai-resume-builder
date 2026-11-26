@@ -221,9 +221,9 @@ class DocumentExtractor:
             left_blocks = []
             right_blocks = []
 
-            body_blocks = [b for b in enriched_text_blocks if b[1] >= page_height * 0.16]
-            if len(body_blocks) >= 6:
-                col_split = page_width * 0.45
+            body_blocks = [b for b in enriched_text_blocks if b[1] >= page_height * 0.16 or (b[3] - b[1]) > page_height * 0.25]
+            if len(body_blocks) >= 2:
+                col_split = page_width * 0.42
                 left_col = [b for b in body_blocks if b[2] <= page_width * 0.52]
                 right_col = [b for b in body_blocks if b[0] >= col_split]
 
@@ -234,12 +234,12 @@ class DocumentExtractor:
                     for rb in right_col
                 )
 
-                if len(left_col) >= 3 and len(right_col) >= 3 and has_vertical_overlap:
+                if len(left_col) >= 1 and len(right_col) >= 1 and has_vertical_overlap:
                     left_span = max(b[3] for b in left_col) - min(b[1] for b in left_col)
                     right_span = max(b[3] for b in right_col) - min(b[1] for b in right_col)
                     right_chars = sum(len(b[4]) for b in right_col)
-                    # Only classify as true 2-column layout if both columns span >40% of page height
-                    if left_span > page_height * 0.40 and right_span > page_height * 0.40 and right_chars > 250:
+                    # True 2-column layout: both columns span substantial vertical height (not a short 4-row table)
+                    if left_span > page_height * 0.28 and right_span > page_height * 0.28 and right_chars > 250 and (len(left_col) >= 2 or left_span > page_height * 0.35):
                         is_two_column = True
                         left_blocks = sorted(left_col, key=lambda b: (b[1], b[0]))
                         right_blocks = sorted(right_col, key=lambda b: (b[1], b[0]))
