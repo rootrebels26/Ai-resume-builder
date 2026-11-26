@@ -12,6 +12,9 @@ import { ResumeTemplate } from '../components/templates/ResumeTemplate';
 import { A4PageSheet } from '../components/templates/A4PageSheet';
 import { TEMPLATES, isFullBleedTemplate } from '../constants/templateRegistry';
 import { CanvaDesignPanel } from '../components/design/CanvaDesignPanel';
+import { BuilderToolbar } from '../components/builder/BuilderToolbar';
+import { SectionSidebar } from '../components/builder/SectionSidebar';
+import { PreviewCanvasToolbar } from '../components/builder/PreviewCanvasToolbar';
 import { pdfService } from '../services/pdfService';
 import { storageService } from '../services/storageService';
 import { aiService } from '../services/aiService';
@@ -52,7 +55,7 @@ export function Builder() {
   const [activeTab, setActiveTab] = useState('personal');
   const [editorPhase, setEditorPhase] = useState('edit'); // 'edit' | 'optimize' | 'ats_and_download'
   const [zoomScale, setZoomScale] = useState(0.85);
-  const [showDesignStudio, setShowDesignStudio] = useState(true);
+  const [showDesignStudio, setShowDesignStudio] = useState(false);
   const [mobileView, setMobileView] = useState('editor'); // 'editor' | 'preview' | 'design'
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState(null); // { type: 'summary'|'bullet'|'skills', options: [...] }
@@ -723,313 +726,60 @@ export function Builder() {
 
   return (
     <div className="flex-1 flex flex-col bg-canvas min-h-0 h-full overflow-hidden">
-      {/* Top Application Bar with Figma Styling */}
-      <div className="bg-[#FAF8F5] border-b border-ink/15 px-4 py-2.5 flex items-center justify-between gap-4 no-print shrink-0 z-20 shadow-xs">
-        {/* Left: Back & Document Title */}
-        <div className="flex items-center gap-3 min-w-0">
-          <Link
-            to="/"
-            className="p-1.5 text-ink-muted hover:text-ink hover:bg-black/5 rounded-full transition"
-            title="Back to Home"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Link>
+      {/* Hidden JSON input */}
+      <input
+        type="file"
+        ref={jsonInputRef}
+        onChange={handleJSONFileSelected}
+        accept=".json,application/json"
+        className="hidden"
+      />
 
-          <div className="flex items-center gap-2 min-w-0">
-            {isEditingTitle ? (
-              <input
-                type="text"
-                value={docTitle}
-                onChange={(e) => setDocTitle(e.target.value)}
-                onBlur={handleTitleBlur}
-                onKeyDown={(e) => e.key === 'Enter' && handleTitleBlur()}
-                autoFocus
-                className="input-base py-1 px-3 text-xs sm:text-sm font-extrabold w-48 sm:w-64"
-              />
-            ) : (
-              <div
-                onClick={() => setIsEditingTitle(true)}
-                className="group flex items-center gap-1.5 cursor-pointer py-1 px-3 rounded-full bg-white border border-ink hover:bg-canvas transition truncate shadow-brutal-sm"
-                title="Click to rename resume"
-              >
-                <span className="font-extrabold text-xs sm:text-sm text-ink truncate">
-                  {docTitle}
-                </span>
-                <Edit3 className="w-3 h-3 text-ink-muted opacity-0 group-hover:opacity-100 transition" />
-              </div>
-            )}
-
-            {/* ATS Score Meter Pill */}
-            <div
-              onClick={() => setEditorPhase('ats_and_download')}
-              className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-volt text-ink border border-ink text-[11px] font-mono font-bold shadow-brutal-sm cursor-pointer hover:scale-105 transition"
-              title="Click to view ATS Readiness & Export"
-            >
-              <span className="flex h-2 w-2 relative" title="Live Synced">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-ink opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-ink" />
-              </span>
-              <span>ATS {displayAtsScore}%</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Center: Phase Indicator / Step Breadcrumbs */}
-        <div className="hidden md:flex items-center gap-2 text-xs font-bold">
-          <button
-            type="button"
-            onClick={() => setEditorPhase('edit')}
-            className={`px-3 py-1 rounded-full border transition cursor-pointer ${
-              editorPhase === 'edit'
-                ? 'bg-ink text-white border-ink shadow-brutal-sm'
-                : 'bg-white text-ink border-ink/20 hover:border-ink'
-            }`}
-          >
-            1. Edit Details
-          </button>
-          <span className="text-ink-muted">→</span>
-          <button
-            type="button"
-            onClick={() => setEditorPhase('optimize')}
-            className={`px-3 py-1 rounded-full border transition cursor-pointer ${
-              editorPhase === 'optimize'
-                ? 'bg-ink text-white border-ink shadow-brutal-sm'
-                : 'bg-white text-ink border-ink/20 hover:border-ink'
-            }`}
-          >
-            2. AI Optimizer
-          </button>
-          <span className="text-ink-muted">→</span>
-          <button
-            type="button"
-            onClick={() => setEditorPhase('ats_and_download')}
-            className={`px-3 py-1 rounded-full border transition cursor-pointer ${
-              editorPhase === 'ats_and_download'
-                ? 'bg-ink text-white border-ink shadow-brutal-sm'
-                : 'bg-white text-ink border-ink/20 hover:border-ink'
-            }`}
-          >
-            3. ATS & Download
-          </button>
-        </div>
-
-        {/* Center: Mobile Switcher (Editor / Preview / Design) */}
-        <div className="md:hidden flex rounded-full bg-white p-0.5 border border-ink shadow-brutal-sm">
-          <button
-            onClick={() => setMobileView('editor')}
-            className={`px-3 py-1 text-xs font-bold rounded-full transition ${
-              mobileView === 'editor' ? 'bg-ink text-white' : 'text-ink-muted'
-            }`}
-          >
-            Editor
-          </button>
-          <button
-            onClick={() => setMobileView('preview')}
-            className={`px-3 py-1 text-xs font-bold rounded-full transition ${
-              mobileView === 'preview' ? 'bg-ink text-white' : 'text-ink-muted'
-            }`}
-          >
-            Preview
-          </button>
-          <button
-            onClick={() => setMobileView('design')}
-            className={`px-3 py-1 text-xs font-bold rounded-full transition ${
-              mobileView === 'design' ? 'bg-ink text-white' : 'text-ink-muted'
-            }`}
-          >
-            Design
-          </button>
-        </div>
-
-        {/* Right: Template Selector & Actions */}
-        <div className="flex items-center gap-2">
-          {/* Design Studio Toggle Button */}
-          <button
-            type="button"
-            onClick={() => setShowDesignStudio(!showDesignStudio)}
-            className={`hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold transition cursor-pointer shadow-brutal-sm ${
-              showDesignStudio
-                ? 'bg-ink text-volt border-ink'
-                : 'bg-white text-ink border-ink/20 hover:border-ink'
-            }`}
-            title="Toggle Canva Design Studio Panel"
-          >
-            <Palette className="w-3.5 h-3.5" />
-            <span className="hidden xl:inline">Design Studio</span>
-          </button>
-          {/* Template Selector dropdown */}
-          <div className="hidden lg:flex items-center gap-2">
-            <span className="text-xs font-mono font-bold text-ink-muted uppercase">Template:</span>
-            <select
-              value={resumeData.templateId || 'ats-01'}
-              onChange={(e) => setTemplateId(e.target.value)}
-              className="text-xs font-bold text-ink bg-white border border-ink rounded-full px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-volt cursor-pointer shadow-brutal-sm"
-            >
-              {TEMPLATES.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name} ({t.category.toUpperCase()})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Reset sample data */}
-          <button
-            onClick={loadSampleData}
-            title="Load sample content"
-            className="p-1.5 text-ink-muted hover:text-ink hover:bg-black/5 rounded-full transition"
-          >
-            <RefreshCw className="w-4 h-4" />
-          </button>
-
-          {/* Hidden JSON input */}
-          <input
-            type="file"
-            ref={jsonInputRef}
-            onChange={handleJSONFileSelected}
-            accept=".json,application/json"
-            className="hidden"
-          />
-
-          {/* Phase-Aware Header Action */}
-          {editorPhase === 'edit' && (
-            <button
-              type="button"
-              onClick={() => setEditorPhase('optimize')}
-              className="btn-volt py-1.5 sm:py-2 px-3.5 sm:px-4 text-xs shadow-brutal-sm flex items-center gap-1.5 cursor-pointer font-extrabold"
-            >
-              <span>Complete & Optimize with AI</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          )}
-
-          {editorPhase === 'optimize' && (
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setEditorPhase('edit')}
-                className="btn-secondary py-1.5 px-3 text-xs font-bold flex items-center gap-1"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Back to Edit</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setEditorPhase('ats_and_download')}
-                className="btn-volt py-1.5 px-3.5 text-xs font-extrabold shadow-brutal-sm flex items-center gap-1.5"
-              >
-                <span>View ATS & Download</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          )}
-
-          {editorPhase === 'ats_and_download' && (
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setEditorPhase('optimize')}
-                className="btn-secondary py-1.5 px-3 text-xs font-bold flex items-center gap-1"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Back to Optimizer</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleDownloadPDF}
-                disabled={isExporting}
-                title="Direct PDF Download (Pixel-Perfect 300 DPI)"
-                className="btn-volt py-1.5 sm:py-2 px-3.5 sm:px-4 text-xs shadow-brutal-sm flex items-center gap-1.5 font-extrabold cursor-pointer"
-              >
-                {isExporting ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>{exportProgressText}</span>
-                  </>
-                ) : (
-                  <>
-                    <Download className="w-3.5 h-3.5" />
-                    <span>Download PDF</span>
-                  </>
-                )}
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
+      {/* Clean Single-Row Studio Header */}
+      <BuilderToolbar
+        docTitle={docTitle}
+        setDocTitle={setDocTitle}
+        isEditingTitle={isEditingTitle}
+        setIsEditingTitle={setIsEditingTitle}
+        onTitleBlur={handleTitleBlur}
+        displayAtsScore={displayAtsScore}
+        editorPhase={editorPhase}
+        setEditorPhase={setEditorPhase}
+        mobileView={mobileView}
+        setMobileView={setMobileView}
+        showDesignStudio={showDesignStudio}
+        setShowDesignStudio={setShowDesignStudio}
+        isExporting={isExporting}
+        exportProgressText={exportProgressText}
+        onDownloadPDF={handleDownloadPDF}
+        onLoadSampleData={loadSampleData}
+        onExportJSON={handleExportJSON}
+        onImportJSONClick={handleImportJSONClick}
+      />
 
       {/* Main Workspace Split View */}
       <div className="flex-1 flex min-h-0 overflow-hidden">
         {/* ======================================================== */}
-        {/* LEFT PANEL: Section Forms & Ergonomic Inputs            */}
+        {/* LEFT PANEL: Section Rail + Ergonomic Forms               */}
         {/* ======================================================== */}
         <div
-          className={`w-full ${showDesignStudio ? 'md:w-5/12 lg:w-4/12 xl:w-3.5/12' : 'md:w-1/2 lg:w-5/12'} bg-white border-r border-ink/15 flex flex-col min-h-0 h-full ${
+          className={`w-full ${showDesignStudio ? 'md:w-[440px] lg:w-[490px]' : 'md:w-[480px] lg:w-[540px]'} shrink-0 bg-white border-r border-ink/15 flex flex-col min-h-0 h-full ${
             mobileView === 'editor' ? 'flex' : 'hidden md:flex'
           }`}
         >
           {/* ======================================================== */}
-          {/* STAGE 1: EDITING ALL DETAILS (Pure Section Forms)        */}
+          {/* STAGE 1: EDITING ALL DETAILS (Vertical Rail + Form)      */}
           {/* ======================================================== */}
           {editorPhase === 'edit' && (
-            <>
-              {/* Section Navigation Tabs with Left & Right Sliding Controls */}
-              <div className="relative flex items-center border-b border-ink/10 bg-canvas px-1.5 shrink-0 select-none">
-            {/* Scroll Left Button */}
-            <button
-              type="button"
-              onClick={() => scrollTabs('left')}
-              className="p-1.5 text-ink-muted hover:text-ink hover:bg-black/10 rounded-full transition shrink-0 cursor-pointer"
-              title="Slide options left"
-              aria-label="Slide options left"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
+            <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
+              <SectionSidebar
+                tabs={tabs}
+                activeTab={activeTab}
+                onSelectTab={setActiveTab}
+              />
 
-            {/* Scrollable Tabs List with Mouse Wheel & Touch Scroll */}
-            <div
-              ref={tabsRef}
-              onWheel={(e) => {
-                if (e.deltaY !== 0 && tabsRef.current) {
-                  tabsRef.current.scrollLeft += e.deltaY;
-                }
-              }}
-              className="flex items-center gap-1.5 overflow-x-auto py-2.5 px-1 text-xs no-scrollbar flex-1 scroll-smooth"
-            >
-              {tabs.map((tab) => {
-                const Icon = tab.icon;
-                const isActive = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full font-bold whitespace-nowrap transition-all duration-150 cursor-pointer border shrink-0 ${
-                      isActive
-                        ? 'bg-ink text-white border-ink shadow-brutal-sm'
-                        : 'bg-white text-ink-muted border-ink/20 hover:border-ink hover:text-ink'
-                    }`}
-                  >
-                    <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-volt' : 'text-ink-muted'}`} />
-                    <span>{tab.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Scroll Right Button */}
-            <button
-              type="button"
-              onClick={() => scrollTabs('right')}
-              className="p-1.5 text-ink-muted hover:text-ink hover:bg-black/10 rounded-full transition shrink-0 cursor-pointer"
-              title="Slide options right"
-              aria-label="Slide options right"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Tab Content Form Container */}
-          <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 space-y-6 min-h-0">
+              {/* Tab Content Form Container */}
+              <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-5 space-y-6 min-h-0">
             {/* 1. PERSONAL INFORMATION */}
             {activeTab === 'personal' && (
               <div className="space-y-4">
@@ -2036,7 +1786,7 @@ export function Builder() {
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
-            </>
+            </div>
           )}
 
           {/* ======================================================== */}
@@ -2664,187 +2414,19 @@ export function Builder() {
             mobileView === 'preview' ? 'flex' : 'hidden md:flex'
           }`}
         >
-          {/* Floating Canvas Toolbar */}
-          <div className="sticky top-0 z-10 mb-6 bg-white px-4 py-2 rounded-full border-[1.5px] border-ink shadow-brutal-sm flex flex-wrap items-center justify-center gap-3 text-xs text-ink shrink-0">
-            {/* Zoom Controls with Slider */}
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setZoomScale((z) => Math.max(0.45, Number((z - 0.05).toFixed(2))))}
-                className="p-1 hover:text-ink hover:bg-canvas rounded-full transition"
-                title="Zoom Out"
-              >
-                <ZoomOut className="w-3.5 h-3.5" />
-              </button>
-              <input
-                type="range"
-                min="0.45"
-                max="1.35"
-                step="0.05"
-                value={zoomScale}
-                onChange={(e) => setZoomScale(parseFloat(e.target.value))}
-                className="w-16 h-1.5 accent-ink cursor-pointer hidden sm:block"
-                title="Canvas Zoom Slider"
-              />
-              <button
-                type="button"
-                onClick={() => setZoomScale(0.85)}
-                className="px-1.5 font-mono text-[11px] font-bold text-ink hover:text-editorial-violet"
-                title="Reset Zoom to 85%"
-              >
-                {Math.round(zoomScale * 100)}%
-              </button>
-              <button
-                type="button"
-                onClick={() => setZoomScale((z) => Math.min(1.4, Number((z + 0.05).toFixed(2))))}
-                className="p-1 hover:text-ink hover:bg-canvas rounded-full transition"
-                title="Zoom In"
-              >
-                <ZoomIn className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            <div className="h-3.5 w-px bg-ink/20" />
-
-            {/* Paper Format Toggle (A4 vs US Letter) */}
-            <button
-              type="button"
-              onClick={() => updatePreferences({ paperFormat: resumeData.preferences?.paperFormat === 'letter' ? 'a4' : 'letter' })}
-              className="px-2.5 py-1 rounded-full border border-ink/20 bg-white hover:border-ink text-[11px] font-mono font-bold text-ink cursor-pointer"
-              title="Toggle Paper Size (A4 vs US Letter)"
-            >
-              {resumeData.preferences?.paperFormat === 'letter' ? 'Letter (8.5×11")' : 'A4 (210×297mm)'}
-            </button>
-
-            <div className="h-3.5 w-px bg-ink/20" />
-
-            {/* Quick Color Swatches on Preview */}
-            <div className="hidden sm:flex items-center gap-1.5">
-              {COLOR_PRESETS.slice(0, 5).map((s) => (
-                <button
-                  key={s.color}
-                  type="button"
-                  onClick={() => handleColorChange(s.color)}
-                  className={`w-3.5 h-3.5 rounded-full transition-transform cursor-pointer border border-ink/40 ${
-                    (resumeData.preferences?.themeColor || '#1e293b') === s.color
-                      ? 'scale-125 ring-2 ring-volt'
-                      : 'hover:scale-110'
-                  }`}
-                  style={{ backgroundColor: s.color }}
-                  title={s.name}
-                />
-              ))}
-            </div>
-
-            <div className="h-3.5 w-px bg-ink/20" />
-
-            {/* Multi-Page Indicator Pill & Quick Page Mode Control */}
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-canvas border border-ink/20 font-mono text-[11px] font-bold text-ink">
-                <FileText className="w-3.5 h-3.5 text-ink-muted" />
-                <span>{pageCount === 1 ? '1 Page (A4)' : `${pageCount} Pages (A4)`}</span>
-                {isMultiPage && (
-                  <span className="ml-0.5 px-1.5 py-0.2 rounded-full bg-volt text-[9px] font-extrabold uppercase border border-ink/30">
-                    Multi-Page
-                  </span>
-                )}
-              </div>
-
-              {/* Layout Mode Control: AI Pro Condenser, 1 Page Fit & + Add 1 More Page */}
-              <div className="flex flex-wrap items-center gap-1.5">
-                {/* AI 1-Page Smart Condense Button */}
-                <button
-                  type="button"
-                  disabled={isSmartCondensing}
-                  onClick={() => handleSmartCondense(1)}
-                  title="AI Smart-Condense: Calibrates STAR bullets to fit cleanly into 1 page with ZERO lost details"
-                  className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-purple-400 bg-purple-50 hover:bg-purple-100 text-purple-900 text-[11px] font-bold font-mono transition cursor-pointer shadow-brutal-sm disabled:opacity-50"
-                >
-                  <Sparkles className="w-3 h-3 text-purple-600" />
-                  <span>{isSmartCondensing ? 'Condensing...' : '✨ AI 1-Page Pro'}</span>
-                </button>
-
-                {/* AI 2-Pages Smart Condense Button */}
-                <button
-                  type="button"
-                  disabled={isSmartCondensing}
-                  onClick={() => handleSmartCondense(2)}
-                  title="AI Smart-Condense: Balances sections across 2 pages with NO cut text"
-                  className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-blue-400 bg-blue-50 hover:bg-blue-100 text-blue-900 text-[11px] font-bold font-mono transition cursor-pointer shadow-brutal-sm disabled:opacity-50"
-                >
-                  <Sparkles className="w-3 h-3 text-blue-600" />
-                  <span>✨ AI 2-Pages Pro</span>
-                </button>
-
-                {/* 1 Page Fit button - Always visible and toggleable */}
-                <button
-                  type="button"
-                  onClick={() => setPageLayoutMode(prev => prev === '1_page' ? 'auto' : '1_page')}
-                  title={pageLayoutMode === '1_page' ? "1 Page Fit is active (Click to reset to Auto)" : "Fit all content onto 1 Page with zero cut-off"}
-                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[11px] font-bold font-mono transition cursor-pointer shadow-brutal-sm ${
-                    pageLayoutMode === '1_page'
-                      ? 'bg-ink text-volt border-ink ring-2 ring-volt/40'
-                      : 'bg-white text-ink border-ink/20 hover:border-ink hover:text-ink hover:bg-canvas'
-                  }`}
-                >
-                  {pageLayoutMode === '1_page' ? (
-                    <>
-                      <Check className="w-3 h-3 text-volt" />
-                      <span>1 Page Fit (Active)</span>
-                    </>
-                  ) : (
-                    <>
-                      <Minimize2 className="w-3 h-3 text-ink-muted" />
-                      <span>1 Page Fit</span>
-                    </>
-                  )}
-                </button>
-
-                {/* Explicit User Control: Add 1 More Page / Auto Toggle */}
-                <button
-                  type="button"
-                  onClick={() => setPageLayoutMode(prev => prev === '2_pages' ? 'auto' : '2_pages')}
-                  title={pageLayoutMode === '2_pages' ? "Switch back to Auto Fit" : "Add 1 more page (Split content across 2 pages)"}
-                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[11px] font-bold font-mono transition cursor-pointer shadow-brutal-sm ${
-                    pageLayoutMode === '2_pages'
-                      ? 'bg-ink text-volt border-ink ring-2 ring-volt/40'
-                      : 'bg-white text-ink border-ink/20 hover:border-ink hover:bg-canvas'
-                  }`}
-                >
-                  {pageLayoutMode === '2_pages' ? (
-                    <>
-                      <Check className="w-3 h-3 text-volt" />
-                      <span>2 Pages Mode</span>
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="w-3 h-3" />
-                      <span>+ Add 1 More Page</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* AI Optimization Notice Banner with 1-Click Undo */}
-            {condenseNotice && (
-              <div className="w-full bg-emerald-50 border border-emerald-300 px-4 py-2 text-xs font-semibold text-emerald-950 flex items-center justify-between rounded-lg shadow-brutal-xs animate-fadeIn">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>{condenseNotice}</span>
-                </div>
-                {undoSnapshot && (
-                  <button
-                    type="button"
-                    onClick={handleUndoCondense}
-                    className="font-bold underline text-emerald-800 hover:text-emerald-950 cursor-pointer ml-3 text-xs"
-                  >
-                    Undo Changes
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
+          {/* Minimal Preview Canvas Toolbar */}
+          <PreviewCanvasToolbar
+            zoomScale={zoomScale}
+            setZoomScale={setZoomScale}
+            pageCount={pageCount}
+            pageLayoutMode={pageLayoutMode}
+            setPageLayoutMode={setPageLayoutMode}
+            isSmartCondensing={isSmartCondensing}
+            onSmartCondense={handleSmartCondense}
+            condenseNotice={condenseNotice}
+            undoSnapshot={undoSnapshot}
+            onUndoCondense={handleUndoCondense}
+          />
 
           {/* Genuine A4 Document Paper Sheet Container */}
           <div
