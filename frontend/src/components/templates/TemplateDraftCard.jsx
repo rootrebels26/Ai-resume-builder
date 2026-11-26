@@ -1,6 +1,7 @@
 import React from 'react';
-import { Eye, Sparkles, Check, Star, Heart, Camera, ShieldCheck } from 'lucide-react';
-import { TemplateDraftPaper } from './TemplateDraftPaper';
+import { Eye, Sparkles, Check, Heart, Camera, ShieldCheck } from 'lucide-react';
+import { DynamicResumeCanvas } from './DynamicResumeCanvas';
+import { INITIAL_RESUME_DATA } from '../../constants/initialResumeData';
 
 export function TemplateDraftCard({
   template,
@@ -76,11 +77,37 @@ export function TemplateDraftCard({
         </div>
       </div>
 
-      {/* Realistic Resume Preview Canvas */}
-      <div className="bg-[#ede8df] p-4 relative flex items-center justify-center overflow-hidden min-h-[270px] border-b border-ink/10">
+      {/* Realistic Resume Preview Canvas (Exact 1:1 DynamicResumeCanvas miniature) */}
+      <div className="bg-[#ede8df] p-4 relative flex items-center justify-center overflow-hidden min-h-[285px] border-b border-ink/10">
         {/* A4 Paper Miniature */}
-        <div className="w-full max-w-[200px] aspect-[210/297] rounded-md bg-white shadow-md border border-black/10 overflow-hidden transform transition-transform duration-300 group-hover:scale-[1.03]">
-          <TemplateDraftPaper template={template} />
+        <div className="w-[200px] h-[283px] rounded-md bg-white shadow-md border border-black/10 overflow-hidden transform transition-transform duration-300 group-hover:scale-[1.03] relative">
+          <div
+            style={{
+              width: '793.7px',
+              minHeight: '1122.5px',
+              padding: '12mm 14mm',
+              boxSizing: 'border-box',
+              transform: 'scale(0.252)',
+              transformOrigin: 'top left',
+              pointerEvents: 'none',
+            }}
+          >
+            <DynamicResumeCanvas
+              templateId={template.id}
+              resumeData={{ ...INITIAL_RESUME_DATA, preferences: {} }}
+              designOverrides={{
+                layout: template.layout || 'single-column',
+                primaryColor: template.palette?.primary || template.colors?.primary || template.accentColor || '#0f172a',
+                accentColor: template.palette?.accent || template.palette?.secondary || template.colors?.accent || template.accentColor || '#3b82f6',
+                backgroundColor: template.palette?.bg || template.palette?.background || '#ffffff',
+                textColor: template.palette?.text || '#1e293b',
+                fontFamily: template.typography?.bodyFont || template.fontFamily || 'Inter, sans-serif',
+                headingFont: template.typography?.headingFont || template.fontFamily || 'Inter, sans-serif',
+                dividerStyle: template.dividerStyle || 'line',
+                bulletStyle: template.bulletStyle || 'disc',
+              }}
+            />
+          </div>
         </div>
 
         {/* Hover Quick Action Overlay */}

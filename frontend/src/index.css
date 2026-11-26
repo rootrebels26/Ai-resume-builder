@@ -786,3 +786,9 @@
 .one-page-fit-active .pb-2 {
   padding-bottom: 0.2rem !important;
 }
+
+.resume-dark-sidebar,
+.resume-dark-sidebar * {
+  color: rgba(255, 255, 255, 0.94) !important;
+  border-color: rgba(255, 255, 255, 0.28) !important;
+}

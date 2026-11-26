@@ -1,5 +1,6 @@
 import React from 'react';
 import { TEMPLATE_REGISTRY } from '../../constants/templateRegistry';
+import { getTemplateHeaderStyle, getTemplateVisualArchetype } from '../../utils/templateStyleResolver';
 import {
   Mail, Phone, MapPin, Globe, Linkedin, Github, ExternalLink,
   Award, Briefcase, GraduationCap, Wrench, FolderGit2, BookOpen, Star, Languages as LangIcon
@@ -163,25 +164,52 @@ export function DynamicResumeCanvas({
 
   const effectivePageNumber = pageNumber || resumeData?.pageNumber || 1;
   const isContinuation = Boolean(resumeData?.isContinuation || effectivePageNumber > 1);
+  const visualArchetype = getTemplateVisualArchetype(templateDef, activeLayout);
+  const isDarkSidebar = visualArchetype === 'sidebar-dark-left' || visualArchetype === 'sidebar-dark-right';
+  const isSidebarLayout = activeLayout === 'sidebar-left' || activeLayout === 'sidebar-right';
 
   // 1. Candidate Header Component (With optional photo support)
   const HeaderComponent = () => {
     // On continuation pages (Page 2+), DO NOT render candidate name, title, or contact details.
-    // Continuation pages start directly with the remaining resume sections (experience, projects, etc.).
     if (effectivePageNumber > 1 || isContinuation) {
       return null;
     }
 
-    const isHeaderCard = activeLayout === 'header-card';
-    const isCenteredHeader = activeLayout === 'single-column';
+    const headerVariant = getTemplateHeaderStyle(templateDef, activeLayout);
+    const isBannerSolid = visualArchetype === 'banner-solid';
+    const isBannerTinted = visualArchetype === 'banner-tinted';
+    const isHeaderCard = isBannerSolid || isBannerTinted;
+    const isCenteredHeader = headerVariant === 'centered' || headerVariant === 'centered-boxed';
+    const isCenteredBoxed = headerVariant === 'centered-boxed';
+    const isAccentBarHeader = headerVariant === 'accent-bar';
+
+    const headerBg = isBannerSolid ? primaryColor : (isBannerTinted ? `${primaryColor}14` : 'transparent');
+    const headerTitleColor = isBannerSolid ? '#ffffff' : primaryColor;
+    const headerSubColor = isBannerSolid ? 'rgba(255,255,255,0.9)' : accentColor;
+    const headerTextColor = isBannerSolid ? 'rgba(255,255,255,0.92)' : textColor;
 
     return (
       <header
-        className={`${isOnePage ? 'pb-2 mb-2' : 'pb-3 mb-3'} ${isHeaderCard ? 'p-4 rounded-xl mb-3' : 'border-b'}`}
+        className={`${isOnePage ? 'pb-2 mb-2' : 'pb-3 mb-3'} ${
+          isHeaderCard
+            ? 'p-4 rounded-xl mb-3'
+            : isCenteredBoxed
+              ? 'p-3.5 border rounded-lg mb-3'
+              : isAccentBarHeader
+                ? 'pl-3.5 border-l-4 pb-2 mb-3'
+                : 'border-b'
+        }`}
         style={{
-          borderColor: isHeaderCard ? 'transparent' : `${primaryColor}35`,
-          backgroundColor: isHeaderCard ? primaryColor : 'transparent',
-          color: isHeaderCard ? '#ffffff' : textColor,
+          borderColor: isBannerSolid
+            ? 'transparent'
+            : isBannerTinted
+              ? primaryColor
+              : isAccentBarHeader
+                ? primaryColor
+                : `${primaryColor}35`,
+          borderLeftWidth: isBannerTinted ? '5px' : undefined,
+          backgroundColor: headerBg,
+          color: headerTextColor,
         }}
       >
         <div className={`flex ${isCenteredHeader ? 'flex-col items-center text-center gap-2' : 'flex-row items-center gap-4'}`}>
@@ -202,7 +230,7 @@ export function DynamicResumeCanvas({
                 style={{
                   fontFamily: headingFont,
                   fontSize: `${(baseFontSize * 2.1).toFixed(1)}px`,
-                  color: isHeaderCard ? '#ffffff' : primaryColor,
+                  color: headerTitleColor,
                   lineHeight: 1.15,
                 }}
               >
@@ -212,7 +240,7 @@ export function DynamicResumeCanvas({
                 <span
                   className="font-bold text-xs sm:text-sm tracking-wide uppercase break-words max-w-full"
                   style={{
-                    color: isHeaderCard ? 'rgba(255,255,255,0.9)' : accentColor,
+                    color: headerSubColor,
                     fontFamily: headingFont,
                   }}
                 >
@@ -224,7 +252,7 @@ export function DynamicResumeCanvas({
           {/* Contact Bar */}
           <div
             className={`flex flex-wrap items-center gap-x-3.5 gap-y-1 text-xs ${isCenteredHeader ? 'justify-center' : 'justify-start'}`}
-            style={{ color: isHeaderCard ? 'rgba(255,255,255,0.92)' : textColor, opacity: isHeaderCard ? 1 : 0.9 }}
+            style={{ color: headerTextColor, opacity: isBannerSolid ? 1 : 0.9 }}
           >
             {personalInfo.phone && (
               <a
@@ -734,16 +762,22 @@ export function DynamicResumeCanvas({
       </div>
     );
 
-    const isSidebar = activeLayout === 'sidebar-left' || activeLayout === 'sidebar-right';
+    const isSidebar = isSidebarLayout;
+    const isTimelineTwoCol = visualArchetype === 'two-col-timeline';
     const sideContent = (
       <div
-        className="w-[34%] shrink-0 space-y-1"
+        className={`w-[34%] shrink-0 space-y-1 ${isDarkSidebar ? 'resume-dark-sidebar' : ''}`}
         style={{
-          backgroundColor: isSidebar ? `${primaryColor}0c` : 'transparent',
-          borderRadius: isSidebar ? '8px' : '0',
-          padding: isSidebar ? '12px' : (isSidebarLeft ? '0 14px 0 0' : '0 0 0 14px'),
-          borderLeft: !isSidebar && !isSidebarLeft ? `1px solid ${borderColor}` : 'none',
-          borderRight: !isSidebar && isSidebarLeft ? `1px solid ${borderColor}` : 'none',
+          backgroundColor: isDarkSidebar
+            ? primaryColor
+            : isSidebar
+              ? `${primaryColor}10`
+              : 'transparent',
+          color: isDarkSidebar ? '#ffffff' : textColor,
+          borderRadius: isSidebar ? '10px' : '0',
+          padding: isSidebar ? '14px' : (isSidebarLeft ? '0 14px 0 0' : '0 0 0 14px'),
+          borderLeft: !isSidebar && !isSidebarLeft ? `${isTimelineTwoCol ? '2px' : '1px'} solid ${isTimelineTwoCol ? primaryColor : borderColor}` : 'none',
+          borderRight: !isSidebar && isSidebarLeft ? `${isTimelineTwoCol ? '2px' : '1px'} solid ${isTimelineTwoCol ? primaryColor : borderColor}` : 'none',
         }}
       >
         {sectionOrder.filter(k => sideSections.includes(k)).map(secKey => {
