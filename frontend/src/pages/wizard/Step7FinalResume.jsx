@@ -1,33 +1,18 @@
 import React, { useRef, useState } from 'react';
-import { Download, Printer, FileJson, ArrowLeft, RefreshCw, ZoomIn, ZoomOut, Check, Palette, Sparkles, FileText } from 'lucide-react';
+import { Download, FileJson, ArrowLeft, RefreshCw, ZoomIn, ZoomOut, Check, Palette, Sparkles } from 'lucide-react';
 import { useResume } from '../../context/ResumeContext';
 import { ResumeTemplate } from '../../components/templates/ResumeTemplate';
 import { TEMPLATES, isFullBleedTemplate } from '../../constants/templatesList';
 import { pdfService } from '../../services/pdfService';
-import { docxService } from '../../services/docxService';
 import { storageService } from '../../services/storageService';
 
 export function Step7FinalResume({ onPrev }) {
   const { resumeData, selectedTemplateId, selectTemplate, selectedJob, updatePreferences } = useResume();
   const [zoomScale, setZoomScale] = useState(0.85);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [isDownloadingDocx, setIsDownloadingDocx] = useState(false);
   const printRef = useRef(null);
 
   const activeTemplate = TEMPLATES.find(t => t.id === selectedTemplateId) || TEMPLATES[0];
-
-  const handleDownloadDOCX = async () => {
-    setIsDownloadingDocx(true);
-    try {
-      const filename = `${(resumeData.personalInfo.fullName || 'Resume').replace(/\s+/g, '_')}_${(selectedJob?.role || 'Resume').replace(/\s+/g, '_')}.docx`;
-      await docxService.exportToDocx(resumeData, filename);
-    } catch (err) {
-      console.error('Word export error:', err);
-      alert('Could not export Word document: ' + (err.message || 'Unknown error'));
-    } finally {
-      setIsDownloadingDocx(false);
-    }
-  };
 
   const handleDownloadPDF = async () => {
     if (printRef.current) {
@@ -112,24 +97,6 @@ export function Step7FinalResume({ onPrev }) {
           >
             <FileJson className="w-3.5 h-3.5" />
             <span>JSON</span>
-          </button>
-
-          <button
-            onClick={() => pdfService.print()}
-            className="btn-secondary py-1.5 px-3 text-xs"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Print</span>
-          </button>
-
-          <button
-            onClick={handleDownloadDOCX}
-            disabled={isDownloadingDocx}
-            className="btn-secondary py-2 px-3.5 text-xs shadow-sm flex items-center gap-1.5 font-bold"
-            title="Download editable Microsoft Word format"
-          >
-            <FileText className="w-3.5 h-3.5 text-blue-600" />
-            <span>{isDownloadingDocx ? 'Exporting...' : 'Download Word (.docx)'}</span>
           </button>
 
           <button

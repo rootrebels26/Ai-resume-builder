@@ -2,7 +2,7 @@ import React, { useState, useRef, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   User, Briefcase, GraduationCap, FolderGit2, Wrench, Award, Palette, Target,
-  Sparkles, Download, Printer, FileJson, Upload, RefreshCw, ZoomIn, ZoomOut,
+  Sparkles, Download, FileJson, Upload, RefreshCw, ZoomIn, ZoomOut,
   Plus, Trash2, ChevronLeft, ChevronRight, ChevronDown, Check, Eye, Loader2, ArrowRight,
   ArrowLeft, Languages, Layers, MoveUp, MoveDown, CheckCircle2, Sliders,
   HelpCircle, AlertCircle, Edit3, FileText, Scissors, Minimize2
@@ -16,7 +16,6 @@ import { pdfService } from '../services/pdfService';
 import { storageService } from '../services/storageService';
 import { aiService } from '../services/aiService';
 import { resumeService } from '../services/resumeService';
-import { docxService } from '../services/docxService';
 import { useResumePagination } from '../utils/resumePaginator';
 import { PhotoUploadModal } from '../components/templates/PhotoUploadModal';
 
@@ -673,25 +672,6 @@ export function Builder() {
     }
   };
 
-  // State for DOCX Export
-  const [isExportingDocx, setIsExportingDocx] = useState(false);
-
-  // DOCX Export Handler
-  const handleDownloadDOCX = async () => {
-    setIsExportingDocx(true);
-    try {
-      const candidate = (resumeData.personalInfo?.fullName || 'Resume').replace(/\s+/g, '_');
-      const role = (resumeData.personalInfo?.professionalTitle || 'CV').replace(/\s+/g, '_');
-      const filename = `${candidate}_${role}.docx`;
-      await docxService.exportToDocx(resumeData, filename);
-    } catch (e) {
-      console.error('DOCX export error:', e);
-      alert('Could not export Word document: ' + (e.message || 'Unknown error'));
-    } finally {
-      setIsExportingDocx(false);
-    }
-  };
-
   // PDF Export
   const handleDownloadPDF = async () => {
     if (!previewRef.current) return;
@@ -711,13 +691,6 @@ export function Builder() {
       setIsExporting(false);
       setExportProgressText('Exporting...');
     }
-  };
-
-  const handlePrintVectorPDF = async () => {
-    if (!previewRef.current) return;
-    await pdfService.printVectorPDF(previewRef.current, {
-      format: resumeData?.preferences?.paperFormat || 'a4'
-    });
   };
 
   // JSON Import & Export
@@ -963,28 +936,9 @@ export function Builder() {
               </button>
               <button
                 type="button"
-                onClick={handleDownloadDOCX}
-                disabled={isExportingDocx}
-                className="btn-secondary py-1.5 sm:py-2 px-3 sm:px-3.5 text-xs shadow-brutal-sm flex items-center gap-1.5 font-extrabold cursor-pointer bg-white hover:bg-slate-50"
-                title="Download editable Microsoft Word format"
-              >
-                {isExportingDocx ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Word...</span>
-                  </>
-                ) : (
-                  <>
-                    <FileText className="w-3.5 h-3.5 text-blue-600" />
-                    <span>Download DOCX</span>
-                  </>
-                )}
-              </button>
-              <button
-                type="button"
                 onClick={handleDownloadPDF}
                 disabled={isExporting}
-                title="Direct PDF Download (300+ DPI High Resolution)"
+                title="Direct PDF Download (Pixel-Perfect 300 DPI)"
                 className="btn-volt py-1.5 sm:py-2 px-3.5 sm:px-4 text-xs shadow-brutal-sm flex items-center gap-1.5 font-extrabold cursor-pointer"
               >
                 {isExporting ? (
@@ -998,16 +952,6 @@ export function Builder() {
                     <span>Download PDF</span>
                   </>
                 )}
-              </button>
-              <button
-                type="button"
-                onClick={handlePrintVectorPDF}
-                disabled={isExporting}
-                title="Print or Save via Browser Native Engine (100% Vector Text & Icons)"
-                className="btn-secondary py-1.5 sm:py-2 px-3 text-xs shadow-brutal-sm hidden lg:flex items-center gap-1.5 font-bold cursor-pointer"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                <span>Print / Vector</span>
               </button>
             </div>
           )}
@@ -2670,47 +2614,24 @@ export function Builder() {
                   Export Resume:
                 </span>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  <button
-                    type="button"
-                    onClick={handleDownloadPDF}
-                    disabled={isExporting}
-                    className="btn-volt py-3 px-4 text-xs font-extrabold shadow-brutal flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
-                  >
-                    <Download className="w-4 h-4" />
-                    <span>{isExporting ? 'Generating PDF...' : 'Download ATS PDF'}</span>
-                  </button>
+                <button
+                  type="button"
+                  onClick={handleDownloadPDF}
+                  disabled={isExporting}
+                  className="w-full btn-volt py-3 px-4 text-xs font-extrabold shadow-brutal flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>{isExporting ? 'Generating PDF...' : 'Download PDF'}</span>
+                </button>
 
-                  <button
-                    type="button"
-                    onClick={handleDownloadDOCX}
-                    disabled={isExportingDocx}
-                    className="btn-secondary py-3 px-4 text-xs font-extrabold shadow-brutal flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 bg-white hover:bg-slate-50 border border-ink"
-                  >
-                    <FileText className="w-4 h-4 text-blue-600" />
-                    <span>{isExportingDocx ? 'Generating Word...' : 'Download Word (.docx)'}</span>
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => window.print()}
-                    className="btn-secondary py-2 px-3 text-xs font-bold flex items-center justify-center gap-1.5 shadow-brutal-sm"
-                  >
-                    <Printer className="w-3.5 h-3.5" />
-                    <span>Print Document</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleExportJSON}
-                    className="btn-secondary py-2 px-3 text-xs font-bold flex items-center justify-center gap-1.5 shadow-brutal-sm"
-                  >
-                    <FileJson className="w-3.5 h-3.5" />
-                    <span>Export JSON</span>
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={handleExportJSON}
+                  className="w-full btn-secondary py-2 px-3 text-xs font-bold flex items-center justify-center gap-1.5 shadow-brutal-sm"
+                >
+                  <FileJson className="w-3.5 h-3.5" />
+                  <span>Export JSON Backup</span>
+                </button>
               </div>
 
               {/* Quick Navigation Back */}

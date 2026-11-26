@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Download, Printer, Edit } from 'lucide-react';
+import { ArrowLeft, Download } from 'lucide-react';
 import { useResume } from '../context/ResumeContext';
 import { ResumeTemplate } from '../components/templates/ResumeTemplate';
 import { isFullBleedTemplate } from '../constants/templatesList';
@@ -32,14 +32,6 @@ export function Preview() {
         </Link>
 
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => pdfService.print()}
-            className="btn-secondary py-1.5 px-3 text-xs"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Print</span>
-          </button>
-
           <button
             onClick={handleDownloadPDF}
             className="btn-primary py-1.5 px-4 text-xs shadow-sm"
