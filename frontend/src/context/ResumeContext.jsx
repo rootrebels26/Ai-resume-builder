@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { INITIAL_RESUME_DATA } from '../constants/initialResumeData';
 import { storageService, INITIAL_WIZARD_STATE } from '../services/storageService';
 import { TEMPLATES } from '../constants/templatesList';
@@ -30,8 +30,11 @@ export function ResumeProvider({ children }) {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const saveTimeoutRef = useRef(null);
 
-  // Resume Data is the core document inside wizardState
-  const resumeData = wizardState.resumeData ? sanitizeResumeData(wizardState.resumeData) : INITIAL_RESUME_DATA;
+  // Memoize sanitized resumeData so downstream consumers & paginator don't thrash on every render
+  const resumeData = useMemo(
+    () => (wizardState.resumeData ? sanitizeResumeData(wizardState.resumeData) : INITIAL_RESUME_DATA),
+    [wizardState.resumeData]
+  );
   const activeDraftId = wizardState.activeDraftId || 'active_resume_draft';
 
   const refreshDraftsList = useCallback(async () => {
@@ -58,7 +61,6 @@ export function ResumeProvider({ children }) {
 
   // Debounced auto-save of entire WizardState to IndexedDB and localStorage
   useEffect(() => {
-    setSaveStatus('unsaved');
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
 
     saveTimeoutRef.current = setTimeout(async () => {
@@ -79,7 +81,7 @@ export function ResumeProvider({ children }) {
         console.error('Failed to auto-save wizard state:', e);
         setSaveStatus('unsaved');
       }
-    }, 600);
+    }, 800);
 
     return () => {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);

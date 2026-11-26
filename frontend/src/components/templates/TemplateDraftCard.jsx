@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState, useEffect, useRef, memo } from 'react';
 import { Eye, Sparkles, Check, Heart, Camera, ShieldCheck } from 'lucide-react';
 import { DynamicResumeCanvas } from './DynamicResumeCanvas';
 import { INITIAL_RESUME_DATA } from '../../constants/initialResumeData';
 
-export function TemplateDraftCard({
+// Shared immutable preview payload so cards never trigger unnecessary re-renders
+const PREVIEW_RESUME_DATA = { ...INITIAL_RESUME_DATA, preferences: {} };
+
+export const TemplateDraftCard = memo(function TemplateDraftCard({
   template,
   isSelected,
   onSelect,
@@ -13,6 +16,27 @@ export function TemplateDraftCard({
 }) {
   const isPhotoRequired = template.photoPolicy === 'required' || template.photoRequired;
   const isPhotoOptional = template.photoPolicy === 'optional';
+  const cardRef = useRef(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') {
+      setIsVisible(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '250px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div
@@ -77,37 +101,48 @@ export function TemplateDraftCard({
         </div>
       </div>
 
-      {/* Realistic Resume Preview Canvas (Exact 1:1 DynamicResumeCanvas miniature) */}
-      <div className="bg-[#ede8df] p-4 relative flex items-center justify-center overflow-hidden min-h-[285px] border-b border-ink/10">
+      {/* Realistic Resume Preview Canvas (Exact 1:1 DynamicResumeCanvas miniature, lazy-mounted on scroll) */}
+      <div ref={cardRef} className="bg-[#ede8df] p-4 relative flex items-center justify-center overflow-hidden min-h-[285px] border-b border-ink/10">
         {/* A4 Paper Miniature */}
         <div className="w-[200px] h-[283px] rounded-md bg-white shadow-md border border-black/10 overflow-hidden transform transition-transform duration-300 group-hover:scale-[1.03] relative">
-          <div
-            style={{
-              width: '793.7px',
-              minHeight: '1122.5px',
-              padding: '12mm 14mm',
-              boxSizing: 'border-box',
-              transform: 'scale(0.252)',
-              transformOrigin: 'top left',
-              pointerEvents: 'none',
-            }}
-          >
-            <DynamicResumeCanvas
-              templateId={template.id}
-              resumeData={{ ...INITIAL_RESUME_DATA, preferences: {} }}
-              designOverrides={{
-                layout: template.layout || 'single-column',
-                primaryColor: template.palette?.primary || template.colors?.primary || template.accentColor || '#0f172a',
-                accentColor: template.palette?.accent || template.palette?.secondary || template.colors?.accent || template.accentColor || '#3b82f6',
-                backgroundColor: template.palette?.bg || template.palette?.background || '#ffffff',
-                textColor: template.palette?.text || '#1e293b',
-                fontFamily: template.typography?.bodyFont || template.fontFamily || 'Inter, sans-serif',
-                headingFont: template.typography?.headingFont || template.fontFamily || 'Inter, sans-serif',
-                dividerStyle: template.dividerStyle || 'line',
-                bulletStyle: template.bulletStyle || 'disc',
+          {isVisible ? (
+            <div
+              style={{
+                width: '793.7px',
+                minHeight: '1122.5px',
+                padding: '12mm 14mm',
+                boxSizing: 'border-box',
+                transform: 'scale(0.252)',
+                transformOrigin: 'top left',
+                pointerEvents: 'none',
               }}
-            />
-          </div>
+            >
+              <DynamicResumeCanvas
+                templateId={template.id}
+                resumeData={PREVIEW_RESUME_DATA}
+                designOverrides={{
+                  layout: template.layout || 'single-column',
+                  primaryColor: template.palette?.primary || template.colors?.primary || template.accentColor || '#0f172a',
+                  accentColor: template.palette?.accent || template.palette?.secondary || template.colors?.accent || template.accentColor || '#3b82f6',
+                  backgroundColor: template.palette?.bg || template.palette?.background || '#ffffff',
+                  textColor: template.palette?.text || '#1e293b',
+                  fontFamily: template.typography?.bodyFont || template.fontFamily || 'Inter, sans-serif',
+                  headingFont: template.typography?.headingFont || template.fontFamily || 'Inter, sans-serif',
+                  dividerStyle: template.dividerStyle || 'line',
+                  bulletStyle: template.bulletStyle || 'disc',
+                }}
+              />
+            </div>
+          ) : (
+            <div className="w-full h-full p-3 space-y-2 bg-white animate-pulse">
+              <div className="h-3 w-2/3 mx-auto rounded bg-slate-200" />
+              <div className="h-2 w-1/2 mx-auto rounded bg-slate-100" />
+              <div className="h-px w-full bg-slate-200 my-2" />
+              <div className="h-2 w-full rounded bg-slate-100" />
+              <div className="h-2 w-5/6 rounded bg-slate-100" />
+              <div className="h-2 w-4/6 rounded bg-slate-100" />
+            </div>
+          )}
         </div>
 
         {/* Hover Quick Action Overlay */}
@@ -195,4 +230,4 @@ export function TemplateDraftCard({
       </div>
     </div>
   );
-}
+});
