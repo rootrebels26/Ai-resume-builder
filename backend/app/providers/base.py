@@ -45,3 +45,7 @@ class BaseAIProvider(ABC):
     @abstractmethod
     async def parse_resume_document(self, text: str, layout_metadata: Dict[str, Any] = None) -> Dict[str, Any]:
         pass
+
+    async def parse_section(self, section_type: str, section_text: str, repair_errors: list = None, heading_raw: str = "") -> Dict[str, Any]:
+        """Stage 3: Section-scoped extraction. Override in providers."""
+        raise NotImplementedError("parse_section not implemented")

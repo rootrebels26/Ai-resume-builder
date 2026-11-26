@@ -55,4 +55,7 @@ class AIServiceProxy(BaseAIProvider):
     async def parse_resume_document(self, text: str, layout_metadata: dict = None):
         return await self.provider.parse_resume_document(text, layout_metadata)
 
+    async def parse_section(self, section_type: str, section_text: str, repair_errors: list = None, heading_raw: str = ""):
+        return await self.provider.parse_section(section_type, section_text, repair_errors=repair_errors, heading_raw=heading_raw)
+
 ai_service = AIServiceProxy()

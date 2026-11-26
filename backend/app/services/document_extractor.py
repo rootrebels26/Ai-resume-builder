@@ -20,6 +20,69 @@ class DocumentExtractor:
     """
 
     @staticmethod
+    def _clean_acquired_text(text: str) -> str:
+        """
+        Stage 1 text cleanup: ligatures, hyphenated line-wraps, and icon-font glyphs.
+        """
+        if not text:
+            return ""
+        # Ligatures
+        for lig, rep in [("ﬁ", "fi"), ("ﬂ", "fl"), ("ﬀ", "ff"), ("ﬃ", "ffi"), ("ﬄ", "ffl")]:
+            text = text.replace(lig, rep)
+        # Rejoin hyphenated words broken across lines
+        text = re.sub(r'([A-Za-z])-\s*\n\s*([a-z])', r'\1\2', text)
+        # Strip private-use Unicode icon-font glyphs
+        text = re.sub(r'[\ue000-\uf8ff]', ' ', text)
+        # Strip standalone "Page X of Y" lines
+        text = re.sub(r'(?im)^\s*page\s+\d+(?:\s+of\s+\d+)?\s*$', '', text)
+        return text
+
+    @staticmethod
+    def _find_hidden_text_spans(page, page_rect) -> Tuple[List[str], bool]:
+        """
+        Detects white text on white background, tiny font (<2pt), or off-page text.
+        Explicitly allows white text sitting on dark-filled header banners or sidebars.
+        """
+        hidden_snippets: List[str] = []
+        try:
+            dark_rects: List[fitz.Rect] = []
+            for d in page.get_drawings():
+                fill = d.get("fill")
+                rect = d.get("rect")
+                if fill and rect and len(fill) >= 3:
+                    brightness = (fill[0] + fill[1] + fill[2]) / 3.0
+                    if brightness < 0.65:
+                        dark_rects.append(fitz.Rect(rect))
+
+            pdict = page.get_text("dict")
+            for block in pdict.get("blocks", []):
+                if block.get("type") != 0:
+                    continue
+                for line in block.get("lines", []):
+                    for span in line.get("spans", []):
+                        txt = (span.get("text") or "").strip()
+                        if not txt:
+                            continue
+                        size = span.get("size", 10.0)
+                        color = span.get("color", 0)
+                        r = (color >> 16) & 0xFF
+                        g = (color >> 8) & 0xFF
+                        b = color & 0xFF
+                        is_white = (r >= 250 and g >= 250 and b >= 250)
+                        bbox = span.get("bbox", (0, 0, 10, 10))
+                        s_rect = fitz.Rect(bbox)
+                        on_dark_bg = any(dr.intersects(s_rect) for dr in dark_rects) if is_white else False
+                        is_offpage = (
+                            bbox[2] < 0 or bbox[0] > page_rect.width or
+                            bbox[3] < 0 or bbox[1] > page_rect.height
+                        )
+                        if size < 2.0 or (is_white and not on_dark_bg) or is_offpage:
+                            hidden_snippets.append(txt)
+        except Exception:
+            pass
+        return hidden_snippets, len(hidden_snippets) > 0
+
+    @staticmethod
     def extract_from_pdf(file_path: str) -> Dict[str, Any]:
         """
         Extracts structured text from PDF, sorting columns spatially and detecting scanned pages.
@@ -85,9 +148,13 @@ class DocumentExtractor:
             except Exception as e:
                 logger.debug("Failed extracting links from page %d: %s", page_idx, e)
 
-            # 2. Check if page contains images
+            # 2. Check if page contains images & hidden text spans
             images = page.get_images(full=True)
             has_images = len(images) > 0
+            hidden_snippets, has_hidden = DocumentExtractor._find_hidden_text_spans(page, page_rect)
+            if has_hidden and "HIDDEN_TEXT: Excluded white, tiny, or off-page text." not in warnings:
+                warnings.append("HIDDEN_TEXT: Excluded white, tiny, or off-page text.")
+            hidden_set = set(hidden_snippets)
 
             # 3. Extract text words and match with hyperlink annotations
             words = []
@@ -100,8 +167,10 @@ class DocumentExtractor:
             seen_link_uris_in_line: Dict[Tuple[int, int], set] = {}
 
             for w in words:
-                w_rect = fitz.Rect(w[0], w[1], w[2], w[3])
                 w_text = w[4]
+                if w_text.strip() in hidden_set:
+                    continue
+                w_rect = fitz.Rect(w[0], w[1], w[2], w[3])
                 block_no = w[5]
                 line_no = w[6]
                 line_key = (block_no, line_no)
@@ -166,9 +235,14 @@ class DocumentExtractor:
                 )
 
                 if len(left_col) >= 3 and len(right_col) >= 3 and has_vertical_overlap:
-                    is_two_column = True
-                    left_blocks = sorted(left_col, key=lambda b: (b[1], b[0]))
-                    right_blocks = sorted(right_col, key=lambda b: (b[1], b[0]))
+                    left_span = max(b[3] for b in left_col) - min(b[1] for b in left_col)
+                    right_span = max(b[3] for b in right_col) - min(b[1] for b in right_col)
+                    right_chars = sum(len(b[4]) for b in right_col)
+                    # Only classify as true 2-column layout if both columns span >40% of page height
+                    if left_span > page_height * 0.40 and right_span > page_height * 0.40 and right_chars > 250:
+                        is_two_column = True
+                        left_blocks = sorted(left_col, key=lambda b: (b[1], b[0]))
+                        right_blocks = sorted(right_col, key=lambda b: (b[1], b[0]))
 
             # 5. Assemble page text in correct spatial reading order
             page_lines = []
@@ -190,13 +264,13 @@ class DocumentExtractor:
                         page_lines.append(b[4].strip())
                         processed_ids.add(b[5])
             else:
-                sorted_blocks = sorted(enriched_text_blocks, key=lambda b: (b[1], b[0]))
+                sorted_blocks = sorted(enriched_text_blocks, key=lambda b: (round(b[1] / 6), b[0]))
                 for b in sorted_blocks:
                     clean_b = b[4].strip()
                     if clean_b:
                         page_lines.append(clean_b)
 
-            page_text = "\n".join(page_lines)
+            page_text = DocumentExtractor._clean_acquired_text("\n".join(page_lines))
 
             # If page text is empty but page has images, attempt OCR / vision recovery
             if len(page_text.strip()) < 30 and has_images:
@@ -205,7 +279,7 @@ class DocumentExtractor:
                     img_bytes = pix.tobytes("jpeg")
                     recovered_ocr = DocumentExtractor._ocr_image_bytes(img_bytes, mime="image/jpeg")
                     if recovered_ocr.strip():
-                        page_text = recovered_ocr.strip()
+                        page_text = DocumentExtractor._clean_acquired_text(recovered_ocr.strip())
                         is_scanned_doc = False
                 except Exception as ocr_err:
                     logger.debug("Page %d OCR fallback failed: %s", page_idx, ocr_err)
@@ -221,7 +295,7 @@ class DocumentExtractor:
             })
 
             if page_text.strip():
-                combined_text_lines.append(page_text.strip())
+                combined_text_lines.append(f"[[page {page_idx + 1}]]\n{page_text.strip()}")
 
         if is_scanned_doc:
             warnings.append(

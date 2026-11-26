@@ -52,6 +52,8 @@ async def parse_resume(file: UploadFile = File(...)):
             },
             "resume_data": resume_data.model_dump(),
             "validation": validation,
+            "unmapped": validation.get("unmapped", []),
+            "structured_warnings": validation.get("structuredWarnings", []),
             "confidence_score": validation.get("overallConfidence", 85),
             "warnings": all_warnings
         },

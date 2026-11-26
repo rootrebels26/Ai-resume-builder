@@ -17,12 +17,43 @@ export function ExtractionReviewModal({
     raw_text = '',
     resume_data: initialResumeData = {},
     validation = {},
+    unmapped: topUnmapped = [],
+    structured_warnings: topStructuredWarnings = [],
     confidence_score = 85,
     warnings = []
   } = parseResult;
 
   const [resumeData, setResumeData] = useState(initialResumeData);
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'personal' | 'experience' | 'education' | 'skills'
+  const [unmappedItems, setUnmappedItems] = useState(validation.unmapped || topUnmapped || []);
+  const structuredWarnings = validation.structuredWarnings || topStructuredWarnings || [];
+  const [activeTab, setActiveTab] = useState('overview');
+
+  const handlePlaceUnmapped = (idx, targetSection) => {
+    const item = unmappedItems[idx];
+    if (!item || !item.raw_text) return;
+    setResumeData(prev => {
+      const next = { ...prev };
+      if (targetSection === 'summary') {
+        next.professionalSummary = prev.professionalSummary
+          ? `${prev.professionalSummary}\n${item.raw_text}`
+          : item.raw_text;
+      } else if (targetSection === 'skills') {
+        const existingSkills = [...(prev.skills || [])];
+        existingSkills.push({ category: 'Imported', items: [item.raw_text] });
+        next.skills = existingSkills;
+      } else if (targetSection === 'custom') {
+        const custom = [...(prev.customSections || [])];
+        custom.push({
+          id: `placed_${Date.now()}`,
+          sectionTitle: 'Additional Details',
+          items: [{ title: item.raw_text, subtitle: '', date: '', description: '' }]
+        });
+        next.customSections = custom;
+      }
+      return next;
+    });
+    setUnmappedItems(prev => prev.filter((_, i) => i !== idx));
+  };
 
   const overallConfidence = validation.overallConfidence || confidence_score;
   const confidenceLevel = validation.confidenceLevel || (overallConfidence >= 80 ? 'High' : overallConfidence >= 55 ? 'Medium' : 'Low');
@@ -162,6 +193,18 @@ export function ExtractionReviewModal({
           >
             Certifications ({(resumeData.certifications || []).length})
           </button>
+          {(unmappedItems.length > 0 || structuredWarnings.length > 0) && (
+            <button
+              onClick={() => setActiveTab('unmapped')}
+              className={`py-2 px-3 rounded-t-xl border-t border-x transition-colors ${
+                activeTab === 'unmapped'
+                  ? 'bg-white border-ink/20 text-ink shadow-brutal-sm'
+                  : 'border-transparent text-amber-700 hover:text-ink'
+              }`}
+            >
+              Review Notices ({unmappedItems.length + structuredWarnings.length})
+            </button>
+          )}
           {raw_text && (
             <button
               onClick={() => setActiveTab('raw_text')}
@@ -468,6 +511,66 @@ export function ExtractionReviewModal({
                     </div>
                   );
                 })
+              )}
+            </div>
+          )}
+
+          {/* TAB: UNMAPPED ITEMS & STRUCTURED WARNINGS (STAGE 5) */}
+          {activeTab === 'unmapped' && (
+            <div className="space-y-4">
+              {structuredWarnings.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-xs font-mono font-bold text-ink uppercase">Validation Warnings</div>
+                  {structuredWarnings.map((w, idx) => (
+                    <div key={idx} className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs flex items-start gap-2">
+                      <span className="px-2 py-0.5 rounded bg-amber-200 text-amber-900 font-mono font-bold text-[10px] shrink-0">
+                        {w.code || 'NOTICE'}
+                      </span>
+                      <span className="text-amber-900">{w.message}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {unmappedItems.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-xs font-mono font-bold text-ink uppercase">
+                    Unmapped Lines — Place Into Resume
+                  </div>
+                  {unmappedItems.map((um, idx) => (
+                    <div key={idx} className="p-3.5 rounded-2xl bg-canvas border border-ink/15 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="space-y-1">
+                        <div className="text-xs font-semibold text-ink">{um.raw_text}</div>
+                        <div className="text-[11px] text-ink-muted font-mono">
+                          Reason: {um.reason} {um.page ? `• Page ${um.page}` : ''}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0 text-[11px]">
+                        <button
+                          type="button"
+                          onClick={() => handlePlaceUnmapped(idx, 'summary')}
+                          className="px-2.5 py-1 rounded-lg bg-white border border-ink/25 hover:border-ink font-bold"
+                        >
+                          + Summary
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handlePlaceUnmapped(idx, 'skills')}
+                          className="px-2.5 py-1 rounded-lg bg-white border border-ink/25 hover:border-ink font-bold"
+                        >
+                          + Skills
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handlePlaceUnmapped(idx, 'custom')}
+                          className="px-2.5 py-1 rounded-lg bg-volt border border-ink font-bold"
+                        >
+                          + Custom
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           )}

@@ -341,3 +341,22 @@ RAW RESUME TEXT:
             return res
 
         return await self.fallback.parse_resume_document(text, layout_metadata)
+
+    async def parse_section(self, section_type: str, section_text: str, repair_errors: list = None, heading_raw: str = "") -> dict:
+        from app.services.section_prompts import build_section_prompt, scan_and_strip_untrusted_lines
+        clean_text, pre_warnings = scan_and_strip_untrusted_lines(section_text)
+        if not clean_text.strip():
+            return {"warnings": pre_warnings, "unmapped": []}
+
+        prompt = build_section_prompt(section_type, clean_text, repair_errors=repair_errors)
+        res = await self._call_gemini(prompt, timeout_seconds=30.0)
+        if res and isinstance(res, dict):
+            existing_w = res.get("warnings") or []
+            res["warnings"] = pre_warnings + (existing_w if isinstance(existing_w, list) else [])
+            if section_type == "custom" and heading_raw and isinstance(res.get("custom_section"), dict):
+                res["custom_section"]["heading"] = res["custom_section"].get("heading") or heading_raw
+            return res
+
+        fallback_res = await self.fallback.parse_section(section_type, clean_text, repair_errors=repair_errors, heading_raw=heading_raw)
+        fallback_res["warnings"] = pre_warnings + (fallback_res.get("warnings") or [])
+        return fallback_res

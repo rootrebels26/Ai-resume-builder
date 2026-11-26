@@ -619,34 +619,311 @@ def sanitize_and_hydrate_resume(data: Dict[str, Any], raw_text: str = "") -> Res
         customSections=custom_sections_items
     )
 
+def _format_date_for_builder(date_obj: Any, is_current: bool = False) -> str:
+    if is_current:
+        return "Present"
+    if isinstance(date_obj, dict):
+        return str(date_obj.get("value") or date_obj.get("raw") or "").strip()
+    if isinstance(date_obj, str):
+        return date_obj.strip()
+    return ""
+
+def assemble_resume_from_sections(
+    blocks_and_results: List[Tuple[Dict[str, Any], Dict[str, Any]]]
+) -> Tuple[ResumeData, List[Dict[str, str]], List[Dict[str, Any]]]:
+    """
+    Stage 3/4 Assembly: Strictly maps each section's verified JSON into ResumeData
+    with ZERO cross-section guessing or synthetic text generation.
+    """
+    personal = PersonalInfo()
+    summary_text = ""
+    education_items: List[Education] = []
+    experience_items: List[Experience] = []
+    internship_items: List[Internship] = []
+    project_items: List[Project] = []
+    skills_categories: List[SkillCategory] = []
+    certification_items: List[Certification] = []
+    achievements_items: List[Achievement] = []
+    languages_items: List[Language] = []
+    publication_items: List[Publication] = []
+    volunteer_items: List[VolunteerExperience] = []
+    custom_sections_items: List[CustomSection] = []
+
+    all_warnings: List[Dict[str, str]] = []
+    all_unmapped: List[Dict[str, Any]] = []
+
+    for blk, res in blocks_and_results:
+        sec_type = blk["section_type"]
+        page_num = blk.get("page", 1)
+
+        for w in res.get("warnings") or []:
+            if isinstance(w, dict):
+                all_warnings.append(w)
+            elif isinstance(w, str):
+                all_warnings.append({"code": "NOTICE", "message": w})
+
+        for um in res.get("unmapped") or []:
+            if isinstance(um, dict) and um.get("raw_text"):
+                all_unmapped.append({
+                    "raw_text": str(um.get("raw_text")).strip(),
+                    "reason": str(um.get("reason") or "unmapped"),
+                    "page": um.get("page") or page_num,
+                })
+
+        if sec_type == "header":
+            b = res.get("basics") or {}
+            if isinstance(b, dict):
+                personal.fullName = str(b.get("full_name") or "").strip()
+                personal.professionalTitle = str(b.get("headline") or "").strip()
+                personal.email = str(b.get("email") or "").strip()
+                personal.phone = str(b.get("phone") or "").strip()
+                loc = b.get("location")
+                if isinstance(loc, dict):
+                    personal.location = str(loc.get("raw") or ", ".join(p for p in [loc.get("city"), loc.get("region"), loc.get("country")] if p) or "").strip()
+                elif isinstance(loc, str):
+                    personal.location = loc.strip()
+
+                for lnk in b.get("links") or []:
+                    if not isinstance(lnk, dict):
+                        continue
+                    url = str(lnk.get("url") or "").strip()
+                    ltype = str(lnk.get("type") or "other").lower()
+                    if not url:
+                        continue
+                    if ltype == "linkedin" and not personal.linkedin:
+                        personal.linkedin = url
+                    elif ltype == "github" and not personal.github:
+                        personal.github = url
+                    elif ltype == "portfolio" and not personal.portfolio:
+                        personal.portfolio = url
+                    elif not personal.website:
+                        personal.website = url
+
+        elif sec_type == "summary":
+            if res.get("summary") and not summary_text:
+                summary_text = str(res["summary"]).strip()
+
+        elif sec_type == "experience":
+            for idx, exp in enumerate(res.get("experience") or []):
+                if not isinstance(exp, dict):
+                    continue
+                is_curr = bool(exp.get("is_current", False))
+                bullets = [str(b).strip() for b in (exp.get("bullets") or []) if str(b).strip()]
+                experience_items.append(Experience(
+                    id=str(exp.get("id") or f"exp_{len(experience_items)+1}"),
+                    company=str(exp.get("company") or "").strip(),
+                    position=str(exp.get("title") or "").strip(),
+                    employmentType=str(exp.get("employment_type") or "").strip() or "Full-time",
+                    location=str(exp.get("location") or "").strip(),
+                    startDate=_format_date_for_builder(exp.get("start_date"), False),
+                    endDate=_format_date_for_builder(exp.get("end_date"), is_curr),
+                    current=is_curr,
+                    responsibilities=bullets,
+                    achievements=[]
+                ))
+
+        elif sec_type == "education":
+            for edu in res.get("education") or []:
+                if not isinstance(edu, dict):
+                    continue
+                is_curr = bool(edu.get("is_current", False))
+                score_obj = edu.get("score")
+                cgpa_str = ""
+                if isinstance(score_obj, dict):
+                    cgpa_str = str(score_obj.get("raw") or (f"{score_obj['value']}/{score_obj['scale']}" if score_obj.get("scale") else score_obj.get("value") or "")).strip()
+                elif isinstance(score_obj, str):
+                    cgpa_str = score_obj.strip()
+                details = [str(d).strip() for d in (edu.get("details") or []) if str(d).strip()]
+                education_items.append(Education(
+                    id=str(edu.get("id") or f"edu_{len(education_items)+1}"),
+                    institution=str(edu.get("institution") or "").strip(),
+                    degree=str(edu.get("degree") or "").strip(),
+                    fieldOfStudy=str(edu.get("field_of_study") or "").strip(),
+                    startDate=_format_date_for_builder(edu.get("start_date"), False),
+                    endDate=_format_date_for_builder(edu.get("end_date"), is_curr),
+                    cgpa=cgpa_str,
+                    description="\n".join(details)
+                ))
+
+        elif sec_type == "skills":
+            for grp in res.get("skills") or []:
+                if not isinstance(grp, dict):
+                    continue
+                cat_name = str(grp.get("category") or "Technical Skills").strip()
+                items = []
+                for it in grp.get("items") or []:
+                    if isinstance(it, dict) and it.get("name"):
+                        nm = str(it["name"]).strip()
+                        lvl = str(it.get("level") or "").strip()
+                        items.append(f"{nm} ({lvl})" if lvl else nm)
+                    elif isinstance(it, str) and it.strip():
+                        items.append(it.strip())
+                if items:
+                    skills_categories.append(SkillCategory(category=cat_name, items=items))
+
+        elif sec_type == "projects":
+            for proj in res.get("projects") or []:
+                if not isinstance(proj, dict):
+                    continue
+                link = str(proj.get("link") or "").strip()
+                gh_url = link if "github.com" in link.lower() else ""
+                live_url = link if link and "github.com" not in link.lower() else ""
+                project_items.append(Project(
+                    id=str(proj.get("id") or f"proj_{len(project_items)+1}"),
+                    name=str(proj.get("name") or "").strip(),
+                    description=str(proj.get("description") or "").strip(),
+                    technologies=[str(t).strip() for t in (proj.get("tech_stack") or []) if str(t).strip()],
+                    githubUrl=gh_url,
+                    liveUrl=live_url,
+                    startDate=_format_date_for_builder(proj.get("start_date"), False),
+                    endDate=_format_date_for_builder(proj.get("end_date"), False),
+                    highlights=[str(b).strip() for b in (proj.get("bullets") or []) if str(b).strip()]
+                ))
+
+        elif sec_type == "certifications":
+            for cert in res.get("certifications") or []:
+                if not isinstance(cert, dict):
+                    continue
+                certification_items.append(Certification(
+                    id=str(cert.get("id") or f"cert_{len(certification_items)+1}"),
+                    name=str(cert.get("name") or "").strip(),
+                    issuer=str(cert.get("issuer") or "").strip(),
+                    issueDate=_format_date_for_builder(cert.get("date"), False),
+                    expiryDate="",
+                    credentialUrl=str(cert.get("url") or "").strip()
+                ))
+
+        elif sec_type == "languages":
+            for lang in res.get("languages") or []:
+                if isinstance(lang, dict) and lang.get("name"):
+                    languages_items.append(Language(
+                        name=str(lang["name"]).strip(),
+                        proficiency=str(lang.get("proficiency") or "Proficient").strip()
+                    ))
+
+        elif sec_type == "awards":
+            for aw in res.get("awards") or []:
+                if isinstance(aw, dict) and aw.get("title"):
+                    achievements_items.append(Achievement(
+                        id=f"awd_{len(achievements_items)+1}",
+                        title=str(aw["title"]).strip(),
+                        description=str(aw.get("description") or aw.get("issuer") or "").strip(),
+                        date=str(aw.get("date") or "").strip()
+                    ))
+
+        elif sec_type == "publications":
+            for pub in res.get("publications") or []:
+                if isinstance(pub, dict) and pub.get("title"):
+                    publication_items.append(Publication(
+                        id=f"pub_{len(publication_items)+1}",
+                        title=str(pub["title"]).strip(),
+                        publisher=str(pub.get("publisher") or "").strip(),
+                        date=str(pub.get("date") or "").strip(),
+                        url=str(pub.get("url") or "").strip(),
+                        description=str(pub.get("description") or "").strip()
+                    ))
+
+        elif sec_type == "volunteer":
+            for vol in res.get("volunteer") or []:
+                if isinstance(vol, dict) and vol.get("organization"):
+                    volunteer_items.append(VolunteerExperience(
+                        id=f"vol_{len(volunteer_items)+1}",
+                        organization=str(vol["organization"]).strip(),
+                        role=str(vol.get("role") or "").strip(),
+                        duration=str(vol.get("duration") or "").strip(),
+                        description=str(vol.get("description") or "").strip()
+                    ))
+
+        elif sec_type == "custom":
+            csec = res.get("custom_section")
+            if isinstance(csec, dict) and csec.get("entries"):
+                c_items = []
+                for ent in csec.get("entries") or []:
+                    if isinstance(ent, dict):
+                        c_items.append(CustomSectionItem(
+                            title=str(ent.get("title") or "").strip(),
+                            subtitle=str(ent.get("subtitle") or "").strip(),
+                            date=str(ent.get("date_raw") or "").strip(),
+                            description=" ".join(str(b).strip() for b in (ent.get("bullets") or []) if str(b).strip())
+                        ))
+                custom_sections_items.append(CustomSection(
+                    id=f"cust_{len(custom_sections_items)+1}",
+                    sectionTitle=str(csec.get("heading") or blk.get("heading_raw") or "Additional").strip(),
+                    items=c_items
+                ))
+
+    return ResumeData(
+        personalInfo=personal,
+        professionalSummary=summary_text,
+        education=education_items,
+        experience=experience_items,
+        internships=internship_items,
+        projects=project_items,
+        skills=skills_categories,
+        certifications=certification_items,
+        achievements=achievements_items,
+        languages=languages_items,
+        publications=publication_items,
+        volunteerExperience=volunteer_items,
+        customSections=custom_sections_items,
+    ), all_warnings, all_unmapped
+
+
 async def parse_resume_document_pipeline(
     raw_text: str, layout_metadata: Dict[str, Any] = None
 ) -> Tuple[ResumeData, Dict[str, Any]]:
     """
-    Executes the multi-stage document extraction:
-    1. Interprets extracted full text via AI provider (Gemini / Groq / OpenRouter / Local fallback).
-    2. Safety-net merge: recovers any empty core sections using deterministic heuristic extraction.
-    3. Hydrates into schema-compliant ResumeData.
-    4. Runs ExtractionValidator to produce confidence scores, section ratings, and actionable notices.
+    5-Stage Section-Scoped Extraction Pipeline (content-extract.md):
+    1. Text acquisition (already completed by DocumentExtractor).
+    2. Section segmentation via SectionSegmenter.
+    3. Section-scoped extraction (one call per section in parallel).
+    4. Deterministic grounding verification + max 1 repair retry per failing section.
+    5. Strict assembly + validation with warnings and unmapped provenance.
     """
-    parsed_dict = await ai_service.parse_resume_document(raw_text, layout_metadata)
-    if not isinstance(parsed_dict, dict):
-        parsed_dict = {}
+    import asyncio
+    from app.services.section_segmenter import SectionSegmenter
 
-    # Safety-net merge: if the AI provider missed any core section that exists in raw_text, recover it deterministically
-    if raw_text and (
-        not parsed_dict.get("experience")
-        or not parsed_dict.get("education")
-        or not parsed_dict.get("skills")
-    ):
-        from app.providers.local_heuristic import LocalHeuristicProvider
-        heuristic_dict = LocalHeuristicProvider().parse_resume_document_sync(raw_text)
-        for key in ("experience", "education", "skills", "projects", "certifications"):
-            if not parsed_dict.get(key) and heuristic_dict.get(key):
-                parsed_dict[key] = heuristic_dict[key]
+    blocks = SectionSegmenter.segment(raw_text)
+    if not blocks:
+        empty = ResumeData()
+        val = ExtractionValidator.validate(raw_text, empty.model_dump(), layout_metadata)
+        return empty, val
 
-    resume_data = sanitize_and_hydrate_resume(parsed_dict, raw_text=raw_text)
-    validation = ExtractionValidator.validate(raw_text, resume_data.model_dump(), layout_metadata)
+    async def _process_block(blk: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        sec_type = blk["section_type"]
+        sec_text = blk["text"]
+        heading_raw = blk.get("heading_raw", "")
+
+        res = await ai_service.parse_section(sec_type, sec_text, heading_raw=heading_raw)
+        if not isinstance(res, dict):
+            res = {}
+
+        # Stage 4: Grounding check + single repair retry if needed
+        cleaned, repair_errors, ground_warnings = ExtractionValidator.verify_section_grounding(sec_type, sec_text, res)
+        if repair_errors:
+            logger.info("Section '%s' had %d grounding error(s); running 1 repair retry.", sec_type, len(repair_errors))
+            repaired = await ai_service.parse_section(sec_type, sec_text, repair_errors=repair_errors, heading_raw=heading_raw)
+            if isinstance(repaired, dict):
+                cleaned, still_bad, ground_warnings = ExtractionValidator.verify_section_grounding(sec_type, sec_text, repaired)
+                if still_bad:
+                    logger.warning("Section '%s' still had %d ungrounded items after repair; stripped.", sec_type, len(still_bad))
+
+        if ground_warnings:
+            cleaned["warnings"] = list(cleaned.get("warnings") or []) + ground_warnings
+
+        logger.info("Parsed section=%s input_chars=%d warnings=%d", sec_type, len(sec_text), len(cleaned.get("warnings") or []))
+        return blk, cleaned
+
+    blocks_and_results = await asyncio.gather(*(_process_block(b) for b in blocks))
+    resume_data, structured_warnings, unmapped = assemble_resume_from_sections(list(blocks_and_results))
+
+    validation = ExtractionValidator.validate(
+        raw_text,
+        resume_data.model_dump(),
+        layout_metadata=layout_metadata,
+        structured_warnings=structured_warnings,
+        unmapped=unmapped,
+    )
     return resume_data, validation
 
 def parse_resume_text(text: str) -> Tuple[ResumeData, List[str]]:

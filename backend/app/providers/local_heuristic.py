@@ -1214,3 +1214,7 @@ class LocalHeuristicProvider(BaseAIProvider):
 
     async def parse_resume_document(self, text: str, layout_metadata: Dict[str, Any] = None) -> Dict[str, Any]:
         return self.parse_resume_document_sync(text, layout_metadata)
+
+    async def parse_section(self, section_type: str, section_text: str, repair_errors: list = None, heading_raw: str = "") -> Dict[str, Any]:
+        from app.services.section_heuristic import parse_section_deterministic
+        return parse_section_deterministic(section_type, section_text, heading_raw=heading_raw)
