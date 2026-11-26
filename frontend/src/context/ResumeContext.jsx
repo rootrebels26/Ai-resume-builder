@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { INITIAL_RESUME_DATA } from '../constants/initialResumeData';
 import { storageService, INITIAL_WIZARD_STATE } from '../services/storageService';
 import { TEMPLATES } from '../constants/templatesList';
+import { TEMPLATE_REGISTRY } from '../constants/templateRegistry';
 import { sanitizeResumeData } from '../utils/sanitizeResume';
 
 const ResumeContext = createContext(null);
@@ -98,10 +99,17 @@ export function ResumeProvider({ children }) {
     setWizardState(prev => ({ ...prev, currentStep: Math.max(1, prev.currentStep - 1) }));
   };
 
-  // Step 1: Select Template
+  // Step 1: Select Template & Apply Full Template Design System
   const selectTemplate = (templateId) => {
-    const tpl = TEMPLATES.find(t => t.id === templateId);
-    const newColor = tpl?.accentColor;
+    const tpl = TEMPLATE_REGISTRY.find(t => t.id === templateId) || TEMPLATES.find(t => t.id === templateId);
+    const pal = tpl?.palette || tpl?.colors || {};
+    const primary = pal.primary || tpl?.accentColor || '#0f172a';
+    const accent = pal.accent || pal.secondary || tpl?.accentColor || '#3b82f6';
+    const bg = pal.bg || pal.background || '#ffffff';
+    const text = pal.text || '#1e293b';
+    const bodyFont = tpl?.typography?.bodyFont || tpl?.fontFamily || 'Inter, sans-serif';
+    const headingFont = tpl?.typography?.headingFont || bodyFont;
+
     setWizardState(prev => ({
       ...prev,
       selectedTemplateId: templateId,
@@ -110,8 +118,16 @@ export function ResumeProvider({ children }) {
         templateId: templateId,
         preferences: {
           ...prev.resumeData?.preferences,
-          themeColor: newColor || prev.resumeData?.preferences?.themeColor || '#1e293b',
-          accentColor: newColor || prev.resumeData?.preferences?.accentColor || '#1e293b'
+          layout: tpl?.layout || 'single-column',
+          themeColor: primary,
+          primaryColor: primary,
+          accentColor: accent,
+          backgroundColor: bg,
+          textColor: text,
+          fontFamily: bodyFont,
+          headingFont: headingFont,
+          dividerStyle: tpl?.dividerStyle || 'line',
+          bulletStyle: tpl?.bulletStyle || 'disc',
         }
       }
     }));

@@ -176,6 +176,24 @@ export function Onboarding() {
   const handleLaunchBuilder = () => {
     let finalResume;
 
+    const tplDef = TEMPLATES.find(t => t.id === chosenTemplateId);
+    const tplPal = tplDef?.palette || tplDef?.colors || {};
+    const tplPrefs = tplDef ? {
+      layout: tplDef.layout || 'single-column',
+      primaryColor: tplPal.primary || chosenColor,
+      themeColor: tplPal.primary || chosenColor,
+      accentColor: tplPal.accent || tplPal.secondary || chosenColor,
+      backgroundColor: tplPal.bg || tplPal.background || '#ffffff',
+      textColor: tplPal.text || '#1e293b',
+      fontFamily: tplDef.typography?.bodyFont || tplDef.fontFamily || 'Inter, sans-serif',
+      headingFont: tplDef.typography?.headingFont || tplDef.fontFamily || 'Inter, sans-serif',
+      dividerStyle: tplDef.dividerStyle || 'line',
+      bulletStyle: tplDef.bulletStyle || 'disc',
+    } : {
+      themeColor: chosenColor,
+      accentColor: chosenColor,
+    };
+
     if (method === 'upload' && extractedData) {
       const uploadedPageCount = rawParseResult?.layout?.page_count || 1;
       const isTwoPageUpload = uploadedPageCount >= 2 || (extractedData.experience?.length || 0) >= 4;
@@ -185,8 +203,7 @@ export function Onboarding() {
         templateId: chosenTemplateId,
         preferences: {
           ...(extractedData.preferences || {}),
-          themeColor: chosenColor,
-          accentColor: chosenColor,
+          ...tplPrefs,
           ...(isTwoPageUpload ? {
             targetPages: 2,
             marginSize: 'compact',
@@ -212,15 +229,13 @@ export function Onboarding() {
         },
         preferences: {
           ...(resumeData.preferences || {}),
-          themeColor: chosenColor,
-          accentColor: chosenColor
+          ...tplPrefs,
         }
       };
     }
 
-    // Update global context
+    // Update global context atomically
     setResumeData(finalResume);
-    selectTemplate(chosenTemplateId);
     if (setTargetJob) {
       setTargetJob({
         role: targetRole || finalResume.personalInfo?.professionalTitle || 'Software Engineer',

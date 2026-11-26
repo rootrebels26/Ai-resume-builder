@@ -148,20 +148,7 @@ export function Templates() {
 
   const applyTemplateAndNavigate = (targetTpl) => {
     const tplId = typeof targetTpl === 'string' ? targetTpl : targetTpl.id;
-    const tplObj = typeof targetTpl === 'object' ? targetTpl : TEMPLATES.find(t => t.id === tplId);
-
     selectTemplate(tplId);
-    if (tplObj) {
-      const pal = tplObj.palette || tplObj.colors || {};
-      updatePreferences({
-        layout: tplObj.layout || 'single-column',
-        themeColor: pal.primary || '#0f172a',
-        primaryColor: pal.primary || '#0f172a',
-        accentColor: pal.accent || pal.secondary || '#3b82f6',
-        dividerStyle: tplObj.dividerStyle || 'line',
-        bulletStyle: tplObj.bulletStyle || 'disc',
-      });
-    }
     navigate('/builder');
   };
 

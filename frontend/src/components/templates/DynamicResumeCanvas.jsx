@@ -176,11 +176,11 @@ export function DynamicResumeCanvas({
 
     return (
       <header
-        className={`${isOnePage ? 'pb-2 mb-2' : 'pb-3 mb-3'} ${isHeaderCard ? 'p-4 rounded-lg mb-3' : 'border-b'}`}
+        className={`${isOnePage ? 'pb-2 mb-2' : 'pb-3 mb-3'} ${isHeaderCard ? 'p-4 rounded-xl mb-3' : 'border-b'}`}
         style={{
           borderColor: isHeaderCard ? 'transparent' : borderColor,
-          backgroundColor: isHeaderCard ? `${primaryColor}10` : 'transparent',
-          borderLeft: isHeaderCard ? `5px solid ${primaryColor}` : 'none',
+          backgroundColor: isHeaderCard ? primaryColor : 'transparent',
+          color: isHeaderCard ? '#ffffff' : textColor,
         }}
       >
         <div className="flex flex-row items-center gap-4">
@@ -190,7 +190,7 @@ export function DynamicResumeCanvas({
                 src={personalInfo.photo}
                 alt={personalInfo.fullName || 'Candidate Photo'}
                 className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-2 shadow-sm"
-                style={{ borderColor: primaryColor }}
+                style={{ borderColor: isHeaderCard ? '#ffffff' : primaryColor }}
               />
             </div>
           )}
@@ -201,7 +201,7 @@ export function DynamicResumeCanvas({
                 style={{
                   fontFamily: headingFont,
                   fontSize: `${(baseFontSize * 2.1).toFixed(1)}px`,
-                  color: primaryColor,
+                  color: isHeaderCard ? '#ffffff' : primaryColor,
                   lineHeight: 1.15,
                 }}
               >
@@ -211,7 +211,7 @@ export function DynamicResumeCanvas({
                 <span
                   className="font-semibold text-sm tracking-wide uppercase shrink-0"
                   style={{
-                    color: accentColor,
+                    color: isHeaderCard ? 'rgba(255,255,255,0.88)' : accentColor,
                     fontFamily: headingFont,
                   }}
                 >
@@ -223,7 +223,7 @@ export function DynamicResumeCanvas({
           {/* Contact Bar */}
           <div
             className="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-xs"
-            style={{ color: textColor, opacity: 0.9 }}
+            style={{ color: isHeaderCard ? 'rgba(255,255,255,0.92)' : textColor, opacity: isHeaderCard ? 1 : 0.9 }}
           >
             {personalInfo.phone && (
               <a
@@ -733,14 +733,16 @@ export function DynamicResumeCanvas({
       </div>
     );
 
+    const isSidebar = activeLayout === 'sidebar-left' || activeLayout === 'sidebar-right';
     const sideContent = (
       <div
-        className="w-[35%] shrink-0 space-y-1"
+        className="w-[34%] shrink-0 space-y-1"
         style={{
-          borderLeft: isSidebarLeft ? 'none' : `1px solid ${borderColor}`,
-          borderRight: isSidebarLeft ? `1px solid ${borderColor}` : 'none',
-          paddingLeft: isSidebarLeft ? '0' : '14px',
-          paddingRight: isSidebarLeft ? '14px' : '0',
+          backgroundColor: isSidebar ? `${primaryColor}0c` : 'transparent',
+          borderRadius: isSidebar ? '8px' : '0',
+          padding: isSidebar ? '12px' : (isSidebarLeft ? '0 14px 0 0' : '0 0 0 14px'),
+          borderLeft: !isSidebar && !isSidebarLeft ? `1px solid ${borderColor}` : 'none',
+          borderRight: !isSidebar && isSidebarLeft ? `1px solid ${borderColor}` : 'none',
         }}
       >
         {sectionOrder.filter(k => sideSections.includes(k)).map(secKey => {
