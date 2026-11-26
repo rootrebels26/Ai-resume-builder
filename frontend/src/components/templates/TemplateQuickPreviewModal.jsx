@@ -158,7 +158,18 @@ export function TemplateQuickPreviewModal({ template, isOpen, onClose, onSelect 
             >
               <ResumeTemplate
                 templateId={template.id}
-                resumeData={INITIAL_RESUME_DATA}
+                resumeData={{ ...INITIAL_RESUME_DATA, preferences: {} }}
+                designOverrides={{
+                  layout: template.layout || 'single-column',
+                  primaryColor: template.palette?.primary || template.colors?.primary || template.accentColor || '#0f172a',
+                  accentColor: template.palette?.accent || template.palette?.secondary || template.colors?.accent || template.accentColor || '#3b82f6',
+                  backgroundColor: template.palette?.bg || template.palette?.background || '#ffffff',
+                  textColor: template.palette?.text || '#1e293b',
+                  fontFamily: template.typography?.bodyFont || template.fontFamily || 'Inter, sans-serif',
+                  headingFont: template.typography?.headingFont || template.fontFamily || 'Inter, sans-serif',
+                  dividerStyle: template.dividerStyle || 'line',
+                  bulletStyle: template.bulletStyle || 'disc',
+                }}
               />
             </div>
           </div>

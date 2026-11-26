@@ -116,7 +116,7 @@ export function DynamicResumeCanvas({
 
   // Section Heading Component with matching divider style
   const SectionHeading = ({ title, icon: Icon }) => {
-    let dividerClass = 'border-b pb-1 mb-2';
+    let dividerClass = 'border-b-[1.5px] pb-1 mb-2';
     let dividerInlineStyle = { borderColor: primaryColor, boxSizing: 'border-box' };
 
     if (dividerStyle === 'bar') {
@@ -173,17 +173,18 @@ export function DynamicResumeCanvas({
     }
 
     const isHeaderCard = activeLayout === 'header-card';
+    const isCenteredHeader = activeLayout === 'single-column';
 
     return (
       <header
         className={`${isOnePage ? 'pb-2 mb-2' : 'pb-3 mb-3'} ${isHeaderCard ? 'p-4 rounded-xl mb-3' : 'border-b'}`}
         style={{
-          borderColor: isHeaderCard ? 'transparent' : borderColor,
+          borderColor: isHeaderCard ? 'transparent' : `${primaryColor}35`,
           backgroundColor: isHeaderCard ? primaryColor : 'transparent',
           color: isHeaderCard ? '#ffffff' : textColor,
         }}
       >
-        <div className="flex flex-row items-center gap-4">
+        <div className={`flex ${isCenteredHeader ? 'flex-col items-center text-center gap-2' : 'flex-row items-center gap-4'}`}>
           {personalInfo.photo && (
             <div className="shrink-0">
               <img
@@ -194,10 +195,10 @@ export function DynamicResumeCanvas({
               />
             </div>
           )}
-          <div className="flex-1 flex flex-col gap-1.5 min-w-0">
-            <div className="flex flex-row items-baseline justify-between gap-1 flex-wrap">
+          <div className={`flex-1 flex flex-col gap-1 min-w-0 w-full ${isCenteredHeader ? 'items-center' : ''}`}>
+            <div className={`flex flex-col ${isCenteredHeader ? 'items-center text-center' : 'items-start'} gap-0.5 w-full min-w-0`}>
               <h1
-                className="font-extrabold tracking-tight"
+                className="font-extrabold tracking-tight uppercase break-words max-w-full"
                 style={{
                   fontFamily: headingFont,
                   fontSize: `${(baseFontSize * 2.1).toFixed(1)}px`,
@@ -209,9 +210,9 @@ export function DynamicResumeCanvas({
               </h1>
               {personalInfo.professionalTitle && (
                 <span
-                  className="font-semibold text-sm tracking-wide uppercase shrink-0"
+                  className="font-bold text-xs sm:text-sm tracking-wide uppercase break-words max-w-full"
                   style={{
-                    color: isHeaderCard ? 'rgba(255,255,255,0.88)' : accentColor,
+                    color: isHeaderCard ? 'rgba(255,255,255,0.9)' : accentColor,
                     fontFamily: headingFont,
                   }}
                 >
@@ -222,7 +223,7 @@ export function DynamicResumeCanvas({
 
           {/* Contact Bar */}
           <div
-            className="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-xs"
+            className={`flex flex-wrap items-center gap-x-3.5 gap-y-1 text-xs ${isCenteredHeader ? 'justify-center' : 'justify-start'}`}
             style={{ color: isHeaderCard ? 'rgba(255,255,255,0.92)' : textColor, opacity: isHeaderCard ? 1 : 0.9 }}
           >
             {personalInfo.phone && (
