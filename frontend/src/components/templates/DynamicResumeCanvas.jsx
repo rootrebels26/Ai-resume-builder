@@ -430,49 +430,68 @@ export function DynamicResumeCanvas({
         <SectionHeading title="Key Projects & Systems" icon={FolderGit2} />
         <div className={isOnePage ? "space-y-1.5" : "space-y-2"}>
           {projects.map((proj, idx) => {
-            const highlights = Array.isArray(proj.highlights)
-              ? proj.highlights
-              : (proj.description ? proj.description.split('\n').filter(Boolean) : []);
+            const descLines = proj.description
+              ? String(proj.description).split('\n').map((s) => s.trim()).filter(Boolean)
+              : [];
+            const hlLines = Array.isArray(proj.highlights)
+              ? proj.highlights.map((s) => String(s).trim()).filter(Boolean)
+              : [];
+            const projectLines = descLines.length > 0 ? descLines : hlLines;
+
+            const liveHref = proj.liveUrl || (proj.link && !String(proj.link).toLowerCase().includes('github.com') ? proj.link : '');
+            const githubHref = proj.githubUrl || (proj.link && String(proj.link).toLowerCase().includes('github.com') ? proj.link : '');
 
             return (
               <div key={idx} className="space-y-0.5">
-                <div className="flex flex-row items-baseline justify-between gap-1">
-                  <div className="flex items-center gap-2 min-w-0">
+                <div className="flex flex-row items-start justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-2 min-w-0">
                     <span
                       className="font-bold tracking-tight"
                       style={{ fontSize: `${(baseFontSize * 1.02).toFixed(1)}px`, color: primaryColor }}
                     >
                       {proj.name || proj.title}
                     </span>
-                    {proj.link && (
+                    {liveHref && (
                       <a
-                        href={normalizeUrl(proj.link)}
+                        href={normalizeUrl(liveHref)}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-0.5 text-xs hover:underline shrink-0"
+                        className="inline-flex items-center gap-0.5 text-xs font-medium hover:underline shrink-0"
                         style={{ color: accentColor }}
                       >
                         <ExternalLink className="w-2.5 h-2.5" />
-                        <span>Link</span>
+                        <span>Live Demo</span>
+                      </a>
+                    )}
+                    {githubHref && (
+                      <a
+                        href={normalizeUrl(githubHref)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-0.5 text-xs font-medium hover:underline shrink-0"
+                        style={{ color: accentColor }}
+                      >
+                        <Github className="w-2.5 h-2.5" />
+                        <span>GitHub</span>
                       </a>
                     )}
                   </div>
-                  {(proj.date || proj.period) && (
-                    <span className="text-xs font-medium shrink-0" style={{ color: accentColor }}>
-                      {proj.date || proj.period}
+                  {(proj.date || proj.period || proj.startDate || proj.endDate) && (
+                    <span className="text-xs font-medium shrink-0 whitespace-nowrap" style={{ color: accentColor }}>
+                      {proj.date || proj.period || [proj.startDate, proj.endDate].filter(Boolean).join(' — ')}
                     </span>
                   )}
                 </div>
 
-                {proj.technologies && (
+                {proj.technologies && (Array.isArray(proj.technologies) ? proj.technologies.length > 0 : String(proj.technologies).trim().length > 0) && (
                   <div className="text-xs font-mono font-medium opacity-85" style={{ color: accentColor }}>
                     Tech Stack: {Array.isArray(proj.technologies) ? proj.technologies.join(', ') : proj.technologies}
                   </div>
                 )}
 
-                {highlights.length > 0 && (
+                {projectLines.length > 0 && (
                   <ul className="space-y-0.5 pl-3.5 mt-0.5" style={{ fontSize: `${baseFontSize}px`, color: textColor }}>
-                    {highlights.map((h, hIdx) => (
+                    {projectLines.map((h, hIdx) => (
                       <li key={hIdx} className="relative leading-relaxed pl-1.5">
                         <span className="absolute -left-3.5 top-0 font-bold opacity-75" style={{ color: accentColor }}>
                           {bulletSymbol}

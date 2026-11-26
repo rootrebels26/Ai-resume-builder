@@ -122,9 +122,10 @@ export function paginateResume(rawResumeData, options = {}) {
     }];
   }
 
-  // Multi-page resumes are ALWAYS balanced across max 2 pages (never 3 or 4 pages)
-  const PAGE_1_MAX = (forceTwoPages || totalCalculatedHeight > NATURAL_PAGE_1_MAX)
-    ? Math.max(480, Math.round(totalCalculatedHeight * 0.52))
+  // Fill Page 1 naturally (~940px) before advancing to Page 2 so Page 1 has ZERO heavy blank space.
+  // Only split early if the user explicitly forced 2 pages on a short 1-page resume.
+  const PAGE_1_MAX = (forceTwoPages && totalCalculatedHeight <= NATURAL_PAGE_1_MAX)
+    ? Math.max(580, Math.round(totalCalculatedHeight * 0.65))
     : NATURAL_PAGE_1_MAX;
   const EFFECTIVE_CONT_MAX = Number.MAX_SAFE_INTEGER;
 
