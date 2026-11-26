@@ -20,14 +20,14 @@ export function paginateResume(rawResumeData, options = {}) {
   const forceTwoPages = options.forceTwoPages === true;
   const forceSinglePage = options.forceSinglePage === true;
 
-  // Calibrated safety thresholds for 96 DPI A4 (1122.5px height - ~121px margins - ~28px footer ≈ 973px)
-  const NATURAL_PAGE_1_MAX = options.page1Max || 900;
-  const PAGE_CONT_MAX = options.pageContMax || 900;
+  // Calibrated safety thresholds for 96 DPI A4 (1122.5px height - ~90px modern margins - ~24px footer ≈ 1008px)
+  const NATURAL_PAGE_1_MAX = options.page1Max || 960;
+  const PAGE_CONT_MAX = options.pageContMax || 960;
 
   const layout = options.layout || resumeData.preferences?.layout || 'single-column';
   const isSidebarOrTwoCol = layout === 'two-column' || layout === 'sidebar-left' || layout === 'sidebar-right';
-  // In sidebar / two-column layouts, main column width is 65%, so fewer characters fit per line
-  const charsPerLine = isSidebarOrTwoCol ? 52 : 72;
+  // Accurate chars-per-line for 180mm printable width (~680px) at 10.5px modern sans-serif
+  const charsPerLine = isSidebarOrTwoCol ? 62 : 92;
 
   const personalInfo = resumeData.personalInfo || {};
   const professionalSummary = resumeData.professionalSummary || '';
@@ -50,44 +50,44 @@ export function paginateResume(rawResumeData, options = {}) {
   const calcSummaryHeight = () => {
     if (!professionalSummary) return 0;
     const lines = Math.max(1, Math.ceil(professionalSummary.length / charsPerLine));
-    return 32 + (lines * 18) + 10; // Header + lines + margins
+    return 26 + (lines * 16) + 8;
   };
 
   const calcJobHeight = (job) => {
-    let h = 34; // Title + company + dates
+    let h = 26; // Title + company + dates
     if (job.responsibilities && job.responsibilities.length > 0) {
-      h += job.responsibilities.reduce((acc, r) => acc + Math.max(18, Math.ceil(r.length / charsPerLine) * 18 + 6), 0);
+      h += job.responsibilities.reduce((acc, r) => acc + Math.max(16, Math.ceil(r.length / charsPerLine) * 16 + 3), 0);
     }
     if (job.achievements && job.achievements.length > 0) {
-      h += 24;
+      h += 20;
     }
-    return h + 10; // margin
+    return h + 8;
   };
 
   const calcEduHeight = (edu) => {
-    let h = 36; // Degree + institution + dates
-    if (edu.cgpa || edu.gpa) h += 18;
-    if (edu.description) h += Math.max(18, Math.ceil(edu.description.length / charsPerLine) * 16);
-    return h + 12;
+    let h = 30;
+    if (edu.cgpa || edu.gpa) h += 16;
+    if (edu.description) h += Math.max(16, Math.ceil(edu.description.length / charsPerLine) * 15);
+    return h + 8;
   };
 
   const calcProjHeight = (proj) => {
-    let h = 32; // Title + links
-    if (proj.description) h += Math.max(18, Math.ceil(proj.description.length / charsPerLine) * 16);
-    if (proj.technologies && proj.technologies.length > 0) h += 26; // Pill badges row
+    let h = 26;
+    if (proj.description) h += Math.max(16, Math.ceil(proj.description.length / charsPerLine) * 15);
+    if (proj.technologies && proj.technologies.length > 0) h += 20;
     if (proj.highlights && proj.highlights.length > 0) {
-      h += proj.highlights.reduce((acc, hl) => acc + Math.max(18, Math.ceil(hl.length / charsPerLine) * 16 + 4), 0);
+      h += proj.highlights.reduce((acc, hl) => acc + Math.max(16, Math.ceil(hl.length / charsPerLine) * 15 + 3), 0);
     }
-    return h + 10;
+    return h + 8;
   };
 
   const calcSkillsHeight = (skillsList) => {
     if (!skillsList || skillsList.length === 0) return 0;
-    return 32 + skillsList.reduce((acc, cat) => {
+    return 26 + skillsList.reduce((acc, cat) => {
       const textLen = (cat.category || '').length + (cat.items || []).join(', ').length;
       const lines = Math.max(1, Math.ceil(textLen / charsPerLine));
-      return acc + (lines * 22) + 6;
-    }, 0) + 10;
+      return acc + (lines * 16) + 4;
+    }, 0) + 8;
   };
 
   const calcCertsHeight = (certs) => {
@@ -122,13 +122,11 @@ export function paginateResume(rawResumeData, options = {}) {
     }];
   }
 
-  // When forceTwoPages is requested: split content evenly (~50/50) and strictly cap at 2 pages
-  const PAGE_1_MAX = forceTwoPages
-    ? Math.max(420, Math.round(totalCalculatedHeight * 0.52))
+  // Multi-page resumes are ALWAYS balanced across max 2 pages (never 3 or 4 pages)
+  const PAGE_1_MAX = (forceTwoPages || totalCalculatedHeight > NATURAL_PAGE_1_MAX)
+    ? Math.max(480, Math.round(totalCalculatedHeight * 0.52))
     : NATURAL_PAGE_1_MAX;
-  const EFFECTIVE_CONT_MAX = forceTwoPages
-    ? Number.MAX_SAFE_INTEGER
-    : PAGE_CONT_MAX;
+  const EFFECTIVE_CONT_MAX = Number.MAX_SAFE_INTEGER;
 
   // Multi-page distribution
   const pages = [];
@@ -150,8 +148,8 @@ export function paginateResume(rawResumeData, options = {}) {
   let currentHeight = headerH;
 
   const advancePage = () => {
-    // In strict 2-page mode, never advance beyond Page 2 (pages.length === 1 means currentPage is Page 2)
-    if (forceTwoPages && pages.length >= 1) {
+    // Strictly cap multi-page resumes at 2 pages (never create Page 3+)
+    if (pages.length >= 1) {
       return;
     }
     pages.push(currentPage);

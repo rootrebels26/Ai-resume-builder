@@ -50,7 +50,21 @@ export function UploadResume() {
   const handleApplyToBuilder = (dataToApply) => {
     const finalData = dataToApply || parseResult?.resume_data;
     if (finalData) {
-      setResumeData(finalData);
+      const uploadedPageCount = parseResult?.layout?.page_count || 1;
+      const isTwoPageUpload = uploadedPageCount >= 2 || (finalData.experience?.length || 0) >= 4;
+      const hydrated = isTwoPageUpload
+        ? {
+            ...finalData,
+            preferences: {
+              ...(finalData.preferences || {}),
+              targetPages: 2,
+              marginSize: 'compact',
+              fontScale: 0.95,
+              lineHeight: 1.32,
+            },
+          }
+        : finalData;
+      setResumeData(hydrated);
       navigate('/builder');
     }
   };

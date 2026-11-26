@@ -31,19 +31,19 @@ export function A4PageSheet({
 
   const isOnePage = pageLayoutMode === '1_page';
   const isTwoPage = pageLayoutMode === '2_pages';
-  const shouldAutoFit = isOnePage || isTwoPage;
+  const shouldAutoFit = isOnePage || isTwoPage || pageCount >= 2;
   const effectiveTemplateId = templateId || resumeData?.templateId || pageData?.templateId || 'ats-01';
   const isFullBleed = isFullBleedTemplate(effectiveTemplateId);
   const paperFormat = resumeData?.preferences?.paperFormat || designOverrides?.paperFormat || 'a4';
   const sheetWidth = paperFormat === 'letter' ? '215.9mm' : '210mm';
   const sheetHeight = paperFormat === 'letter' ? '279.4mm' : '297mm';
 
-  // Dynamic Margin based on Canva Design Studio settings
+  // Modern, crisp margins with minimal wasted whitespace
   const marginSize = designOverrides.marginSize || resumeData?.preferences?.marginSize || 'normal';
   const marginMap = {
-    compact: '10mm 12mm',
-    normal: '16mm 18mm',
-    spacious: '20mm 22mm',
+    compact: '9mm 12mm',
+    normal: '12mm 14mm',
+    spacious: '16mm 18mm',
   };
   const sheetPadding = isFullBleed
     ? '0'

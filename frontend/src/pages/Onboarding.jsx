@@ -177,13 +177,22 @@ export function Onboarding() {
     let finalResume;
 
     if (method === 'upload' && extractedData) {
+      const uploadedPageCount = rawParseResult?.layout?.page_count || 1;
+      const isTwoPageUpload = uploadedPageCount >= 2 || (extractedData.experience?.length || 0) >= 4;
+
       finalResume = {
         ...extractedData,
         templateId: chosenTemplateId,
         preferences: {
           ...(extractedData.preferences || {}),
           themeColor: chosenColor,
-          accentColor: chosenColor
+          accentColor: chosenColor,
+          ...(isTwoPageUpload ? {
+            targetPages: 2,
+            marginSize: 'compact',
+            fontScale: 0.95,
+            lineHeight: 1.32,
+          } : {})
         }
       };
       if (targetRole) {

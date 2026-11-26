@@ -116,28 +116,28 @@ export function DynamicResumeCanvas({
 
   // Section Heading Component with matching divider style
   const SectionHeading = ({ title, icon: Icon }) => {
-    let dividerClass = 'border-b pb-1.5 mb-2.5';
+    let dividerClass = 'border-b pb-1 mb-2';
     let dividerInlineStyle = { borderColor: primaryColor, boxSizing: 'border-box' };
 
     if (dividerStyle === 'bar') {
-      dividerClass = 'pl-2.5 border-l-4 mb-2.5';
+      dividerClass = 'pl-2.5 border-l-4 mb-2';
       dividerInlineStyle = { borderColor: primaryColor, boxSizing: 'border-box' };
     } else if (dividerStyle === 'dashed') {
-      dividerClass = 'border-b border-dashed pb-1.5 mb-2.5';
+      dividerClass = 'border-b border-dashed pb-1 mb-2';
       dividerInlineStyle = { borderColor: primaryColor, boxSizing: 'border-box' };
     } else if (dividerStyle === 'double') {
-      dividerClass = 'border-b-2 border-double pb-1.5 mb-2.5';
+      dividerClass = 'border-b-2 border-double pb-1 mb-2';
       dividerInlineStyle = { borderColor: primaryColor, boxSizing: 'border-box' };
     } else if (dividerStyle === 'minimal') {
-      dividerClass = 'mb-2';
+      dividerClass = 'mb-1.5';
       dividerInlineStyle = { boxSizing: 'border-box' };
     } else if (dividerStyle === 'none') {
-      dividerClass = 'mb-2';
+      dividerClass = 'mb-1.5';
       dividerInlineStyle = { boxSizing: 'border-box' };
     }
 
     return (
-      <div className={`${isOnePage ? 'mt-2' : 'mt-3.5'} first:mt-0 ${dividerClass}`} style={dividerInlineStyle}>
+      <div className={`${isOnePage ? 'mt-1.5' : 'mt-2.5'} first:mt-0 ${dividerClass}`} style={dividerInlineStyle}>
         <h2
           className="font-bold tracking-tight uppercase flex items-center gap-1.5 leading-normal"
           style={{

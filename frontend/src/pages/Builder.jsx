@@ -93,7 +93,12 @@ export function Builder() {
   const jsonInputRef = useRef(null);
   const tabsRef = useRef(null);
 
-  const [pageLayoutMode, setPageLayoutMode] = useState('auto'); // 'auto' | '1_page' | '2_pages'
+  const [pageLayoutMode, setPageLayoutMode] = useState(() => {
+    const tp = resumeData?.preferences?.targetPages;
+    if (tp === 1) return '1_page';
+    if (tp === 2) return '2_pages';
+    return 'auto';
+  }); // 'auto' | '1_page' | '2_pages'
   const [isSmartCondensing, setIsSmartCondensing] = useState(false);
   const [condenseNotice, setCondenseNotice] = useState(null);
   const [undoSnapshot, setUndoSnapshot] = useState(null);

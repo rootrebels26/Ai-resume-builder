@@ -234,8 +234,9 @@ CRITICAL EXTRACTION RULES:
    - Accurately determine the candidate's real professional title (e.g. "Full Stack Developer", "Backend Engineer", "Data Scientist", "Azure Data Engineer", "Software Engineer", "DevOps Engineer").
    - If a title is explicitly in the header, use it.
    - If not in the header, inspect the most recent job title in their experience or primary technologies and set an accurate title. DO NOT default to a generic placeholder.
-5. EXPERIENCE & BULLETS:
-   - Extract EVERY position with exact company name, job title, start/end dates, location, and bullet point responsibilities.
+5. EXPERIENCE & BULLETS (CRITICAL — DO NOT TRUNCATE):
+   - Extract EVERY SINGLE work experience role from the entire document across all pages (if there are 7, 8, 9, or 10+ roles, extract ALL of them from newest to oldest!).
+   - For every position, extract exact company name, job title, start/end dates, location, and ALL bullet point responsibilities.
 6. PROJECTS (CRITICAL):
    - Locate and extract all technical and personal projects.
    - UNIVERSAL FALLBACK: If the resume does NOT have a separate "PROJECTS" section, extract the top 3-4 major engineering systems, platforms, or data architectures described in their work experience into "projects" so the projects list is never empty!
@@ -248,11 +249,12 @@ CRITICAL EXTRACTION RULES:
    - If the resume explicitly organizes skills into named categories (e.g. "AI & Agents", "Data", "Languages", "ML / Frameworks", "Tools & Cloud", "Core CS"), PRESERVE those exact category names and items!
    - Otherwise, group skills into clean categories: "Programming Languages", "Frameworks & AI/ML", "Cloud & DevOps", "Databases & Tools", "Core Competencies".
 8. EDUCATION:
-   - Extract institution, full degree (including field of study, e.g. "BS in Data Science and Applications"), start/end dates, CGPA, and coursework in description.
+   - Extract institution, full degree (including field of study, e.g. "BS in Data Science and Applications" or "Bachelor of Engineering (Information and Technology)"), start/end dates, CGPA, and coursework in description.
    - If education is mentioned anywhere in the document, extract it.
-9. CERTIFICATIONS:
+9. CERTIFICATIONS, LEADERSHIP & EXTRA SECTIONS:
    - Extract EVERY certification. If multiple certifications are listed on the same bullet line separated by '|', split them into separate certification objects!
    - Extract name, issuer (organization/platform e.g. Anthropic, Learn Depth, Simplilearn, HackerRank), and issue date.
+   - Extract any Leadership / Interpersonal Skills, Awards, Languages, Publications, or Volunteer sections into "achievements", "languages", "publications", "volunteerExperience", or "customSections" so ZERO information from the uploaded resume is lost.
 
 Return ONLY valid JSON matching this exact structure:
 {{
