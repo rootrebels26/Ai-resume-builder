@@ -1700,11 +1700,11 @@ export function Builder() {
 
                       <div>
                         <div className="flex justify-between items-center mb-1">
-                          <label className="label-base mb-0">Project Description & Impact</label>
+                          <label className="label-base mb-0">Project Summary / Overview</label>
                           <button
                             type="button"
                             onClick={() => handleImproveProject(proj.id, proj.description)}
-                            className="text-[11px] font-semibold text-brand-600 hover:text-brand-700 inline-flex items-center gap-1"
+                            className="text-[11px] font-semibold text-brand-600 hover:text-brand-700 inline-flex items-center gap-1 cursor-pointer"
                           >
                             <Sparkles className="w-3 h-3" />
                             <span>Improve with AI</span>
@@ -1719,6 +1719,51 @@ export function Builder() {
                           placeholder="Engineered high-performance real-time messaging engine handling 50k concurrent websockets."
                           className="input-base"
                         />
+                      </div>
+
+                      {/* Structured Project Bullet Points */}
+                      <div className="space-y-2 pt-1">
+                        <div className="flex items-center justify-between">
+                          <label className="label-base mb-0">Key Bullet Points ({(proj.highlights || []).length})</label>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const nextHighlights = [...(proj.highlights || []), ''];
+                              updateItemInSection('projects', proj.id, { highlights: nextHighlights });
+                            }}
+                            className="text-[11px] font-bold text-[#5e48d7] hover:underline inline-flex items-center gap-1 cursor-pointer"
+                          >
+                            <Plus className="w-3 h-3" />
+                            <span>Add Point</span>
+                          </button>
+                        </div>
+                        {(proj.highlights || []).map((hl, hIdx) => (
+                          <div key={hIdx} className="flex items-start gap-2">
+                            <span className="mt-2 text-ink-muted font-bold">•</span>
+                            <input
+                              type="text"
+                              value={hl}
+                              onChange={(e) => {
+                                const nextHighlights = [...(proj.highlights || [])];
+                                nextHighlights[hIdx] = e.target.value;
+                                updateItemInSection('projects', proj.id, { highlights: nextHighlights });
+                              }}
+                              placeholder="e.g. Reduced API response latency by 42% using Redis caching."
+                              className="input-base py-1.5 px-3 text-xs flex-1"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const nextHighlights = (proj.highlights || []).filter((_, i) => i !== hIdx);
+                                updateItemInSection('projects', proj.id, { highlights: nextHighlights });
+                              }}
+                              className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition cursor-pointer shrink-0"
+                              title="Remove point"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   ))}

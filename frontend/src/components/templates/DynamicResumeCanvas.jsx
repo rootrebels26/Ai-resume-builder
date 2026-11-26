@@ -465,7 +465,13 @@ export function DynamicResumeCanvas({
             const hlLines = Array.isArray(proj.highlights)
               ? proj.highlights.map((s) => String(s).trim()).filter(Boolean)
               : [];
-            const projectLines = descLines.length > 0 ? descLines : hlLines;
+            // Merge description lines and bullet highlights without duplicates
+            const projectLines = [...descLines];
+            hlLines.forEach((h) => {
+              if (!projectLines.some((d) => d.toLowerCase() === h.toLowerCase())) {
+                projectLines.push(h);
+              }
+            });
 
             const liveHref = proj.liveUrl || (proj.link && !String(proj.link).toLowerCase().includes('github.com') ? proj.link : '');
             const githubHref = proj.githubUrl || (proj.link && String(proj.link).toLowerCase().includes('github.com') ? proj.link : '');
@@ -519,9 +525,9 @@ export function DynamicResumeCanvas({
                 )}
 
                 {projectLines.length > 0 && (
-                  <ul className="space-y-0.5 pl-3.5 mt-0.5" style={{ fontSize: `${baseFontSize}px`, color: textColor }}>
+                  <ul className="space-y-0.5 pl-3.5 mt-0.5 min-w-0" style={{ fontSize: `${baseFontSize}px`, color: textColor, overflowWrap: 'anywhere' }}>
                     {projectLines.map((h, hIdx) => (
-                      <li key={hIdx} className="relative leading-relaxed pl-1.5">
+                      <li key={hIdx} className="relative leading-relaxed pl-1.5 break-words" style={{ overflowWrap: 'anywhere' }}>
                         <span className="absolute -left-3.5 top-0 font-bold opacity-75" style={{ color: accentColor }}>
                           {bulletSymbol}
                         </span>
@@ -806,7 +812,7 @@ export function DynamicResumeCanvas({
 
   return (
     <div
-      className="resume-dynamic-canvas font-normal w-full"
+      className="resume-dynamic-canvas font-normal w-full break-words"
       style={{
         fontFamily,
         lineHeight,
@@ -815,6 +821,7 @@ export function DynamicResumeCanvas({
         padding: 0,
         boxSizing: 'border-box',
         minHeight: '100%',
+        overflowWrap: 'anywhere',
       }}
     >
       <HeaderComponent />
