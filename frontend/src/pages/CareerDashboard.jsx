@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import { RefreshCw, ShieldCheck, Trash2, Sparkles, Info } from 'lucide-react';
+import { RefreshCw, ShieldCheck, Trash2, Sparkles, Info, FileUp, FileText, Loader2 } from 'lucide-react';
 import { storageService } from '../services/storageService';
 import { careerService } from '../services/careerService';
+import { resumeService } from '../services/resumeService';
 import { CareerSnapshot } from '../components/career/CareerSnapshot';
 import { CareerFilters } from '../components/career/CareerFilters';
 import { RecommendedRoleCard } from '../components/career/RecommendedRoleCard';
@@ -27,6 +28,13 @@ const DEFAULT_FILTERS = {
 
 function hasMeaningfulResume(data) {
   if (!data || typeof data !== 'object') return false;
+  // Never auto-analyze the sample starter template ("Alex Rivera") as a user's real resume
+  if (
+    data.personalInfo?.fullName === 'Alex Rivera' &&
+    data.personalInfo?.email === 'alex.rivera@example.com'
+  ) {
+    return false;
+  }
   return Boolean(
     data.personalInfo?.professionalTitle ||
       data.professionalSummary?.trim() ||
@@ -40,6 +48,10 @@ function hasMeaningfulResume(data) {
 
 export function CareerDashboard() {
   const [resumeData, setResumeData] = useState(null);
+  const [resumeSourceLabel, setResumeSourceLabel] = useState('');
+  const [savedDrafts, setSavedDrafts] = useState([]);
+  const [uploadingResume, setUploadingResume] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
   const [careerProfile, setCareerProfile] = useState(null);
   const [recommendations, setRecommendations] = useState([]);
   const [skillsGap, setSkillsGap] = useState(null);
@@ -54,7 +66,7 @@ export function CareerDashboard() {
   const [error, setError] = useState('');
   const [selectedRole, setSelectedRole] = useState(null);
 
-  const runAnalysis = useCallback(async (resData, prefs, forceRefresh = false) => {
+  const runAnalysis = useCallback(async (resData, prefs, forceRefresh = false, sourceLabel = '') => {
     if (!hasMeaningfulResume(resData)) {
       setLoading(false);
       return;
@@ -75,6 +87,8 @@ export function CareerDashboard() {
       setDisclaimer(data.disclaimer || '');
 
       await storageService.saveCareerState({
+        uploadedResumeData: resData,
+        uploadedSourceLabel: sourceLabel || resumeSourceLabel,
         careerProfile: data.career_profile,
         recommendations: data.recommendations || [],
         skillsGap: data.skills_gap || null,
@@ -89,35 +103,72 @@ export function CareerDashboard() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [resumeSourceLabel]);
+
+  const handleResumeFileUpload = async (file) => {
+    if (!file) return;
+    setUploadingResume(true);
+    setError('');
+    try {
+      const parsedResp = await resumeService.parseResumeFile(file);
+      const parsedData = parsedResp?.data?.resume_data || parsedResp?.resume_data || parsedResp?.data;
+      if (!parsedData || !hasMeaningfulResume(parsedData)) {
+        throw new Error('Could not extract enough resume details from this file. Please try another PDF, DOCX, or TXT resume.');
+      }
+      const label = `Uploaded: ${file.name}`;
+      setResumeData(parsedData);
+      setResumeSourceLabel(label);
+      await runAnalysis(parsedData, preferences, true, label);
+    } catch (err) {
+      setError(err?.message || 'Failed to parse uploaded resume.');
+    } finally {
+      setUploadingResume(false);
+    }
+  };
+
+  const handleSelectDraft = async (draftId) => {
+    const draft = savedDrafts.find((d) => d.id === draftId);
+    if (!draft?.data || !hasMeaningfulResume(draft.data)) return;
+    const label = `Saved Draft: ${draft.title || draft.data?.personalInfo?.fullName || 'Resume'}`;
+    setResumeData(draft.data);
+    setResumeSourceLabel(label);
+    await runAnalysis(draft.data, preferences, true, label);
+  };
 
   useEffect(() => {
     let mounted = true;
     async function hydrate() {
       setLoading(true);
-      const [drafts, wizardState, cachedCareer] = await Promise.all([
+      const [drafts, cachedCareer] = await Promise.all([
         storageService.getAllDrafts(),
-        storageService.getWizardState(),
         storageService.getCareerState(),
       ]);
 
       if (!mounted) return;
 
-      const activeDraft = drafts?.[0]?.data;
-      const activeWizard = wizardState?.resumeData;
-      const bestResume = hasMeaningfulResume(activeDraft)
-        ? activeDraft
-        : hasMeaningfulResume(activeWizard)
-        ? activeWizard
-        : null;
+      const validDrafts = (drafts || []).filter((d) => hasMeaningfulResume(d?.data));
+      setSavedDrafts(validDrafts);
 
-      setResumeData(bestResume);
       if (cachedCareer?.savedRoles) {
         setSavedRoles(cachedCareer.savedRoles);
       }
       if (cachedCareer?.preferences) {
         setPreferences(cachedCareer.preferences);
       }
+
+      const cachedUploaded = cachedCareer?.uploadedResumeData;
+      const bestResume = hasMeaningfulResume(cachedUploaded)
+        ? cachedUploaded
+        : validDrafts[0]?.data || null;
+
+      const initialLabel = hasMeaningfulResume(cachedUploaded)
+        ? cachedCareer?.uploadedSourceLabel || 'Uploaded Resume'
+        : validDrafts[0]
+        ? `Saved Draft: ${validDrafts[0].title || 'Resume'}`
+        : '';
+
+      setResumeData(bestResume);
+      setResumeSourceLabel(initialLabel);
 
       if (!bestResume) {
         setLoading(false);
@@ -139,7 +190,7 @@ export function CareerDashboard() {
         setDisclaimer(cachedCareer.disclaimer || '');
         setLoading(false);
       } else {
-        await runAnalysis(bestResume, prefs, false);
+        await runAnalysis(bestResume, prefs, false, initialLabel);
       }
     }
     hydrate();
@@ -167,6 +218,8 @@ export function CareerDashboard() {
 
   const handleClearCareerData = async () => {
     await storageService.clearCareerState();
+    setResumeData(null);
+    setResumeSourceLabel('');
     setCareerProfile(null);
     setRecommendations([]);
     setSkillsGap(null);
@@ -265,18 +318,96 @@ export function CareerDashboard() {
         </p>
       </div>
 
-      {loading && <CareerLoadingState />}
+      {/* Direct Resume Upload & Source Selector */}
+      <section
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragActive(true);
+        }}
+        onDragLeave={() => setDragActive(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragActive(false);
+          const file = e.dataTransfer?.files?.[0];
+          if (file) handleResumeFileUpload(file);
+        }}
+        className={`rounded-3xl border-2 p-5 transition-colors flex flex-wrap items-center justify-between gap-4 ${
+          dragActive
+            ? 'border-brand-600 bg-volt/25'
+            : 'border-dashed border-ink/35 bg-white'
+        }`}
+      >
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-volt border border-ink flex items-center justify-center shrink-0">
+            <FileText className="w-5 h-5 text-ink" />
+          </div>
+          <div className="space-y-0.5">
+            <div className="text-sm font-extrabold text-ink">
+              {resumeSourceLabel ? `Active Resume: ${resumeSourceLabel}` : 'Upload Your Resume (PDF, DOCX, TXT, RTF)'}
+            </div>
+            <p className="text-xs text-ink-muted">
+              Upload any resume file or drop it here — recommendations are generated directly from your uploaded resume without storing it on any server.
+            </p>
+          </div>
+        </div>
 
-      {!loading && error && (
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="btn-volt py-2 px-4 text-xs font-bold inline-flex items-center gap-2 cursor-pointer">
+            {uploadingResume ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileUp className="w-3.5 h-3.5" />}
+            <span>{uploadingResume ? 'Extracting Resume...' : resumeData ? 'Upload Another Resume' : 'Upload Resume'}</span>
+            <input
+              type="file"
+              accept=".pdf,.docx,.doc,.txt,.rtf,.png,.jpg,.jpeg"
+              className="hidden"
+              disabled={uploadingResume}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleResumeFileUpload(file);
+                e.target.value = '';
+              }}
+            />
+          </label>
+
+          {savedDrafts.length > 0 && (
+            <select
+              aria-label="Choose saved resume draft"
+              defaultValue=""
+              onChange={(e) => {
+                if (e.target.value) handleSelectDraft(e.target.value);
+              }}
+              className="input-base text-xs py-2"
+            >
+              <option value="" disabled>
+                Or use saved draft...
+              </option>
+              {savedDrafts.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.title || d.data?.personalInfo?.fullName || 'Saved Resume'}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+      </section>
+
+      {(loading || uploadingResume) && <CareerLoadingState />}
+
+      {!loading && !uploadingResume && error && (
         <CareerErrorState
           message={error}
           onRetry={resumeData ? () => runAnalysis(resumeData, preferences, true) : null}
         />
       )}
 
-      {!loading && !error && !resumeData && <CareerEmptyState hasResume={false} />}
+      {!loading && !uploadingResume && !error && !resumeData && (
+        <CareerEmptyState
+          hasResume={false}
+          onFileUpload={handleResumeFileUpload}
+          uploading={uploadingResume}
+        />
+      )}
 
-      {!loading && !error && resumeData && (
+      {!loading && !uploadingResume && !error && resumeData && (
         <>
           {/* B. Career Snapshot */}
           <CareerSnapshot careerProfile={careerProfile} resumeData={resumeData} />
