@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
@@ -62,6 +62,12 @@ const Privacy = lazyWithRetry(() => import('./pages/Privacy'), 'Privacy');
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'), 'NotFound');
 
 export default function App() {
+  useEffect(() => {
+    const rawBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+    const cleanBase = rawBase.trim().replace(/\/+$/, '').replace(/\/api\/v1\/?$/, '');
+    fetch(`${cleanBase}/api/v1/health`, { method: 'GET', mode: 'cors' }).catch(() => {});
+  }, []);
+
   return (
     <AppLayout>
       <ErrorBoundary>

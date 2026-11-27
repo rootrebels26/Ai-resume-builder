@@ -423,8 +423,11 @@ class DocumentExtractor:
             # If page text is empty but page has images, attempt OCR / vision recovery
             if len(page_text.strip()) < 30 and has_images:
                 try:
-                    pix = page.get_pixmap(dpi=250)
+                    from app.core.config import settings
+                    ocr_dpi = 180 if getattr(settings, "APP_ENV", "development") == "production" else 220
+                    pix = page.get_pixmap(dpi=ocr_dpi)
                     img_bytes = pix.tobytes("jpeg")
+                    del pix
                     recovered_ocr = DocumentExtractor._ocr_image_bytes(img_bytes, mime="image/jpeg")
                     if recovered_ocr.strip():
                         page_text = DocumentExtractor._clean_acquired_text(recovered_ocr.strip())
@@ -958,65 +961,64 @@ class DocumentExtractor:
     @staticmethod
     def _ocr_image_bytes(img_bytes: bytes, mime: str = "image/jpeg") -> str:
         """
-        Local OCR (Tesseract+OpenCV or RapidOCR ONNX) followed by Gemini Vision OCR fallback.
+        Cloud-friendly OCR: uses Gemini Vision first when GEMINI_API_KEY is configured
+        (zero ONNX RAM overhead on Render 512MB tier + clean spacing/punctuation),
+        with automatic fallback to local RapidOCR ONNX / Tesseract.
         """
         import base64
         from app.core.config import settings
         import httpx
 
-        local_text, local_conf = DocumentExtractor._try_local_tesseract_ocr(img_bytes)
-        if local_text and len(local_text) >= 80 and (local_conf is None or local_conf >= 0.55):
-            return local_text
+        api_key = settings.GEMINI_API_KEY
+        if api_key:
+            b64 = base64.b64encode(img_bytes).decode("utf-8")
+            models_to_try = [settings.AI_MODEL or "gemini-2.5-flash", "gemini-2.0-flash"]
+            for model_id in dict.fromkeys(models_to_try):
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_id}:generateContent?key={api_key}"
+                gen_config: Dict[str, Any] = {"temperature": 0.0}
+                if "2.5" in model_id:
+                    gen_config["thinkingConfig"] = {"thinkingBudget": 0}
+                payload = {
+                    "contents": [{
+                        "parts": [
+                            {
+                                "text": "You are a universal resume OCR extraction engine. Transcribe ALL text from this resume image exactly as written, preserving all contact info, section headings, job titles, dates, companies, bullet points, skills, projects, and education. Read multi-column layouts column-by-column. Do not summarize or omit anything. Output the full text with clear line breaks."
+                            },
+                            {
+                                "inlineData": {
+                                    "mimeType": mime,
+                                    "data": b64
+                                }
+                            }
+                        ]
+                    }],
+                    "generationConfig": gen_config
+                }
+                try:
+                    with httpx.Client(timeout=15.0) as client:
+                        resp = client.post(url, json=payload)
+                        if resp.status_code == 200:
+                            data = resp.json()
+                            candidates = data.get("candidates", [])
+                            if candidates and "content" in candidates[0]:
+                                parts = candidates[0]["content"].get("parts", [])
+                                if parts and "text" in parts[0]:
+                                    txt = parts[0]["text"].strip()
+                                    if txt:
+                                        return txt
+                        else:
+                            logger.warning("Gemini Vision OCR (%s) returned %s: %s", model_id, resp.status_code, resp.text[:160])
+                            if resp.status_code in (401, 403, 429):
+                                break
+                except Exception as e:
+                    logger.warning("Gemini Vision OCR (%s) failed: %s", model_id, e)
 
         rapid_text, rapid_conf = DocumentExtractor._try_local_rapidocr(img_bytes)
-        if rapid_text and len(rapid_text) >= 80 and (rapid_conf is None or rapid_conf >= 0.55):
+        if rapid_text and len(rapid_text) >= 40:
             return rapid_text
 
-        api_key = settings.GEMINI_API_KEY
-        if not api_key:
-            return rapid_text or local_text
-
-        b64 = base64.b64encode(img_bytes).decode("utf-8")
-        models_to_try = [settings.AI_MODEL or "gemini-2.5-flash", "gemini-2.0-flash"]
-        for model_id in dict.fromkeys(models_to_try):
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_id}:generateContent?key={api_key}"
-            gen_config: Dict[str, Any] = {"temperature": 0.0}
-            if "2.5" in model_id:
-                gen_config["thinkingConfig"] = {"thinkingBudget": 0}
-            payload = {
-                "contents": [{
-                    "parts": [
-                        {
-                            "text": "You are a universal resume OCR extraction engine. Transcribe ALL text from this resume image exactly as written, preserving all contact info, section headings, job titles, dates, companies, bullet points, skills, projects, and education. Do not summarize or omit anything. Output the full text with clear line breaks."
-                        },
-                        {
-                            "inlineData": {
-                                "mimeType": mime,
-                                "data": b64
-                            }
-                        }
-                    ]
-                }],
-                "generationConfig": gen_config
-            }
-            try:
-                with httpx.Client(timeout=28.0) as client:
-                    resp = client.post(url, json=payload)
-                    if resp.status_code == 200:
-                        data = resp.json()
-                        candidates = data.get("candidates", [])
-                        if candidates and "content" in candidates[0]:
-                            parts = candidates[0]["content"].get("parts", [])
-                            if parts and "text" in parts[0]:
-                                txt = parts[0]["text"].strip()
-                                if txt:
-                                    return txt
-                    else:
-                        logger.warning("Gemini Vision OCR (%s) returned %s: %s", model_id, resp.status_code, resp.text[:160])
-            except Exception as e:
-                logger.warning("Gemini Vision OCR (%s) failed: %s", model_id, e)
-
-        return ""
+        local_text, _ = DocumentExtractor._try_local_tesseract_ocr(img_bytes)
+        return local_text or rapid_text
 
     @staticmethod
     def extract_document(file_path: str, filename: str = "") -> Dict[str, Any]:
