@@ -350,7 +350,7 @@ RAW RESUME TEXT:
             return {"warnings": pre_warnings, "unmapped": []}
 
         prompt = build_section_prompt(section_type, clean_text, repair_errors=repair_errors)
-        res = await self._call_gemini(prompt, timeout_seconds=30.0)
+        res = await self._call_gemini(prompt, timeout_seconds=12.0)
         if res and isinstance(res, dict):
             existing_w = res.get("warnings") or []
             res["warnings"] = pre_warnings + (existing_w if isinstance(existing_w, list) else [])

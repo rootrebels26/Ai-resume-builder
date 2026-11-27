@@ -214,6 +214,16 @@ class ExtractionValidator:
                         "message": f"Skill '{sk}' duplicates an experience job title."
                     })
 
+        if layout_metadata:
+            exp_pages = int(layout_metadata.get("page_count") or 1)
+            proc_pages = len(layout_metadata.get("pages") or []) or len(re.findall(r'\[\[page\s+\d+\]\]', raw_text, re.I)) or 1
+            if exp_pages > proc_pages:
+                all_structured_warnings.append({
+                    "code": "PARTIAL_PAGE_COVERAGE",
+                    "path": "meta",
+                    "message": f"Only {proc_pages} of {exp_pages} pages produced extractable text."
+                })
+
         if layout_metadata and layout_metadata.get("is_scanned"):
             warnings.append("Document is image-only or scanned; OCR recovery was applied.")
             all_structured_warnings.append({

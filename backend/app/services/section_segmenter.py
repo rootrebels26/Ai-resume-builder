@@ -9,22 +9,27 @@ SECTION_SYNONYMS: Dict[str, List[str]] = {
     "summary": [
         "summary", "professional summary", "profile", "about me",
         "objective", "career objective", "career summary", "executive summary",
-        "professional profile"
+        "professional profile", "profil", "über mich", "uber mich", "resumen"
     ],
     "experience": [
         "experience", "work experience", "professional experience", "employment",
         "employment history", "work history", "career history", "internships",
-        "internship experience", "relevant experience"
+        "internship experience", "relevant experience", "where i've worked",
+        "berufserfahrung", "erfahrung", "experience professionnelle", "expérience professionnelle",
+        "experiencia laboral", "experiencia profesional"
     ],
     "education": [
         "education", "academic background", "academics", "qualifications",
         "educational qualification", "educational qualifications", "academic profile",
-        "education & training"
+        "education & training", "ausbildung", "studium", "formation",
+        "éducation", "educacion", "educación", "formacion"
     ],
     "skills": [
         "skills", "technical skills", "core competencies", "technical core competencies",
         "key skills", "expertise", "technologies", "tools", "tech stack", "skill set",
-        "technical expertise", "skills & technologies", "tools & frameworks", "competencies"
+        "technical expertise", "skills & technologies", "tools & frameworks", "competencies",
+        "toolkit", "kenntnisse", "fähigkeiten", "fahigkeiten", "kompetenzen",
+        "compétences", "competences", "habilidades"
     ],
     "projects": [
         "projects", "personal projects", "academic projects", "key projects",
@@ -133,7 +138,12 @@ class SectionSegmenter:
             matched_type = None
             heading_raw = ""
 
-            if _is_probable_heading(stripped):
+            is_inline_skill_cat = (
+                current_type == "skills"
+                and ":" in stripped
+                and bool(stripped.split(":", 1)[1].strip())
+            )
+            if not is_inline_skill_cat and _is_probable_heading(stripped):
                 norm = _normalize_heading_candidate(stripped)
                 has_header_content = any(l.strip() for l in current_lines)
                 if norm in synonym_map:

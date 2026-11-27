@@ -283,7 +283,7 @@ class DocumentExtractor:
                     s1 = max(b[3] for b in col1) - min(b[1] for b in col1)
                     s2 = max(b[3] for b in col2) - min(b[1] for b in col2)
                     s3 = max(b[3] for b in col3) - min(b[1] for b in col3)
-                    if s1 > page_height * 0.22 and s2 > page_height * 0.22 and s3 > page_height * 0.22:
+                    if s1 >= 30 and s2 >= 30 and s3 >= 30:
                         column_count = 3
                         is_two_column = True
                         left_blocks = sorted(col1, key=lambda b: (b[1], b[0]))
@@ -322,18 +322,31 @@ class DocumentExtractor:
                         if has_overlap:
                             l_span = max(b[3] for b in l_cands) - min(b[1] for b in l_cands)
                             r_span = max(b[3] for b in r_cands) - min(b[1] for b in r_cands)
-                            if l_span > page_height * 0.22 and r_span > page_height * 0.22:
+                            r_chars = sum(len(b[4].strip()) for b in r_cands)
+                            l_chars = sum(len(b[4].strip()) for b in l_cands)
+                            if (
+                                l_span >= 30
+                                and r_span >= 30
+                                and min(l_chars, r_chars) >= 25
+                                and (len(l_cands) >= 2 or l_span > page_height * 0.15)
+                                and (len(r_cands) >= 2 or r_span > page_height * 0.15)
+                            ):
                                 score = min(len(l_cands), len(r_cands)) * min(gap_w, 40)
                                 if score > best_score:
                                     best_score = score
                                     best_cut = cut_x
 
                 if best_cut is not None:
-                    # Keep top spanning/header blocks above 12% height out of columns; assign side blocks below 12% to their column
-                    # so column headings like "WORK EXPERIENCE" stay attached to their column instead of jumping to top_headers.
+                    # Partition page into top spanning header, 2-column body band, and any bottom 1-column zone
                     col_pool = [b for b in enriched_text_blocks if b[1] >= page_height * 0.12 or (b[3] - b[1]) > page_height * 0.25]
-                    left_col = [b for b in col_pool if b[2] <= best_cut + 4]
-                    right_col = [b for b in col_pool if b[0] >= best_cut - 4]
+                    lower_spanning = [
+                        b for b in col_pool
+                        if b[0] < best_cut - 4 and b[2] > best_cut + 4 and b[1] >= page_height * 0.25
+                    ]
+                    bottom_zone_y = min((b[1] for b in lower_spanning), default=page_height + 1) - 35.0
+                    col_pool_band = [b for b in col_pool if b[1] < bottom_zone_y]
+                    left_col = [b for b in col_pool_band if b[2] <= best_cut + 4]
+                    right_col = [b for b in col_pool_band if b[0] >= best_cut - 4]
                     is_two_column = True
                     column_count = 2
                     left_blocks = sorted(left_col, key=lambda b: (b[1], b[0]))
@@ -344,14 +357,24 @@ class DocumentExtractor:
                     left_chars = sum(len(b[4].strip()) for b in left_blocks)
                     right_chars = sum(len(b[4].strip()) for b in right_blocks)
                     if left_blocks and right_blocks and right_chars > 0:
-                        if (left_chars < 0.18 * right_chars and len(left_blocks) <= 12) or all(len(b[4].split()) <= 3 for b in left_blocks):
+                        looks_like_label_only = all(
+                            len(b[4].split()) <= 3
+                            and ":" not in b[4]
+                            and not any(ch.isdigit() for ch in b[4])
+                            for b in left_blocks
+                        )
+                        if left_chars < 0.18 * right_chars and len(left_blocks) <= 12 and looks_like_label_only:
                             is_label_sidebar = True
 
-            # 5. Assemble page text in correct spatial reading order
+            # 5. Assemble page text in correct spatial reading order (zone-aware: top/mid/bottom spanning + columns)
             page_lines = []
             if is_two_column:
-                col_ids = {b[5] for b in (left_blocks + mid_blocks + right_blocks)}
-                top_headers = [b for b in enriched_text_blocks if b[5] not in col_ids and b[1] < page_height * 0.25]
+                col_blocks_all = left_blocks + mid_blocks + right_blocks
+                col_ids = {b[5] for b in col_blocks_all}
+                col_min_y = min((b[1] for b in col_blocks_all), default=page_height * 0.25)
+                spanning_blocks = [b for b in enriched_text_blocks if b[5] not in col_ids]
+                top_headers = [b for b in spanning_blocks if b[1] <= col_min_y or b[1] < page_height * 0.25]
+                bottom_spanning = [b for b in spanning_blocks if b not in top_headers]
                 processed_ids = set()
 
                 for b in sorted(top_headers, key=lambda x: (round(x[1] / 6), x[0])):
@@ -383,6 +406,11 @@ class DocumentExtractor:
                         if b[5] not in processed_ids:
                             page_lines.append(b[4].strip())
                             processed_ids.add(b[5])
+
+                for b in sorted(bottom_spanning, key=lambda x: (round(x[1] / 6), x[0])):
+                    if b[5] not in processed_ids:
+                        page_lines.append(b[4].strip())
+                        processed_ids.add(b[5])
             else:
                 sorted_blocks = sorted(enriched_text_blocks, key=lambda b: (round(b[1] / 6), b[0]))
                 for b in sorted_blocks:
@@ -505,14 +533,18 @@ class DocumentExtractor:
                         seen_hf.add(htxt)
                         text_lines.append(htxt)
 
-        # 1. Process paragraphs with heading level indicators and hyperlink recovery
-        for p in doc.paragraphs:
+        from docx.table import Table as DocxTable
+        from docx.text.paragraph import Paragraph as DocxParagraph
+        from docx.text.run import Run as DocxRun
+
+        def _format_paragraph(p: DocxParagraph) -> Optional[str]:
             p_text_parts = []
             try:
                 for child in p._element:
-                    if child.tag.endswith('hyperlink'):
+                    c_tag = child.tag.rsplit('}', 1)[-1]
+                    if c_tag == 'hyperlink':
                         r_id = child.attrib.get('{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id')
-                        h_text = "".join(child.itertext()).strip()
+                        h_text = "".join(t.text or "" for t in child.iter() if t.tag.rsplit('}', 1)[-1] == 't').strip()
                         if r_id and hasattr(doc.part, 'rels') and r_id in doc.part.rels:
                             target_uri = doc.part.rels[r_id].target_ref
                             if target_uri and not target_uri.startswith("#"):
@@ -521,8 +553,8 @@ class DocumentExtractor:
                                 p_text_parts.append(h_text)
                         else:
                             p_text_parts.append(h_text)
-                    elif child.tag.endswith('r'):
-                        r_text = "".join(child.itertext())
+                    elif c_tag == 'r':
+                        r_text = DocxRun(child, p).text
                         if r_text:
                             p_text_parts.append(r_text)
             except Exception:
@@ -531,17 +563,49 @@ class DocumentExtractor:
             p_assembled = "".join(p_text_parts).strip() if p_text_parts else p.text.strip()
             text = p_assembled if p_assembled else p.text.strip()
             if not text:
-                continue
+                return None
 
-            if p.style and 'list' in p.style.name.lower():
-                text_lines.append(f"• {text}")
-            elif p.style and 'heading' in p.style.name.lower():
-                text_lines.append(f"\n[SECTION: {text.upper()}]")
-            else:
-                text_lines.append(text)
+            style_name = p.style.name.lower() if (p.style and p.style.name) else ""
+            if 'list' in style_name:
+                return f"• {text}"
+            if 'heading' in style_name:
+                return f"\n[SECTION: {text.upper()}]"
+            return text
 
-        # 2. Process tables recursively (supports nested tables inside table cells)
-        def _extract_table_recursive(tbl, depth: int = 0):
+        def _extract_table_recursive(tbl: DocxTable, depth: int = 0):
+            # Detect multi-column layout tables (e.g. 2-col sidebar/main resumes) vs compact data tables
+            max_cols = max((len(r.cells) for r in tbl.rows), default=0)
+            is_layout_table = False
+            if 1 <= max_cols <= 3:
+                for row in tbl.rows:
+                    for c in row.cells:
+                        non_empty_paras = sum(1 for cp in c.paragraphs if cp.text.strip())
+                        if non_empty_paras >= 3 or len(c.text.strip()) >= 140:
+                            is_layout_table = True
+                            break
+                    if is_layout_table:
+                        break
+
+            if is_layout_table:
+                # Read column-by-column (deduplicating merged cells by XML element identity)
+                seen_cells = set()
+                for col_idx in range(max_cols):
+                    for row in tbl.rows:
+                        if col_idx >= len(row.cells):
+                            continue
+                        cell = row.cells[col_idx]
+                        cell_id = id(cell._tc)
+                        if cell_id in seen_cells:
+                            continue
+                        seen_cells.add(cell_id)
+                        for cp in cell.paragraphs:
+                            formatted = _format_paragraph(cp)
+                            if formatted:
+                                text_lines.append(formatted)
+                        for nested_tbl in getattr(cell, "tables", []) or []:
+                            _extract_table_recursive(nested_tbl, depth + 1)
+                return
+
             for row in tbl.rows:
                 cells_text = [c.text.strip().replace("\n", " ") for c in row.cells if c.text.strip()]
                 deduped_cells = []
@@ -554,20 +618,49 @@ class DocumentExtractor:
                     for nested_tbl in getattr(c, "tables", []) or []:
                         _extract_table_recursive(nested_tbl, depth + 1)
 
-        for table_idx, table in enumerate(doc.tables):
-            text_lines.append(f"\n[TABLE {table_idx + 1}]")
-            _extract_table_recursive(table)
+        # 1. Walk body elements in true XML document order (w:p, w:tbl, w:sdt content controls)
+        table_counter = 0
 
-        # 3. Extract Word text boxes (w:txbxContent) that python-docx paragraphs/tables skip
+        def _walk_container(container_el):
+            nonlocal table_counter
+            for child in container_el:
+                tag_local = child.tag.rsplit('}', 1)[-1]
+                if tag_local == 'p':
+                    formatted = _format_paragraph(DocxParagraph(child, doc))
+                    if formatted:
+                        text_lines.append(formatted)
+                elif tag_local == 'tbl':
+                    table_counter += 1
+                    tbl = DocxTable(child, doc)
+                    # Only emit [TABLE N] marker for compact data tables, not layout tables
+                    _extract_table_recursive(tbl)
+                elif tag_local == 'sdt':
+                    for sub in child:
+                        if sub.tag.rsplit('}', 1)[-1] == 'sdtContent':
+                            _walk_container(sub)
+
+        _walk_container(doc.element.body)
+
+        # 2. Extract Word text boxes (w:txbxContent) preserving paragraph & bullet structure
         try:
             body_el = doc.element.body
             existing_blob = "\n".join(text_lines)
             for txbx in body_el.iter():
                 if txbx.tag.endswith("txbxContent"):
-                    box_txt = " ".join(t.strip() for t in txbx.itertext() if t and t.strip())
-                    if box_txt and box_txt not in existing_blob:
-                        text_lines.append(box_txt)
-                        existing_blob += "\n" + box_txt
+                    box_lines = []
+                    for p_el in txbx:
+                        if p_el.tag.rsplit('}', 1)[-1] == 'p':
+                            formatted = _format_paragraph(DocxParagraph(p_el, doc))
+                            if formatted:
+                                box_lines.append(formatted)
+                    if not box_lines:
+                        fallback_txt = " ".join(t.strip() for t in txbx.itertext() if t and t.strip())
+                        if fallback_txt:
+                            box_lines.append(fallback_txt)
+                    for bl in box_lines:
+                        if bl not in existing_blob:
+                            text_lines.append(bl)
+                            existing_blob += "\n" + bl
         except Exception:
             pass
 

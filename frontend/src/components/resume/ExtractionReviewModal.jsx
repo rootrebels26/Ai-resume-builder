@@ -117,7 +117,7 @@ export function ExtractionReviewModal({
             <div className="space-y-0.5">
               <span className="font-bold">Extraction notice:</span>
               <div className="text-[11px] text-amber-800">
-                {warnings[0]}
+                {typeof warnings[0] === 'object' ? (warnings[0]?.message || warnings[0]?.code || 'Review extracted fields') : warnings[0]}
                 {warnings.length > 1 && ` (+${warnings.length - 1} more review points)`}
               </div>
             </div>
@@ -299,7 +299,10 @@ export function ExtractionReviewModal({
                     Extraction Summary
                   </span>
                   <span className="text-[11px] font-mono text-ink-muted">
-                    {resumeData.sourceDocument?.layoutType || 'standard'} • {resumeData.sourceDocument?.language || 'en'}
+                    {resumeData.sourceDocument?.layoutType || 'standard'} •{' '}
+                    {typeof resumeData.sourceDocument?.language === 'object'
+                      ? (resumeData.sourceDocument.language?.name || resumeData.sourceDocument.language?.code || 'en')
+                      : (resumeData.sourceDocument?.language || 'en')}
                   </span>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center">
@@ -759,17 +762,48 @@ export function ExtractionReviewModal({
             </div>
           )}
 
-          {/* TAB: FULL EXTRACTED TEXT (STAGE 1) */}
+          {/* TAB: FULL EXTRACTED TEXT & SIDE-BY-SIDE COMPARISON (STAGE 1 vs STAGE 5) */}
           {activeTab === 'raw_text' && raw_text && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <p className="text-xs text-ink-muted">
-                  Full text extracted from <strong className="text-ink">{filename}</strong> before AI structuring ({raw_text.length.toLocaleString()} characters):
+                  Compare original text extracted from <strong className="text-ink">{filename}</strong> ({raw_text.length.toLocaleString()} chars) with normalized fields and confidence scores:
                 </p>
               </div>
-              <pre className="p-4 rounded-2xl bg-canvas border border-ink/15 text-[11px] font-mono text-ink whitespace-pre-wrap leading-relaxed max-h-[420px] overflow-y-auto">
-                {raw_text}
-              </pre>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <pre className="p-4 rounded-2xl bg-canvas border border-ink/15 text-[11px] font-mono text-ink whitespace-pre-wrap leading-relaxed max-h-[420px] overflow-y-auto">
+                  {raw_text}
+                </pre>
+                <div className="p-4 rounded-2xl bg-white border border-ink/15 space-y-2 max-h-[420px] overflow-y-auto">
+                  <div className="text-[11px] font-mono font-bold uppercase text-ink-muted">
+                    Normalized Field Evidence ({(resumeData.fieldEvidence || []).length})
+                  </div>
+                  {(resumeData.fieldEvidence || []).length === 0 ? (
+                    <p className="text-xs text-ink-muted">No field evidence metadata recorded.</p>
+                  ) : (
+                    (resumeData.fieldEvidence || []).map((ev, eIdx) => {
+                      const lowConf = ev.requiresReview || (typeof ev.confidence === 'number' && ev.confidence < 0.8);
+                      return (
+                        <div
+                          key={eIdx}
+                          className={`p-2.5 rounded-xl border text-xs space-y-0.5 ${
+                            lowConf ? 'bg-amber-50/70 border-amber-300' : 'bg-canvas border-ink/10'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between font-mono text-[10px]">
+                            <span className="font-bold text-ink">{ev.field}</span>
+                            <span className={lowConf ? 'text-amber-700 font-bold' : 'text-emerald-700'}>
+                              {typeof ev.confidence === 'number' ? `${Math.round(ev.confidence * 100)}%` : 'OK'}
+                              {ev.sourcePage ? ` • p.${ev.sourcePage}` : ''}
+                            </span>
+                          </div>
+                          <div className="font-semibold text-ink truncate">{String(ev.value || '')}</div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </div>

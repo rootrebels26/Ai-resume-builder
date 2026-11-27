@@ -869,19 +869,56 @@ async def parse_resume_document_pipeline(
         return empty, val
 
     async def _process_block(blk: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        from app.services.section_heuristic import parse_section_deterministic
+
         sec_type = blk["section_type"]
         sec_text = blk["text"]
         heading_raw = blk.get("heading_raw", "")
 
-        res = await ai_service.parse_section(sec_type, sec_text, heading_raw=heading_raw)
-        if not isinstance(res, dict):
-            res = {}
+        # Stage 3a: Deterministic Python extraction first (0ms, zero AI quota cost)
+        det_res = parse_section_deterministic(sec_type, sec_text, heading_raw=heading_raw)
+        if not isinstance(det_res, dict):
+            det_res = {}
+
+        def _needs_targeted_ai(st: str, txt: str, r: Dict[str, Any]) -> bool:
+            if not txt or not txt.strip():
+                return False
+            if r.get("unmapped"):
+                return True
+            if any((w or {}).get("code") == "AMBIGUOUS_ORDER" for w in (r.get("warnings") or [])):
+                return True
+            if st == "header":
+                return not r.get("full_name") or (not r.get("email") and not r.get("phone"))
+            if st == "summary":
+                return not r.get("summary")
+            if st == "skills":
+                return not (r.get("categories") or [])
+            if st in ("experience", "internships"):
+                return not (r.get("experience") or []) and len(txt.strip()) >= 20
+            if st in ("education", "projects", "certifications", "languages", "awards", "publications", "volunteer"):
+                key = "awards" if st == "awards" else st
+                return not (r.get(key) or []) and len(txt.strip()) >= 20
+            if st == "custom":
+                return not (r.get("items") or []) and len(txt.strip()) >= 20
+            return False
+
+        res = det_res
+        if _needs_targeted_ai(sec_type, sec_text, det_res):
+            try:
+                ai_res = await ai_service.parse_section(sec_type, sec_text, heading_raw=heading_raw)
+                if isinstance(ai_res, dict) and ai_res:
+                    res = ai_res
+            except Exception as exc:
+                logger.warning("Targeted AI recovery failed for section '%s': %s; using deterministic result.", sec_type, exc)
 
         # Stage 4: Grounding check + single repair retry if needed
         cleaned, repair_errors, ground_warnings = ExtractionValidator.verify_section_grounding(sec_type, sec_text, res)
         if repair_errors:
             logger.info("Section '%s' had %d grounding error(s); running 1 repair retry.", sec_type, len(repair_errors))
-            repaired = await ai_service.parse_section(sec_type, sec_text, repair_errors=repair_errors, heading_raw=heading_raw)
+            try:
+                repaired = await ai_service.parse_section(sec_type, sec_text, repair_errors=repair_errors, heading_raw=heading_raw)
+            except Exception:
+                repaired = None
             if isinstance(repaired, dict):
                 cleaned, still_bad, ground_warnings = ExtractionValidator.verify_section_grounding(sec_type, sec_text, repaired)
                 if still_bad:
@@ -896,12 +933,30 @@ async def parse_resume_document_pipeline(
     blocks_and_results = await asyncio.gather(*(_process_block(b) for b in blocks))
     resume_data, structured_warnings, unmapped = assemble_resume_from_sections(list(blocks_and_results))
 
-    # Stage 5b: Deterministic safety-net merge for secondary/custom sections if section-scoped pass missed them
+    # Stage 5b: Deterministic safety-net recovery for any primary or secondary section missed by section-scoped pass
     try:
         from app.providers.local_heuristic import LocalHeuristicProvider
         heuristic = LocalHeuristicProvider()
         h_dict = heuristic.parse_resume_document_sync(raw_text, layout_metadata=layout_metadata)
         h_resume = sanitize_and_hydrate_resume(h_dict, raw_text=raw_text)
+        if not resume_data.personalInfo.fullName and h_resume.personalInfo.fullName:
+            resume_data.personalInfo.fullName = h_resume.personalInfo.fullName
+        if not resume_data.personalInfo.email and h_resume.personalInfo.email:
+            resume_data.personalInfo.email = h_resume.personalInfo.email
+        if not resume_data.personalInfo.phone and h_resume.personalInfo.phone:
+            resume_data.personalInfo.phone = h_resume.personalInfo.phone
+        if not resume_data.professionalSummary and h_resume.professionalSummary:
+            resume_data.professionalSummary = h_resume.professionalSummary
+        if not resume_data.experience and h_resume.experience:
+            resume_data.experience = h_resume.experience
+        if not resume_data.projects and h_resume.projects:
+            resume_data.projects = h_resume.projects
+        if not resume_data.education and h_resume.education:
+            resume_data.education = h_resume.education
+        if not resume_data.skills and h_resume.skills:
+            resume_data.skills = h_resume.skills
+        if not resume_data.certifications and h_resume.certifications:
+            resume_data.certifications = h_resume.certifications
         if not resume_data.internships and h_resume.internships:
             resume_data.internships = h_resume.internships
         if not resume_data.achievements and h_resume.achievements:
@@ -917,22 +972,67 @@ async def parse_resume_document_pipeline(
     except Exception as e:
         logger.debug("Heuristic secondary merge skipped: %s", e)
 
+    from app.services.extraction_reconciliation import reconcile_extraction
+    reconciliation = reconcile_extraction(resume_data.model_dump(), raw_text, layout_metadata)
+
+    # Ensure substantial unmapped source blocks are never silently discarded
+    combined_unmapped = list(unmapped or [])
+    seen_unmapped_txt = {str(u.get("raw_text") or "").strip().lower() for u in combined_unmapped}
+    substantial_unmapped: List[Dict[str, Any]] = []
+    for u_samp in (reconciliation.get("unmapped_samples") or []):
+        utxt = str(u_samp.get("raw_text") or "").strip()
+        if not utxt or utxt.lower() in seen_unmapped_txt:
+            continue
+        # Skip trivial standalone headings or single-token noise
+        if len(utxt) >= 20 and len(utxt.split()) >= 3:
+            combined_unmapped.append(u_samp)
+            substantial_unmapped.append(u_samp)
+            seen_unmapped_txt.add(utxt.lower())
+
+    if substantial_unmapped and not any(
+        (cs.sectionTitle or "").lower().startswith("unmapped") for cs in resume_data.customSections
+    ):
+        resume_data.customSections.append(
+            CustomSection(
+                id=f"cust_unmapped_{len(resume_data.customSections) + 1}",
+                sectionTitle="Unmapped Content (Review)",
+                normalizedCategory="custom",
+                items=[
+                    CustomSectionItem(
+                        title=u["raw_text"][:100],
+                        subtitle=f"Page {u.get('page', 1)}",
+                        date="",
+                        description=u["raw_text"],
+                    )
+                    for u in substantial_unmapped[:10]
+                ],
+                sourcePage=substantial_unmapped[0].get("page", 1),
+            )
+        )
+
     validation = ExtractionValidator.validate(
         raw_text,
         resume_data.model_dump(),
         layout_metadata=layout_metadata,
         structured_warnings=structured_warnings,
-        unmapped=unmapped,
+        unmapped=combined_unmapped,
     )
 
     # Populate sourceDocument, extractionReport, and fieldEvidence metadata
     meta = layout_metadata or {}
+    raw_lang = meta.get("language")
+    lang_code = (
+        (raw_lang.get("code") or raw_lang.get("name") or "en")
+        if isinstance(raw_lang, dict)
+        else (str(raw_lang).strip() if raw_lang else "en")
+    )
     resume_data.sourceDocument = {
         "pageCount": meta.get("page_count") or len(re.findall(r'\[\[page\s+\d+\]\]', raw_text, re.IGNORECASE)) or 1,
         "layoutType": meta.get("layout_type") or "single_column",
         "columnCount": meta.get("column_count") or 1,
         "extractionMethod": meta.get("extraction_method") or "text",
-        "language": meta.get("language") or "en",
+        "language": lang_code,
+        "languageInfo": raw_lang if isinstance(raw_lang, dict) else {"code": lang_code},
         "textCoverage": meta.get("text_coverage") or (1.0 if len(raw_text.strip()) > 0 else 0.0),
     }
 

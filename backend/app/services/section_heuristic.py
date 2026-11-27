@@ -98,6 +98,18 @@ def parse_header_section(text: str) -> Dict[str, Any]:
     skip_words = {"resume", "curriculum vitae", "cv", "curriculum", "vitae"}
     for idx, line in enumerate(lines[:6]):
         cand = re.sub(r'^resume\s+of\s+', '', line, flags=re.IGNORECASE).strip()
+        # Handle combined header lines like "Sneha Reddy | sneha@fin.in | +91 9811100099"
+        if ("|" in cand or "•" in cand) and ("@" in cand or any(ch.isdigit() for ch in cand)):
+            for seg in re.split(r'[|•]', cand):
+                seg = seg.strip()
+                if seg and "@" not in seg and "http" not in seg.lower() and not any(ch.isdigit() for ch in seg):
+                    seg_tokens = [t for t in seg.split() if any(c.isalpha() for c in t)]
+                    if 1 <= len(seg_tokens) <= 4 and len(seg) <= 45 and not TITLE_KEYWORDS.search(seg):
+                        full_name = seg
+                        name_idx = idx
+                        break
+            if full_name:
+                break
         low = cand.lower()
         if low in skip_words or "@" in cand or "http" in low or any(ch.isdigit() for ch in cand):
             continue
@@ -387,11 +399,11 @@ def parse_education_section(text: str) -> Dict[str, Any]:
     entries: List[Dict[str, Any]] = []
 
     edu_deg_re = re.compile(
-        r'\b(b\.?tech|m\.?tech|b\.?e\.?|m\.?e\.?|b\.?s\.?c?|m\.?s\.?c?|b\.?a\.?|m\.?a\.?|bba|mba|ph\.?d|bachelor(?:\s+of\s+\w+)?|master(?:\s+of\s+\w+)?|diploma|associate|class\s+(?:x|xii|10|12)|higher\s+secondary|secondary|ssc|hsc|cbse)\b',
+        r'(?:\b(?:b\.?tech|m\.?tech|b\.?e\.?|m\.?e\.?|b\.?s\.?c?|m\.?s\.?c?|b\.?a\.?|m\.?a\.?|bba|mba|ph\.?d|class\s+(?:x|xii|10|12)|higher\s+secondary|secondary|ssc|hsc|cbse)\b|\b(?:bachelor|master|diploma|associate))',
         re.IGNORECASE,
     )
     inst_re = re.compile(
-        r'\b(university|college|institute|school|academy|polytechnic|iit|nit|bits)\b',
+        r'(?:university|college|institute|school|academy|polytechnic|\biit\b|\bnit\b|\bbits\b)',
         re.IGNORECASE,
     )
 
@@ -457,8 +469,11 @@ def parse_education_section(text: str) -> Dict[str, Any]:
 
         # Clean dates & scores from line to extract institution / degree
         text_only = DATE_RANGE_RE.sub("", cleaned)
+        if d_single:
+            text_only = SINGLE_DATE_RE.sub("", text_only)
         if score_obj:
             text_only = text_only.replace(score_obj["raw"], "")
+            text_only = re.sub(r'\b(?:cgpa|gpa|grade|score)\s*[:\-]?\s*$', '', text_only, flags=re.IGNORECASE)
         text_only = re.sub(r'[|•–-]+$', '', text_only).strip(" ,|–-")
 
         parts = [p.strip() for p in re.split(r'\s*[|–—]\s*|\s+-\s+', text_only) if p.strip()]

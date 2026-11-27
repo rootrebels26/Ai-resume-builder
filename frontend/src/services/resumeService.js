@@ -9,7 +9,7 @@ export const resumeService = {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
-      timeout: 45000,
+      timeout: 90000,
     });
   },
 
