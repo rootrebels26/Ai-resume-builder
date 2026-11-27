@@ -395,7 +395,7 @@ class DocumentExtractor:
             # If page text is empty but page has images, attempt OCR / vision recovery
             if len(page_text.strip()) < 30 and has_images:
                 try:
-                    pix = page.get_pixmap(dpi=200)
+                    pix = page.get_pixmap(dpi=250)
                     img_bytes = pix.tobytes("jpeg")
                     recovered_ocr = DocumentExtractor._ocr_image_bytes(img_bytes, mime="image/jpeg")
                     if recovered_ocr.strip():
@@ -786,7 +786,7 @@ class DocumentExtractor:
             import numpy as np
 
             pil_img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
-            img_w, _ = pil_img.size
+            img_w, img_h = pil_img.size
             engine = getattr(DocumentExtractor, "_rapidocr_engine", None)
             if engine is None:
                 engine = RapidOCR()
@@ -796,7 +796,6 @@ class DocumentExtractor:
             if not result:
                 return "", None
 
-            # Each item: [bbox_4pts, text, confidence]
             boxes = []
             confs = []
             for item in result:
@@ -811,19 +810,54 @@ class DocumentExtractor:
             if not boxes:
                 return "", None
 
-            # Simple 2-column spatial split if right side has substantial content
-            mid_x = img_w * 0.58
-            left_b = [b for b in boxes if b[2] <= mid_x + 20]
-            right_b = [b for b in boxes if b[0] >= mid_x - 20]
-            if len(left_b) >= 4 and len(right_b) >= 4:
-                left_b.sort(key=lambda b: (round(b[1] / 12), b[0]))
-                right_b.sort(key=lambda b: (round(b[1] / 12), b[0]))
-                ordered = left_b + right_b
+            def _boxes_to_lines(box_list: list) -> list[str]:
+                if not box_list:
+                    return []
+                sorted_b = sorted(box_list, key=lambda b: (b[1], b[0]))
+                rows = []
+                for b in sorted_b:
+                    # Same visual line if vertical centers/tops are within 10px
+                    if rows and abs(b[1] - rows[-1][0][1]) <= 10:
+                        rows[-1].append(b)
+                    else:
+                        rows.append([b])
+                lines_out = []
+                for row in rows:
+                    row.sort(key=lambda b: b[0])
+                    lines_out.append(" ".join(b[4] for b in row))
+                return lines_out
+
+            # Separate top spanning header (y < 14% height) from body, then check 2-col split
+            top_boxes = [b for b in boxes if b[1] < img_h * 0.13]
+            body_boxes = [b for b in boxes if b[1] >= img_h * 0.13]
+
+            # Find cleanest vertical split between 30% and 72% width
+            best_cut = None
+            best_score = 0
+            for frac in (0.35, 0.42, 0.50, 0.60, 0.65):
+                cut = img_w * frac
+                spanning = sum(1 for b in body_boxes if b[0] < cut - 8 and b[2] > cut + 8)
+                l_cnt = sum(1 for b in body_boxes if b[2] <= cut + 8)
+                r_cnt = sum(1 for b in body_boxes if b[0] >= cut - 8)
+                if spanning <= max(2, int(len(body_boxes) * 0.08)) and l_cnt >= 5 and r_cnt >= 5:
+                    score = min(l_cnt, r_cnt) - spanning * 3
+                    if score > best_score:
+                        best_score = score
+                        best_cut = cut
+
+            if best_cut is not None:
+                left_b = [b for b in body_boxes if b[2] <= best_cut + 8]
+                right_b = [b for b in body_boxes if b[0] >= best_cut - 8]
+                ordered_lines = (
+                    _boxes_to_lines(top_boxes)
+                    + _boxes_to_lines(left_b)
+                    + _boxes_to_lines(right_b)
+                )
             else:
-                ordered = sorted(boxes, key=lambda b: (round(b[1] / 12), b[0]))
+                ordered_lines = _boxes_to_lines(boxes)
 
             avg_conf = round(sum(confs) / len(confs), 3) if confs else None
-            return "\n".join(b[4] for b in ordered), avg_conf
+            return "\n".join(ordered_lines), avg_conf
         except Exception as exc:
             logger.debug("RapidOCR fallback error: %s", exc)
             return "", None
