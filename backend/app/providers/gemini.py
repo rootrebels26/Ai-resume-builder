@@ -221,129 +221,13 @@ Return ONLY valid JSON matching this schema:
         return await self.fallback.tailor_resume(request)
 
     async def parse_resume_document(self, text: str, layout_metadata: dict = None) -> dict:
-        prompt = f"""You are a Principal Document Intelligence & Resume Parsing Specialist.
-Extract all information from the provided raw resume text into a strictly formatted JSON object matching the exact schema below.
+        from app.services.document_extraction import run_document_extraction
 
-CRITICAL EXTRACTION RULES:
-1. ZERO HALLUCINATION: Extract only facts explicitly present in the text. Never invent degrees, institutions, summaries, or projects not present in the source text.
-2. MULTI-LANGUAGE & ORIGINAL WORDING PRESERVATION: Preserve the exact original language, wording, punctuation, and bullet structure of summaries, job responsibilities, and project descriptions. Do not summarize or shorten descriptions.
-3. CANDIDATE NAME & CONTACT DETAILS:
-   - Identify the candidate's actual full name at the top of the resume.
-   - Extract phone number (preserving international country code e.g. +91, +1, +44), email, city/state/country location.
-   - Extract LinkedIn profile URL, GitHub profile URL, GitLab/Behance/Dribbble/StackOverflow URLs, and personal portfolio or website URL (into "portfolio" and "website").
-4. PROFESSIONAL SUMMARY (CRITICAL):
-   - DO NOT prepend or include contact words or labels ("Email", "Contact", "Phone"), candidate name, links, or contact numbers inside "professionalSummary".
-   - "professionalSummary" must ONLY contain pure biographical and career narrative prose, preserving the original paragraph verbatim.
-5. PROFESSIONAL TITLE & TARGET ROLE (CRITICAL):
-   - Accurately determine the candidate's real professional title across any industry (e.g. "Full Stack Developer", "Registered Nurse", "Chartered Accountant", "Product Manager", "Mechanical Engineer", "Graphic Designer").
-   - If a title is explicitly in the header, use it.
-   - If not in the header, inspect the most recent job title in their experience. DO NOT default to a generic placeholder like "Engineer".
-6. EXPERIENCE, INTERNSHIPS & BULLETS (CRITICAL — DO NOT TRUNCATE):
-   - Extract EVERY SINGLE work experience role from the entire document across all pages (if there are 7, 8, 9, or 10+ roles, extract ALL of them from newest to oldest!).
-   - Extract internships separately into "internships" when labeled as Internships / Industrial Training / Research Internship / Apprenticeship.
-   - For every position, extract exact company name, job title, start/end dates, location, and ALL bullet point responsibilities verbatim.
-7. PROJECTS (CRITICAL — DO NOT SUMMARIZE):
-   - Locate and extract all technical, academic, research, freelance, and personal projects.
-   - CRITICAL: DO NOT dump live demo URLs, GitHub links, or labels like "[Demo]", "[GitHub]", "Live: https://..." into the "description" text or "highlights" bullets!
-   - Put live deployment URLs strictly in "liveUrl" (e.g. Render, Vercel, Netlify, AWS, custom domain).
-   - Put repository URLs strictly in "githubUrl".
-   - Keep "name" as the clean project title, and "description" / "highlights" preserving ALL original project details verbatim.
-   - Extract "technologies" as an array of individual technology strings.
-8. SKILLS:
-   - If the resume explicitly organizes skills into named categories (e.g. "AI & Agents", "Clinical Skills", "Languages", "Tools & Cloud"), PRESERVE those exact category names and items!
-   - Otherwise, group skills cleanly without inventing skills not in the text.
-9. EDUCATION:
-   - Extract institution, full degree (including field of study), start/end dates, original CGPA/GPA/percentage without converting, and coursework in description.
-   - If no education is in the document, leave "education" as [].
-10. CERTIFICATIONS, LEADERSHIP & CUSTOM SECTIONS:
-   - Extract EVERY certification. If multiple certifications are listed on the same bullet line separated by '|', split them into separate certification objects!
-   - Extract name, issuer, credentialId (if any), and issue date.
-   - Extract any Leadership, Awards, Languages, Publications, Volunteer sections, AND any unrecognized/custom sections (e.g. Patents, Clinical Rotations, Exhibitions, Teaching, Confs, Grants, References) into "achievements", "languages", "publications", "volunteerExperience", or "customSections" (with "sectionTitle" and "items": [{"title", "subtitle", "date", "description"}]) so ZERO information from the uploaded resume is lost.
-
-Return ONLY valid JSON matching this exact structure:
-{{
-  "personalInfo": {{
-    "fullName": "",
-    "email": "",
-    "phone": "",
-    "location": "",
-    "professionalTitle": "",
-    "website": "",
-    "linkedin": "",
-    "github": "",
-    "portfolio": ""
-  }},
-  "professionalSummary": "",
-  "education": [
-    {{
-      "institution": "",
-      "degree": "",
-      "fieldOfStudy": "",
-      "startDate": "",
-      "endDate": "",
-      "cgpa": "",
-      "description": ""
-    }}
-  ],
-  "experience": [
-    {{
-      "company": "",
-      "position": "",
-      "employmentType": "Full-time",
-      "location": "",
-      "startDate": "",
-      "endDate": "",
-      "current": false,
-      "responsibilities": [],
-      "achievements": []
-    }}
-  ],
-  "internships": [],
-  "projects": [
-    {{
-      "name": "",
-      "description": "",
-      "technologies": [],
-      "githubUrl": "",
-      "liveUrl": "",
-      "startDate": "",
-      "endDate": "",
-      "highlights": []
-    }}
-  ],
-  "skills": [
-    {{
-      "category": "Technical Skills",
-      "items": []
-    }}
-  ],
-  "certifications": [],
-  "achievements": [],
-  "languages": [
-    {{
-      "name": "English",
-      "proficiency": "Proficient"
-    }}
-  ],
-  "publications": [],
-  "volunteerExperience": [],
-  "customSections": []
-}}
-
-RAW RESUME TEXT:
-{text[:28000]}
-"""
-        res = await self._call_gemini(prompt, timeout_seconds=35.0)
-        if res and isinstance(res, dict) and ("personalInfo" in res or "experience" in res or "education" in res):
-            pinfo = res.get("personalInfo", {})
-            if isinstance(pinfo, dict) and not pinfo.get("professionalTitle"):
-                exps = res.get("experience", [])
-                if exps and isinstance(exps, list) and len(exps) > 0:
-                    first_pos = exps[0].get("position")
-                    if first_pos:
-                        pinfo["professionalTitle"] = first_pos
+        res = await run_document_extraction(
+            self._call_gemini, text, layout_metadata, max_chars=28000, timeout_seconds=45.0
+        )
+        if res:
             return res
-
         return await self.fallback.parse_resume_document(text, layout_metadata)
 
     async def parse_section(self, section_type: str, section_text: str, repair_errors: list = None, heading_raw: str = "") -> dict:

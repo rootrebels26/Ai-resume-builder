@@ -69,9 +69,19 @@ def reconcile_extraction(
         ]
 
     mapped_count = 0
+    excluded_blocks = 0
     unmapped_blocks: List[Dict[str, Any]] = []
+    from app.services.section_prompts import INJECTION_PATTERNS, SENSITIVE_PATTERNS
+
     for blk in source_blocks:
-        b_tokens = _normalize_token_set(blk.get("text", ""))
+        block_text = str(blk.get("text", ""))
+        if any(p.search(block_text) for p in INJECTION_PATTERNS) or any(
+            p.match(block_text) for p in SENSITIVE_PATTERNS
+        ):
+            # Sensitive attributes and prompt-injection lines are never resume content.
+            excluded_blocks += 1
+            continue
+        b_tokens = _normalize_token_set(block_text)
         if not b_tokens:
             continue
         overlap = len(b_tokens & mapped_tokens) / max(1, len(b_tokens))
@@ -81,11 +91,11 @@ def reconcile_extraction(
             unmapped_blocks.append({
                 "block_id": blk.get("block_id"),
                 "page": blk.get("page", 1),
-                "raw_text": blk.get("text", "")[:240],
+                "raw_text": block_text[:240],
                 "reason": "low_semantic_overlap",
             })
 
-    total_blocks = len(source_blocks)
+    total_blocks = len(source_blocks) - excluded_blocks
     semantic_coverage = round(mapped_count / max(1, total_blocks), 3) if total_blocks else 0.0
     text_coverage = 1.0 if len((raw_text or "").strip()) >= 50 else round(len((raw_text or "").strip()) / 50.0, 2)
 

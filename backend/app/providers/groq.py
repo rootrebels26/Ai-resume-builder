@@ -126,124 +126,12 @@ Return valid JSON matching:
         return await self.fallback.tailor_resume(request)
 
     async def parse_resume_document(self, text: str, layout_metadata: dict = None) -> dict:
-        prompt = f"""You are a Principal Document Intelligence & Resume Parsing Specialist.
-Extract all information from the provided raw resume text into a strictly formatted JSON object matching the exact schema below.
+        from app.services.document_extraction import run_document_extraction
 
-CRITICAL RULES:
-1. ZERO HALLUCINATION: Only extract facts explicitly stated in the resume. If a field (e.g. phone, dates, GPA, location) is not present, return empty string "" or empty array []. Never invent missing data.
-2. EXTRACT ALL ITEMS: Do NOT truncate. Extract EVERY employment experience, EVERY educational degree, EVERY project, and ALL skills.
-3. PROFESSIONAL SUMMARY (CRITICAL):
-   - DO NOT include contact labels ("Email", "Contact", "Phone"), candidate name, or URLs inside "professionalSummary".
-   - Keep "professionalSummary" strictly as career narrative prose.
-4. PROJECTS EXTRACTION (VERY IMPORTANT):
-   - Locate and extract ALL projects from sections titled "Projects", "Featured Projects", "Technical Projects", "Key Projects", "Personal Projects", "Academic Projects", "Selected Projects", or "Notable Projects".
-   - UNIVERSAL FALLBACK: If the resume lacks an explicit "PROJECTS" section, extract 3-4 major engineering architectures, data platforms, or systems described in the work experience bullets into "projects" so projects are never empty!
-   - Extract each project entry into the "projects" array (NOT into "experience").
-   - For each project, extract:
-     * "name": clean project title WITHOUT [Demo], [GitHub], or raw URLs
-     * "description": clean narrative summary of what the project does. CRITICAL: DO NOT put raw URLs or link tags into this field!
-     * "technologies": array of tools, languages, and frameworks used (e.g. ["Python", "FastAPI", "React"])
-     * "githubUrl": repository link if mentioned
-     * "liveUrl": live deployment or demo link if mentioned (e.g. Render, Vercel, Netlify, custom domain)
-     * "startDate": start date if available
-     * "endDate": end date or completion date if available
-     * "highlights": array of bullet points, key features, and accomplishments WITHOUT raw URLs embedded
-5. PRESERVE ORIGINAL WORDING: Retain original bullet points, metrics, and details. Do not summarize or rewrite achievements.
-6. CONTACT DETAILS:
-   - Extract candidate's phone number (preserving international country code e.g. +91, +1, +44), email, city/state/country location.
-   - Extract LinkedIn profile URL, GitHub profile URL, and personal portfolio or website URL (into "portfolio" and "website").
-7. CATEGORIZED SKILLS: Group skills logically into categories: "Programming Languages", "Frameworks & Libraries", "Databases & Cloud", "Developer Tools", "Core Competencies".
-8. Return ONLY valid JSON with this exact schema:
-{{
-  "personalInfo": {{
-    "fullName": "...",
-    "email": "...",
-    "phone": "...",
-    "location": "...",
-    "professionalTitle": "...",
-    "website": "...",
-    "linkedin": "...",
-    "github": "...",
-    "portfolio": "..."
-  }},
-  "professionalSummary": "...",
-  "education": [
-    {{
-      "institution": "...",
-      "degree": "...",
-      "fieldOfStudy": "...",
-      "startDate": "...",
-      "endDate": "...",
-      "cgpa": "...",
-      "description": "..."
-    }}
-  ],
-  "experience": [
-    {{
-      "company": "...",
-      "position": "...",
-      "employmentType": "Full-time",
-      "location": "...",
-      "startDate": "...",
-      "endDate": "...",
-      "current": false,
-      "responsibilities": ["..."],
-      "achievements": ["..."]
-    }}
-  ],
-  "internships": [],
-  "projects": [
-    {{
-      "name": "...",
-      "description": "...",
-      "technologies": ["..."],
-      "githubUrl": "...",
-      "liveUrl": "...",
-      "startDate": "...",
-      "endDate": "...",
-      "highlights": ["..."]
-    }}
-  ],
-  "skills": [
-    {{
-      "category": "Programming Languages",
-      "items": ["..."]
-    }}
-  ],
-  "certifications": [
-    {{
-      "name": "...",
-      "issuer": "...",
-      "issueDate": "...",
-      "expiryDate": "...",
-      "credentialUrl": ""
-    }}
-  ],
-  "achievements": [],
-  "languages": [
-    {{
-      "name": "...",
-      "proficiency": "Proficient"
-    }}
-  ],
-  "publications": [],
-  "volunteerExperience": [],
-  "customSections": []
-}}
-
-RESUME TEXT:
-{text[:30000]}
-"""
-        res = await self._call_groq(prompt, timeout_seconds=12.0)
-        if res and isinstance(res, dict) and ("personalInfo" in res or "experience" in res or "education" in res):
-            # If professionalTitle was not identified, default to most recent job position
-            pinfo = res.get("personalInfo", {})
-            if isinstance(pinfo, dict) and not pinfo.get("professionalTitle"):
-                exps = res.get("experience", [])
-                if exps and isinstance(exps, list) and len(exps) > 0:
-                    first_pos = exps[0].get("position")
-                    if first_pos:
-                        pinfo["professionalTitle"] = first_pos
+        res = await run_document_extraction(
+            self._call_groq, text, layout_metadata, max_chars=30000, timeout_seconds=30.0
+        )
+        if res:
             return res
         return await self.fallback.parse_resume_document(text, layout_metadata)
 

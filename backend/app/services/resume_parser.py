@@ -20,6 +20,31 @@ from app.utils.text_utils import (
 
 logger = logging.getLogger("resume_parser")
 
+_REFERENCE_HEADING_RE = re.compile(r'^\s*(?:references?|referees?)\s*:?\s*$', re.IGNORECASE | re.MULTILINE)
+
+
+def _strip_reference_sections(text: str) -> str:
+    """Return text before the first References heading.
+
+    Reference names, phones and emails are never the candidate's own contact
+    details, so contact recovery must not scan that section.
+    """
+    if not text:
+        return text
+    match = _REFERENCE_HEADING_RE.search(text)
+    return text[:match.start()] if match else text
+
+
+def _looks_like_candidate_contact(value: str, contact_zone: str, digits_only: bool = False) -> bool:
+    if not value or not contact_zone:
+        return False
+    if digits_only:
+        value_digits = re.sub(r'\D', '', value)
+        if not value_digits:
+            return False
+        return value_digits in re.sub(r'\D', '', contact_zone)
+    return value.lower() in contact_zone.lower()
+
 def extract_text_from_pdf(file_path: str) -> Tuple[str, List[str], Dict[str, Any]]:
     """
     Extracts text using spatial multi-column layout recognition.
@@ -90,6 +115,11 @@ def sanitize_and_hydrate_resume(data: Dict[str, Any], raw_text: str = "") -> Res
                         break
 
     if raw_text:
+        contact_zone = _strip_reference_sections(raw_text)
+        if email and not _looks_like_candidate_contact(email, contact_zone):
+            email = ""
+        if phone and not _looks_like_candidate_contact(phone, contact_zone, digits_only=True):
+            phone = ""
         if not full_name or full_name.lower() in ("candidate", "alex rivera", "john doe", ""):
             first_lines = [l.strip() for l in raw_text.splitlines()[:6] if l.strip()]
             for line in first_lines:
@@ -100,11 +130,11 @@ def sanitize_and_hydrate_resume(data: Dict[str, Any], raw_text: str = "") -> Res
                         full_name = clean_name
                         break
         if not email or "@" not in email:
-            emails = EMAIL_REGEX.findall(raw_text)
+            emails = EMAIL_REGEX.findall(contact_zone)
             if emails:
                 email = emails[0]
         if not phone or len(re.sub(r'\D', '', phone)) < 10:
-            rec_phone = extract_phone_number(raw_text)
+            rec_phone = extract_phone_number(contact_zone)
             if rec_phone:
                 phone = rec_phone
         if not location:
@@ -974,6 +1004,42 @@ async def parse_resume_document_pipeline(
             resume_data.customSections = h_resume.customSections
     except Exception as e:
         logger.debug("Heuristic secondary merge skipped: %s", e)
+
+    # Stage 5c: Whole-document extraction fallback (document_extraction engine).
+    # Only runs when the section-scoped pass produced almost nothing, so the
+    # primary section-scoped contract is not bypassed on normal resumes.
+    core_missing = not resume_data.personalInfo.fullName and not resume_data.personalInfo.email
+    body_missing = not any((
+        resume_data.professionalSummary,
+        resume_data.experience,
+        resume_data.internships,
+        resume_data.education,
+        resume_data.projects,
+        resume_data.skills,
+        resume_data.certifications,
+    ))
+    if core_missing or body_missing:
+        try:
+            doc_dict = await ai_service.parse_resume_document(raw_text, layout_metadata)
+            if isinstance(doc_dict, dict) and doc_dict:
+                doc_resume = sanitize_and_hydrate_resume(doc_dict, raw_text=raw_text)
+                for field in (
+                    "experience", "internships", "projects", "education", "skills",
+                    "certifications", "achievements", "languages", "publications",
+                    "volunteerExperience", "customSections",
+                ):
+                    if not getattr(resume_data, field) and getattr(doc_resume, field):
+                        setattr(resume_data, field, getattr(doc_resume, field))
+                for field in (
+                    "fullName", "email", "phone", "location", "professionalTitle",
+                    "website", "linkedin", "github", "gitlab", "behance", "dribbble", "portfolio",
+                ):
+                    if not getattr(resume_data.personalInfo, field) and getattr(doc_resume.personalInfo, field):
+                        setattr(resume_data.personalInfo, field, getattr(doc_resume.personalInfo, field))
+                if not resume_data.professionalSummary and doc_resume.professionalSummary:
+                    resume_data.professionalSummary = doc_resume.professionalSummary
+        except Exception as e:
+            logger.warning("Whole-document extraction fallback skipped: %s", e)
 
     from app.services.extraction_reconciliation import reconcile_extraction
     reconciliation = reconcile_extraction(resume_data.model_dump(), raw_text, layout_metadata)
