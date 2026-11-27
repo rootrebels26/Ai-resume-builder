@@ -18,6 +18,21 @@ export class ErrorBoundary extends React.Component {
   componentDidCatch(error, errorInfo) {
     // Replace with a real error reporter (Sentry, etc.) in production.
     console.error('Unhandled UI error:', error, errorInfo);
+    const msg = String(error?.message || '');
+    if (
+      msg.includes('Failed to fetch dynamically imported module') ||
+      msg.includes('Importing a module script failed') ||
+      error?.name === 'ChunkLoadError'
+    ) {
+      try {
+        if (sessionStorage.getItem('resume_studio_eb_reload') !== '1') {
+          sessionStorage.setItem('resume_studio_eb_reload', '1');
+          window.location.reload();
+        }
+      } catch {
+        // ignore
+      }
+    }
   }
 
   handleReload = () => {

@@ -6,19 +6,60 @@ import { PageLoader } from './components/common/PageLoader';
 import { Toaster } from './components/common/Toaster';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 
+// Retry dynamic chunk imports once by reloading the page when Vercel deploys a new build
+// and an open browser tab still holds stale chunk hashes.
+function lazyWithRetry(importer, exportName) {
+  return lazy(async () => {
+    const reloadKey = 'resume_studio_chunk_reload';
+    try {
+      const mod = await importer();
+      try {
+        sessionStorage.removeItem(reloadKey);
+      } catch {
+        // ignore storage errors
+      }
+      return { default: mod[exportName] };
+    } catch (err) {
+      const msg = String(err?.message || err || '');
+      const isChunkError =
+        msg.includes('Failed to fetch dynamically imported module') ||
+        msg.includes('Importing a module script failed') ||
+        err?.name === 'ChunkLoadError';
+
+      let alreadyReloaded = false;
+      try {
+        alreadyReloaded = sessionStorage.getItem(reloadKey) === '1';
+      } catch {
+        // ignore
+      }
+
+      if (isChunkError && !alreadyReloaded) {
+        try {
+          sessionStorage.setItem(reloadKey, '1');
+        } catch {
+          // ignore
+        }
+        window.location.reload();
+        return new Promise(() => {});
+      }
+      throw err;
+    }
+  });
+}
+
 // Route-level code splitting keeps the heavy template engine out of the
 // initial bundle so the landing page loads fast.
-const Home = lazy(() => import('./pages/Home').then((m) => ({ default: m.Home })));
-const Builder = lazy(() => import('./pages/Builder').then((m) => ({ default: m.Builder })));
-const Onboarding = lazy(() => import('./pages/Onboarding').then((m) => ({ default: m.Onboarding })));
-const ResumeWizard = lazy(() => import('./pages/ResumeWizard').then((m) => ({ default: m.ResumeWizard })));
-const Templates = lazy(() => import('./pages/Templates').then((m) => ({ default: m.Templates })));
-const UploadResume = lazy(() => import('./pages/UploadResume').then((m) => ({ default: m.UploadResume })));
-const ATSChecker = lazy(() => import('./pages/ATSChecker').then((m) => ({ default: m.ATSChecker })));
-const Preview = lazy(() => import('./pages/Preview').then((m) => ({ default: m.Preview })));
-const CareerDashboard = lazy(() => import('./pages/CareerDashboard').then((m) => ({ default: m.CareerDashboard })));
-const Privacy = lazy(() => import('./pages/Privacy').then((m) => ({ default: m.Privacy })));
-const NotFound = lazy(() => import('./pages/NotFound').then((m) => ({ default: m.NotFound })));
+const Home = lazyWithRetry(() => import('./pages/Home'), 'Home');
+const Builder = lazyWithRetry(() => import('./pages/Builder'), 'Builder');
+const Onboarding = lazyWithRetry(() => import('./pages/Onboarding'), 'Onboarding');
+const ResumeWizard = lazyWithRetry(() => import('./pages/ResumeWizard'), 'ResumeWizard');
+const Templates = lazyWithRetry(() => import('./pages/Templates'), 'Templates');
+const UploadResume = lazyWithRetry(() => import('./pages/UploadResume'), 'UploadResume');
+const ATSChecker = lazyWithRetry(() => import('./pages/ATSChecker'), 'ATSChecker');
+const Preview = lazyWithRetry(() => import('./pages/Preview'), 'Preview');
+const CareerDashboard = lazyWithRetry(() => import('./pages/CareerDashboard'), 'CareerDashboard');
+const Privacy = lazyWithRetry(() => import('./pages/Privacy'), 'Privacy');
+const NotFound = lazyWithRetry(() => import('./pages/NotFound'), 'NotFound');
 
 export default function App() {
   return (
