@@ -146,8 +146,29 @@ class DocumentExtractor:
                 "is_scanned": False,
                 "layout": "unknown",
                 "links": [],
+                "source_blocks": [],
                 "warnings": ["The PDF document contains 0 pages."]
             }
+
+        if getattr(doc, "needs_pass", False):
+            doc.close()
+            return {
+                "text": "",
+                "pages": [],
+                "page_count": page_count,
+                "is_scanned": False,
+                "layout": "locked",
+                "links": [],
+                "source_blocks": [],
+                "warnings": ["This PDF is password-protected. Please unlock or export an unprotected copy before uploading."]
+            }
+
+        max_pages = 15
+        if page_count > max_pages:
+            warnings.append(f"PDF has {page_count} pages; processing the first {max_pages} pages to ensure fast extraction.")
+            page_count = max_pages
+
+        source_blocks: List[Dict[str, Any]] = []
 
         combined_text_lines = []
 
@@ -385,6 +406,15 @@ class DocumentExtractor:
 
             total_text_length += len(page_text)
 
+            for b_idx, b in enumerate(enriched_text_blocks):
+                if b[4].strip():
+                    source_blocks.append({
+                        "block_id": f"b_p{page_idx + 1}_{b_idx + 1}",
+                        "page": page_idx + 1,
+                        "bbox": [round(float(x), 1) for x in b[:4]],
+                        "text": b[4].strip()[:500],
+                    })
+
             pages_content.append({
                 "page_number": page_idx + 1,
                 "text": page_text,
@@ -413,6 +443,7 @@ class DocumentExtractor:
             "layout": "three_column" if any(p.get("column_count") == 3 for p in pages_content) else ("multi_column" if any(p["is_two_column"] for p in pages_content) else "single_column"),
             "language": lang_info,
             "links": all_extracted_links,
+            "source_blocks": source_blocks,
             "warnings": warnings
         }
 
@@ -462,6 +493,18 @@ class DocumentExtractor:
                 "warnings": [f"Corrupted or invalid Word document: {str(e)}"]
             }
 
+        # 0. Extract headers & footers across sections (contact info often sits in Word headers)
+        seen_hf = set()
+        for sec in doc.sections:
+            for hf in (sec.header, sec.footer):
+                if hf is None:
+                    continue
+                for hp in hf.paragraphs:
+                    htxt = hp.text.strip()
+                    if htxt and htxt not in seen_hf:
+                        seen_hf.add(htxt)
+                        text_lines.append(htxt)
+
         # 1. Process paragraphs with heading level indicators and hyperlink recovery
         for p in doc.paragraphs:
             p_text_parts = []
@@ -497,18 +540,36 @@ class DocumentExtractor:
             else:
                 text_lines.append(text)
 
-        # 2. Process tables preserving row context
-        for table_idx, table in enumerate(doc.tables):
-            text_lines.append(f"\n[TABLE {table_idx + 1}]")
-            for row in table.rows:
+        # 2. Process tables recursively (supports nested tables inside table cells)
+        def _extract_table_recursive(tbl, depth: int = 0):
+            for row in tbl.rows:
                 cells_text = [c.text.strip().replace("\n", " ") for c in row.cells if c.text.strip()]
                 deduped_cells = []
-                for cell in cells_text:
-                    if not deduped_cells or deduped_cells[-1] != cell:
-                        deduped_cells.append(cell)
-
+                for cell_txt in cells_text:
+                    if not deduped_cells or deduped_cells[-1] != cell_txt:
+                        deduped_cells.append(cell_txt)
                 if deduped_cells:
                     text_lines.append(" | ".join(deduped_cells))
+                for c in row.cells:
+                    for nested_tbl in getattr(c, "tables", []) or []:
+                        _extract_table_recursive(nested_tbl, depth + 1)
+
+        for table_idx, table in enumerate(doc.tables):
+            text_lines.append(f"\n[TABLE {table_idx + 1}]")
+            _extract_table_recursive(table)
+
+        # 3. Extract Word text boxes (w:txbxContent) that python-docx paragraphs/tables skip
+        try:
+            body_el = doc.element.body
+            existing_blob = "\n".join(text_lines)
+            for txbx in body_el.iter():
+                if txbx.tag.endswith("txbxContent"):
+                    box_txt = " ".join(t.strip() for t in txbx.itertext() if t and t.strip())
+                    if box_txt and box_txt not in existing_blob:
+                        text_lines.append(box_txt)
+                        existing_blob += "\n" + box_txt
+        except Exception:
+            pass
 
         full_text = "\n".join(text_lines)
 
@@ -672,17 +733,58 @@ class DocumentExtractor:
         }
 
     @staticmethod
+    def _try_local_tesseract_ocr(img_bytes: bytes) -> Tuple[str, Optional[float]]:
+        """
+        Optional local OCR + OpenCV preprocessing (grayscale, median denoise, adaptive threshold)
+        when pytesseract + cv2 + Pillow are available on the host. Returns (text, confidence_0_to_1).
+        """
+        try:
+            import io
+            import importlib
+            if not (importlib.util.find_spec("pytesseract") and importlib.util.find_spec("PIL")):
+                return "", None
+            import pytesseract
+            from PIL import Image
+
+            pil_img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+            if importlib.util.find_spec("cv2") and importlib.util.find_spec("numpy"):
+                import cv2
+                import numpy as np
+                arr = np.array(pil_img)
+                gray = cv2.cvtColor(arr, cv2.COLOR_RGB2GRAY)
+                denoised = cv2.medianBlur(gray, 3)
+                thresh = cv2.adaptiveThreshold(
+                    denoised, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 31, 11
+                )
+                ocr_target = Image.fromarray(thresh)
+            else:
+                ocr_target = pil_img.convert("L")
+
+            data = pytesseract.image_to_data(ocr_target, output_type=pytesseract.Output.DICT)
+            words = [w for w in data.get("text", []) if w and w.strip()]
+            confs = [float(c) for c in data.get("conf", []) if str(c) not in ("-1", "") and float(c) >= 0]
+            avg_conf = round((sum(confs) / len(confs)) / 100.0, 3) if confs else None
+            txt = pytesseract.image_to_string(ocr_target).strip()
+            return txt, avg_conf
+        except Exception:
+            return "", None
+
+    @staticmethod
     def _ocr_image_bytes(img_bytes: bytes, mime: str = "image/jpeg") -> str:
         """
-        Multimodal OCR transcription via Gemini API if configured.
+        Local Tesseract+OpenCV OCR when installed, followed by Gemini Vision OCR fallback.
         """
         import base64
         from app.core.config import settings
         import httpx
 
+        local_text, local_conf = DocumentExtractor._try_local_tesseract_ocr(img_bytes)
+        if local_text and len(local_text) >= 80 and (local_conf is None or local_conf >= 0.55):
+            return local_text
+
         api_key = settings.GEMINI_API_KEY
         if not api_key:
-            return ""
+            return local_text
 
         b64 = base64.b64encode(img_bytes).decode("utf-8")
         models_to_try = [settings.AI_MODEL or "gemini-2.5-flash", "gemini-2.0-flash"]

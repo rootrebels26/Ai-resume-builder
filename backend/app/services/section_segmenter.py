@@ -139,23 +139,29 @@ class SectionSegmenter:
                 if norm in synonym_map:
                     matched_type = synonym_map[norm]
                     heading_raw = stripped.rstrip(':').strip()
-                elif norm.endswith(("projects", "project work")):
-                    matched_type = "projects"
-                    heading_raw = stripped.rstrip(':').strip()
-                elif norm.endswith(("competencies", "skills", "tech stack")):
-                    matched_type = "skills"
-                    heading_raw = stripped.rstrip(':').strip()
-                elif norm.endswith("experience"):
-                    matched_type = "experience"
-                    heading_raw = stripped.rstrip(':').strip()
-                elif norm in CUSTOM_HEADING_ALLOWLIST or (
-                    (current_type != "header" or has_header_content)
-                    and stripped.isupper()
-                    and 1 <= len(norm.split()) <= 3
-                    and not any(ch.isdigit() for ch in norm)
-                ):
-                    matched_type = "custom"
-                    heading_raw = stripped.rstrip(':').strip()
+                else:
+                    from app.services.section_classifier import classify_heading
+                    cls_type, cls_conf = classify_heading(stripped)
+                    if cls_type != "custom" and cls_conf >= 0.85:
+                        matched_type = cls_type
+                        heading_raw = stripped.rstrip(':').strip()
+                    elif norm.endswith(("projects", "project work")):
+                        matched_type = "projects"
+                        heading_raw = stripped.rstrip(':').strip()
+                    elif norm.endswith(("competencies", "skills", "tech stack")):
+                        matched_type = "skills"
+                        heading_raw = stripped.rstrip(':').strip()
+                    elif norm.endswith("experience"):
+                        matched_type = "experience"
+                        heading_raw = stripped.rstrip(':').strip()
+                    elif norm in CUSTOM_HEADING_ALLOWLIST or (
+                        (current_type != "header" or has_header_content)
+                        and stripped.isupper()
+                        and 1 <= len(norm.split()) <= 3
+                        and not any(ch.isdigit() for ch in norm)
+                    ):
+                        matched_type = "custom"
+                        heading_raw = stripped.rstrip(':').strip()
 
             if matched_type:
                 if matched_type == "header" and current_type == "header":

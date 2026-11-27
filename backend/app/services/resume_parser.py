@@ -998,6 +998,9 @@ async def parse_resume_document_pipeline(
             "requiresReview": not bool(edu.institution),
         })
 
+    from app.services.extraction_reconciliation import reconcile_extraction
+    reconciliation = reconcile_extraction(resume_data.model_dump(), raw_text, layout_metadata)
+
     review_count = sum(1 for ev in evidence if ev.get("requiresReview"))
     resume_data.fieldEvidence = evidence
     resume_data.extractionReport = {
@@ -1013,6 +1016,7 @@ async def parse_resume_document_pipeline(
         "fieldsRequiringReview": review_count,
         "confidence": validation.get("confidence", 0.0),
         "warningsCount": len(validation.get("warnings") or []),
+        "reconciliation": reconciliation,
     }
 
     return resume_data, validation

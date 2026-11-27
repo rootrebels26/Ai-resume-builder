@@ -34,7 +34,9 @@ async def parse_resume(file: UploadFile = File(...)):
             "is_scanned": extraction_res.get("is_scanned", False),
             "layout": extraction_res.get("layout", "single_column"),
             "pages": extraction_res.get("pages", []),
-            "links": extraction_res.get("links", [])
+            "links": extraction_res.get("links", []),
+            "source_blocks": extraction_res.get("source_blocks", []),
+            "language": extraction_res.get("language", {}),
         }
 
     resume_data, validation = await parse_resume_document_pipeline(raw_text, layout)

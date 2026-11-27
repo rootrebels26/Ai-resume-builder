@@ -23,26 +23,26 @@ SECTION_PATTERNS: List[Tuple[str, re.Pattern, float]] = [
     ("experience", re.compile(
         r'^(?:work\s+experience|professional\s+experience|employment\s+history|employment|experience|'
         r'work\s+history|career\s+history|relevant\s+experience|engineering\s+experience|'
-        r'clinical\s+experience|teaching\s+experience|academic\s+experience|industry\s+experience|'
-        r'professional\s+background|where\s+i(?:\'ve|\s+have)\s+worked|my\s+journey|career\s+timeline|'
-        r'consulting\s+experience|freelance\s+(?:work|experience)|positions\s+held)\b',
+        r'clinical\s+experience|teaching\s+experience|academic\s+(?:experience|appointments)|industry\s+experience|'
+        r'professional\s+background|where\s+i(?:\'ve|\s+have)\s+worked|my\s+journey|career\s+timeline|career\s+trajectory|'
+        r'consulting\s+experience|freelance\s+(?:work|experience)|positions\s+held|experiencia\s+laboral)\b',
         re.IGNORECASE
     ), 0.95),
     ("education", re.compile(
         r'^(?:education\s*(?:&|and)\s*academics|education\s*(?:&|and)\s*training|education|'
         r'academic\s+background|academic\s+history|academics|academic\s+credentials|qualifications|'
-        r'educational\s+qualifications|degrees|scholastic\s+record|schooling)\b',
+        r'educational\s+qualifications|degrees|scholastic\s+record|schooling|where\s+i\s+studied|educaci[oó]n)\b',
         re.IGNORECASE
     ), 0.96),
     ("projects", re.compile(
         r'^(?:(?:featured|key|technical|personal|academic|selected|notable|major|minor|relevant|independent|capstone|final\s+year|research|open\s+source|portfolio)\s+projects|'
         r'projects|project\s+experience|project\s+work|portfolio\s*(?:&|and)\s*projects|selected\s+work|'
-        r'architectures\s*(?:&|and)\s*systems|case\s+studies|product\s+development|open\s+source\s+contributions)\b',
+        r'what\s+i(?:\'ve|\s+have)\s+built|architectures\s*(?:&|and)\s*systems|case\s+studies|product\s+development|open\s+source\s+contributions)\b',
         re.IGNORECASE
     ), 0.95),
     ("skills", re.compile(
         r'^(?:(?:core\s+)?technical\s+skills|core\s+skills|technical\s+competencies|technical\s+expertise|'
-        r'technical\s+toolbox|skills\s*(?:&|and)\s*(?:competencies|tools|expertise|technologies)|skills|'
+        r'technical\s+toolbox|toolbox|skills\s*(?:&|and)\s*(?:competencies|tools|expertise|technologies)|skills|'
         r'technologies|tech\s+stack|proficiencies|tools\s*(?:&|and)\s*technologies|core\s+competencies|'
         r'key\s+skills|areas\s+of\s+expertise|competencies|clinical\s+skills|domain\s+expertise)\b',
         re.IGNORECASE

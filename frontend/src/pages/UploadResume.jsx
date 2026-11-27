@@ -13,9 +13,18 @@ export function UploadResume() {
   const { setResumeData } = useResume();
   const [file, setFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadStage, setUploadStage] = useState(0);
   const [parseResult, setParseResult] = useState(null);
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [error, setError] = useState(null);
+
+  const EXTRACTION_STAGES = [
+    'Uploading document',
+    'Detecting file format & validating signature',
+    'Reading document & detecting layout',
+    'Extracting text & running OCR if needed',
+    'Understanding sections & validating fields',
+  ];
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -30,7 +39,11 @@ export function UploadResume() {
     if (!file) return;
 
     setIsUploading(true);
+    setUploadStage(0);
     setError(null);
+    const stageTimer = setInterval(() => {
+      setUploadStage((prev) => (prev < EXTRACTION_STAGES.length - 1 ? prev + 1 : prev));
+    }, 900);
     try {
       const response = await resumeService.parseResumeFile(file);
       if (response.success && response.data) {
@@ -43,6 +56,7 @@ export function UploadResume() {
       console.error('Upload parse error:', err);
       setError(err.message || 'An error occurred while uploading and parsing your resume.');
     } finally {
+      clearInterval(stageTimer);
       setIsUploading(false);
     }
   };
@@ -139,6 +153,33 @@ export function UploadResume() {
                 </>
               )}
             </button>
+          </div>
+        )}
+
+        {/* Extraction Progress Stages (No fake percentages) */}
+        {isUploading && (
+          <div className="p-5 rounded-2xl bg-white border-2 border-ink shadow-brutal-sm space-y-3">
+            <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase text-ink">
+              <Loader2 className="w-4 h-4 animate-spin text-editorial-violet" />
+              <span>Processing {file?.name}</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
+              {EXTRACTION_STAGES.map((stage, idx) => (
+                <div
+                  key={stage}
+                  className={`px-3 py-2 rounded-xl border text-[11px] font-semibold flex items-center gap-1.5 ${
+                    idx < uploadStage
+                      ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
+                      : idx === uploadStage
+                      ? 'bg-volt/60 border-ink text-ink font-bold'
+                      : 'bg-canvas border-ink/15 text-ink-muted'
+                  }`}
+                >
+                  {idx < uploadStage ? <Check className="w-3.5 h-3.5 shrink-0" /> : null}
+                  <span>{stage}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

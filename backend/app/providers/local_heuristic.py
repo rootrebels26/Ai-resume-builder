@@ -779,9 +779,13 @@ class LocalHeuristicProvider(BaseAIProvider):
         education_items = []
         edu_lines = sections["education"]
         current_edu = None
-        edu_keywords = ["bachelor", "master", "b.s", "bs", "m.s", "ms", "b.tech", "m.tech", "ph.d", "bba", "mba", "diploma", "degree", "associate", "engineering", "b.e", "be", "bca", "mca"]
+        edu_keywords = [
+            "bachelor", "master", "b.s", "bs", "m.s", "ms", "b.tech", "m.tech", "ph.d", "bba", "mba",
+            "diploma", "degree", "associate", "engineering", "b.e", "be", "bca", "mca", "b.sc", "m.sc",
+            "higher secondary", "senior secondary", "secondary", "class xii", "class x", "high school", "b.arch", "jd"
+        ]
         deg_regex = re.compile(
-            r'\b(Bachelor(?:\s+of\s+[A-Za-z\s&()]+)?|Master(?:\s+of\s+[A-Za-z\s&()]+)?|B\.?E\.?(?:\s+in\s+[A-Za-z\s&()]+)?|B\.?Tech(?:\s+in\s+[A-Za-z\s&()]+)?|M\.?Tech|B\.?Sc|M\.?Sc|BCA|MCA|BS|MS|MBA|BBA|Ph\.?D)\b',
+            r'\b(Bachelor(?:\s+of\s+[A-Za-z\s&()]+)?|Master(?:\s+of\s+[A-Za-z\s&()]+)?|B\.?E\.?(?:\s+in\s+[A-Za-z\s&()]+)?|B\.?Tech(?:\s+in\s+[A-Za-z\s&()]+)?|M\.?Tech|B\.?Sc|M\.?Sc|BCA|MCA|BS|MS|MBA|BBA|Ph\.?D|Higher\s+Secondary(?:\s*\([^)]+\))?|Senior\s+Secondary|B\.?Arch|Juris\s+Doctor)\b',
             re.IGNORECASE
         )
 
@@ -790,7 +794,7 @@ class LocalHeuristicProvider(BaseAIProvider):
             l_lower = l_clean.lower()
             d_match = date_pattern.search(l_clean) or re.search(r'\b(20\d{2}|19\d{2})\b', l_clean)
             has_degree_kw = any(re.search(r'\b' + re.escape(dkw) + r'\b', l_lower) for dkw in edu_keywords)
-            has_inst_kw = any(ikw in l_lower for ikw in ["university", "college", "institute", "school", "academy", "iit", "nit", "bits", "rgpv"])
+            has_inst_kw = any(ikw in l_lower for ikw in ["university", "college", "institute", "school", "academy", "vidyalaya", "polytechnic", "iit", "nit", "bits", "rgpv"])
 
             # Coursework lines should ALWAYS go to description
             if l_lower.startswith("coursework") or "coursework:" in l_lower:
@@ -798,9 +802,9 @@ class LocalHeuristicProvider(BaseAIProvider):
                     current_edu["description"] = l_clean
                 continue
 
-            # GPA / CGPA line
-            gpa_match = re.search(r'\b(?:gpa|cgpa|grade)[\s:]*([0-9.]+(?:\s*/\s*[0-9.]+)?%?)\b', l_clean, re.IGNORECASE)
-            if gpa_match:
+            # Standalone GPA / CGPA / Percentage line
+            gpa_match = re.search(r'\b(?:gpa|cgpa|grade|percentage)[\s:]*([0-9.]+(?:\s*/\s*[0-9.]+)?%?)\b', l_clean, re.IGNORECASE)
+            if gpa_match and not has_degree_kw and not has_inst_kw:
                 if current_edu:
                     current_edu["cgpa"] = gpa_match.group(1).strip()
                 continue

@@ -48,3 +48,27 @@ def validate_uploaded_file(file: UploadFile, content: bytes) -> None:
     
     if len(content) == 0:
         raise FileValidationError("Uploaded file is empty.")
+
+    # Reject executable/script signatures regardless of extension
+    if content.startswith((b"MZ", b"\x7fELF", b"#!")):
+        raise FileValidationError("Invalid or unsafe file signature detected.")
+
+    # Magic-byte signature verification (do not trust extensions alone)
+    if ext == ".pdf" and not content.lstrip()[:8].startswith(b"%PDF-"):
+        raise FileValidationError("File extension is .pdf but the file header is not a valid PDF (%PDF-).")
+    if ext == ".docx" and not content[:4].startswith((b"PK\x03\x04", b"PK\x05\x06")):
+        raise FileValidationError("File extension is .docx but the file is not a valid Office Open XML archive.")
+    if ext == ".png" and not content[:8].startswith(b"\x89PNG\r\n\x1a\n"):
+        raise FileValidationError("File extension is .png but the file signature is invalid.")
+    if ext in (".jpg", ".jpeg") and not content[:3].startswith(b"\xff\xd8\xff"):
+        raise FileValidationError("File extension is JPEG but the file signature is invalid.")
+    if ext == ".webp" and not (content[:4] == b"RIFF" and content[8:12] == b"WEBP"):
+        raise FileValidationError("File extension is .webp but the file signature is invalid.")
+    if ext == ".rtf" and not content.lstrip()[:6].startswith(b"{\\rtf"):
+        raise FileValidationError("File extension is .rtf but the file header is not valid RTF.")
+
+    if file.content_type and file.content_type.lower() not in ALLOWED_MIME_TYPES:
+        raise FileValidationError(
+            f"Unsupported MIME type '{file.content_type}'.",
+            details={"content_type": file.content_type}
+        )
