@@ -22,22 +22,25 @@ logger = logging.getLogger("groq_provider")
 class GroqProvider(BaseAIProvider):
     def __init__(self, api_key: str = None, model_name: str = None):
         self.api_key = api_key or settings.GROQ_API_KEY
-        self.model_name = model_name or settings.AI_MODEL or "openai/gpt-oss-120b"
+        raw_model = model_name or settings.AI_MODEL
+        if raw_model and raw_model.lower().startswith("gemini"):
+            raw_model = None
+        self.model_name = raw_model or "llama-3.3-70b-versatile"
         self.fallback = LocalHeuristicProvider()
 
-    async def _call_groq(self, prompt: str):
+    async def _call_groq(self, prompt: str, timeout_seconds: float = 30.0):
         if not self.api_key:
             return None
 
         # Build candidate models with auto-fallback if 404 or policy restriction
         candidate_models = [self.model_name]
-        for fb in ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "llama-3.3-70b-versatile"]:
+        for fb in ["llama-3.3-70b-versatile", "openai/gpt-oss-120b", "llama-3.1-8b-instant"]:
             if fb not in candidate_models:
                 candidate_models.append(fb)
 
         for model in candidate_models:
             try:
-                async with httpx.AsyncClient(timeout=35.0) as client:
+                async with httpx.AsyncClient(timeout=timeout_seconds) as client:
                     res = await client.post(
                         "https://api.groq.com/openai/v1/chat/completions",
                         headers={
@@ -78,7 +81,7 @@ class GroqProvider(BaseAIProvider):
         prompt = f"""Generate 3 professional summaries and a suggested headline for a {request.role} with skills: {', '.join(request.key_skills)}.
 Return JSON matching:
 {{"summaries": ["..."], "selected_summary": "...", "suggested_headline": "..."}}"""
-        res = await self._call_groq(prompt)
+        res = await self._call_groq(prompt, timeout_seconds=12.0)
         if res and "summaries" in res:
             try:
                 return GenerateSummaryResponse(**res)
@@ -99,7 +102,7 @@ Return valid JSON matching:
     {{"text": "Option 3...", "rationale": "Technical/architectural excellence...", "metrics_included": false}}
   ]
 }}"""
-        res = await self._call_groq(prompt)
+        res = await self._call_groq(prompt, timeout_seconds=12.0)
         if res and "options" in res and len(res["options"]) >= 3:
             try:
                 return ImproveBulletResponse(**res)
@@ -231,7 +234,7 @@ CRITICAL RULES:
 RESUME TEXT:
 {text[:30000]}
 """
-        res = await self._call_groq(prompt)
+        res = await self._call_groq(prompt, timeout_seconds=12.0)
         if res and isinstance(res, dict) and ("personalInfo" in res or "experience" in res or "education" in res):
             # If professionalTitle was not identified, default to most recent job position
             pinfo = res.get("personalInfo", {})
@@ -251,7 +254,7 @@ RESUME TEXT:
             return {"warnings": pre_warnings, "unmapped": []}
 
         prompt = build_section_prompt(section_type, clean_text, repair_errors=repair_errors)
-        res = await self._call_groq(prompt)
+        res = await self._call_groq(prompt, timeout_seconds=12.0)
         if res and isinstance(res, dict):
             existing_w = res.get("warnings") or []
             res["warnings"] = pre_warnings + (existing_w if isinstance(existing_w, list) else [])

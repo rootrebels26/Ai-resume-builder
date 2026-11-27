@@ -23,7 +23,10 @@ logger = logging.getLogger("gemini_provider")
 class GeminiProvider(BaseAIProvider):
     def __init__(self, api_key: str = None, model_name: str = None):
         self.api_key = api_key or settings.GEMINI_API_KEY
-        self.model_name = model_name or settings.AI_MODEL or "gemini-2.5-flash"
+        raw_model = model_name or settings.AI_MODEL
+        if raw_model and not raw_model.lower().startswith("gemini"):
+            raw_model = None
+        self.model_name = raw_model or "gemini-2.5-flash"
         self.fallback = LocalHeuristicProvider()
 
     async def _call_gemini(self, prompt: str, schema_class: type = None, timeout_seconds: float = 25.0):

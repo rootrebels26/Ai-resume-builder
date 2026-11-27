@@ -16,7 +16,7 @@ services:
       - key: COMPANY_ACCESS_CODE
         value: NityaCloudtech#resume
       - key: AI_PROVIDER
-        value: local
+        value: groq
       - key: MAX_UPLOAD_SIZE_MB
         value: 10
       - key: RATE_LIMIT_PER_MINUTE

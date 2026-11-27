@@ -969,10 +969,58 @@ class DocumentExtractor:
         from app.core.config import settings
         import httpx
 
+        groq_key = getattr(settings, "GROQ_API_KEY", None)
+        pref_provider = (getattr(settings, "AI_PROVIDER", "groq") or "groq").lower().strip()
+        if groq_key and pref_provider in ("groq", "auto"):
+            b64 = base64.b64encode(img_bytes).decode("utf-8")
+            for groq_vision_model in ("meta-llama/llama-4-scout-17b-16e-instruct", "llama-3.2-11b-vision-preview"):
+                try:
+                    with httpx.Client(timeout=15.0) as client:
+                        resp = client.post(
+                            "https://api.groq.com/openai/v1/chat/completions",
+                            headers={
+                                "Authorization": f"Bearer {groq_key}",
+                                "Content-Type": "application/json",
+                            },
+                            json={
+                                "model": groq_vision_model,
+                                "temperature": 0.0,
+                                "messages": [{
+                                    "role": "user",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "You are a universal resume OCR extraction engine. Transcribe ALL text from this resume image exactly as written, preserving all contact info, section headings, job titles, dates, companies, bullet points, skills, projects, and education. Read multi-column layouts column-by-column. Do not summarize or omit anything. Output the full text with clear line breaks."
+                                        },
+                                        {
+                                            "type": "image_url",
+                                            "image_url": {"url": f"data:{mime};base64,{b64}"}
+                                        }
+                                    ]
+                                }]
+                            }
+                        )
+                        if resp.status_code == 200:
+                            data = resp.json()
+                            choices = data.get("choices", [])
+                            if choices:
+                                txt = (choices[0].get("message", {}).get("content") or "").strip()
+                                if txt:
+                                    return txt
+                        else:
+                            logger.warning("Groq Vision OCR (%s) returned %s: %s", groq_vision_model, resp.status_code, resp.text[:160])
+                            if resp.status_code in (401, 403, 429):
+                                break
+                except Exception as e:
+                    logger.warning("Groq Vision OCR (%s) failed: %s", groq_vision_model, e)
+
         api_key = settings.GEMINI_API_KEY
         if api_key:
             b64 = base64.b64encode(img_bytes).decode("utf-8")
-            models_to_try = [settings.AI_MODEL or "gemini-2.5-flash", "gemini-2.0-flash"]
+            raw_model = settings.AI_MODEL
+            if raw_model and not raw_model.lower().startswith("gemini"):
+                raw_model = None
+            models_to_try = [raw_model or "gemini-2.5-flash", "gemini-2.0-flash"]
             for model_id in dict.fromkeys(models_to_try):
                 url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_id}:generateContent?key={api_key}"
                 gen_config: Dict[str, Any] = {"temperature": 0.0}

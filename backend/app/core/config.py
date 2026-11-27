@@ -31,8 +31,8 @@ class Settings(BaseSettings):
     RATE_LIMIT_PER_MINUTE: int = 60  # set to 0 to disable
     GZIP_MINIMUM_SIZE: int = 1024
 
-    # AI Provider configuration: "auto", "gemini", "groq", "openrouter", or "local"
-    AI_PROVIDER: str = "auto"
+    # AI Provider configuration: "auto", "groq", "gemini", "openrouter", or "local"
+    AI_PROVIDER: str = "groq"
     AI_MODEL: Optional[str] = None
 
     GEMINI_API_KEY: Optional[str] = None
