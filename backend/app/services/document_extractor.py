@@ -770,9 +770,68 @@ class DocumentExtractor:
             return "", None
 
     @staticmethod
+    def _try_local_rapidocr(img_bytes: bytes) -> Tuple[str, Optional[float]]:
+        """
+        Pure-Python local ONNX OCR via rapidocr-onnxruntime + Pillow.
+        Groups detected text boxes spatially (supports 1-col and 2-col image-only PDFs)
+        without requiring a system tesseract binary.
+        """
+        try:
+            import io
+            import importlib
+            if not (importlib.util.find_spec("rapidocr_onnxruntime") and importlib.util.find_spec("PIL")):
+                return "", None
+            from rapidocr_onnxruntime import RapidOCR
+            from PIL import Image
+            import numpy as np
+
+            pil_img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+            img_w, _ = pil_img.size
+            engine = getattr(DocumentExtractor, "_rapidocr_engine", None)
+            if engine is None:
+                engine = RapidOCR()
+                DocumentExtractor._rapidocr_engine = engine
+
+            result, _ = engine(np.array(pil_img))
+            if not result:
+                return "", None
+
+            # Each item: [bbox_4pts, text, confidence]
+            boxes = []
+            confs = []
+            for item in result:
+                pts, txt, conf = item[0], str(item[1] or "").strip(), float(item[2] or 0.0)
+                if not txt:
+                    continue
+                xs = [p[0] for p in pts]
+                ys = [p[1] for p in pts]
+                boxes.append((min(xs), min(ys), max(xs), max(ys), txt))
+                confs.append(conf)
+
+            if not boxes:
+                return "", None
+
+            # Simple 2-column spatial split if right side has substantial content
+            mid_x = img_w * 0.58
+            left_b = [b for b in boxes if b[2] <= mid_x + 20]
+            right_b = [b for b in boxes if b[0] >= mid_x - 20]
+            if len(left_b) >= 4 and len(right_b) >= 4:
+                left_b.sort(key=lambda b: (round(b[1] / 12), b[0]))
+                right_b.sort(key=lambda b: (round(b[1] / 12), b[0]))
+                ordered = left_b + right_b
+            else:
+                ordered = sorted(boxes, key=lambda b: (round(b[1] / 12), b[0]))
+
+            avg_conf = round(sum(confs) / len(confs), 3) if confs else None
+            return "\n".join(b[4] for b in ordered), avg_conf
+        except Exception as exc:
+            logger.debug("RapidOCR fallback error: %s", exc)
+            return "", None
+
+    @staticmethod
     def _ocr_image_bytes(img_bytes: bytes, mime: str = "image/jpeg") -> str:
         """
-        Local Tesseract+OpenCV OCR when installed, followed by Gemini Vision OCR fallback.
+        Local OCR (Tesseract+OpenCV or RapidOCR ONNX) followed by Gemini Vision OCR fallback.
         """
         import base64
         from app.core.config import settings
@@ -782,9 +841,13 @@ class DocumentExtractor:
         if local_text and len(local_text) >= 80 and (local_conf is None or local_conf >= 0.55):
             return local_text
 
+        rapid_text, rapid_conf = DocumentExtractor._try_local_rapidocr(img_bytes)
+        if rapid_text and len(rapid_text) >= 80 and (rapid_conf is None or rapid_conf >= 0.55):
+            return rapid_text
+
         api_key = settings.GEMINI_API_KEY
         if not api_key:
-            return local_text
+            return rapid_text or local_text
 
         b64 = base64.b64encode(img_bytes).decode("utf-8")
         models_to_try = [settings.AI_MODEL or "gemini-2.5-flash", "gemini-2.0-flash"]
