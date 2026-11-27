@@ -160,8 +160,12 @@ export const pdfService = {
         sandbox.style.margin = '0';
         sandbox.style.padding = '0';
         sandbox.style.transform = 'none';
+        const computedStyle = window.getComputedStyle(pageEl);
         sandbox.style.backgroundColor = pageBg;
         sandbox.style.boxSizing = 'border-box';
+        sandbox.style.fontFamily = computedStyle.fontFamily;
+        sandbox.style.fontSize = computedStyle.fontSize;
+        sandbox.style.lineHeight = computedStyle.lineHeight;
 
         const pageClone = pageEl.cloneNode(true);
         pageClone.style.boxShadow = 'none';
@@ -171,6 +175,7 @@ export const pdfService = {
         pageClone.style.height = `${targetPxHeight}px`;
         pageClone.style.boxSizing = 'border-box';
         pageClone.style.backgroundColor = pageBg;
+        pageClone.style.fontFamily = computedStyle.fontFamily;
 
         await this.inlineExternalImages(pageClone);
 

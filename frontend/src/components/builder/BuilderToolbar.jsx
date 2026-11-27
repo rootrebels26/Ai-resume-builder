@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowLeft, Edit3, Palette, Download, Loader2,
-  MoreHorizontal, RefreshCw, FileJson, Upload, LayoutTemplate
+  MoreHorizontal, RefreshCw, FileJson, Upload, LayoutTemplate, Undo2, Redo2
 } from 'lucide-react';
 
 /**
@@ -29,6 +29,10 @@ export function BuilderToolbar({
   onLoadSampleData,
   onExportJSON,
   onImportJSONClick,
+  canUndo = false,
+  canRedo = false,
+  onUndo,
+  onRedo,
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -91,6 +95,37 @@ export function BuilderToolbar({
           <span className="size-1.5 rounded-full bg-emerald-700" />
           <span>ATS {displayAtsScore}%</span>
         </button>
+
+        {/* Senior-UI Segmented Undo / Redo Pill */}
+        <div
+          role="group"
+          aria-label="History controls"
+          className="inline-flex items-center rounded-xl border border-ink/20 bg-white p-0.5 shadow-2xs shrink-0"
+        >
+          <button
+            type="button"
+            onClick={onUndo}
+            disabled={!canUndo}
+            title="Undo (Ctrl+Z)"
+            aria-label="Undo"
+            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-bold text-ink transition cursor-pointer hover:bg-volt/40 disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+          >
+            <Undo2 className="w-3.5 h-3.5" />
+            <span className="hidden lg:inline">Undo</span>
+          </button>
+          <div className="w-px h-3.5 bg-ink/15 mx-0.5" />
+          <button
+            type="button"
+            onClick={onRedo}
+            disabled={!canRedo}
+            title="Redo (Ctrl+Y)"
+            aria-label="Redo"
+            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-bold text-ink transition cursor-pointer hover:bg-volt/40 disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+          >
+            <Redo2 className="w-3.5 h-3.5" />
+            <span className="hidden lg:inline">Redo</span>
+          </button>
+        </div>
       </div>
 
       {/* Center: Clean Segmented Phase Switcher (Desktop) */}

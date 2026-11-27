@@ -910,12 +910,12 @@ export function DynamicResumeCanvas({
             const githubHref = proj.githubUrl || (proj.link && String(proj.link).toLowerCase().includes('github.com') ? proj.link : '');
 
             return (
-              <div key={idx} className="space-y-0.5" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
-                <div className="flex flex-row items-start justify-between gap-2">
-                  <div className="flex flex-wrap items-center gap-2 min-w-0">
+              <div key={idx} className="space-y-1" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                <div className="flex flex-row items-start justify-between gap-2 leading-snug">
+                  <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1 min-w-0 leading-snug">
                     <span
                       className="font-bold tracking-tight"
-                      style={{ fontSize: `${(baseFontSize * 1.02).toFixed(1)}px`, color: primaryColor }}
+                      style={{ fontSize: `${(baseFontSize * 1.02).toFixed(1)}px`, color: primaryColor, lineHeight: 1.35 }}
                     >
                       {proj.name || proj.title}
                     </span>
@@ -924,10 +924,10 @@ export function DynamicResumeCanvas({
                         href={normalizeUrl(liveHref)}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-0.5 text-xs font-medium hover:underline shrink-0"
-                        style={{ color: accentColor }}
+                        className="inline-flex items-center gap-1 text-xs font-medium hover:underline shrink-0 whitespace-nowrap"
+                        style={{ color: accentColor, lineHeight: 1.35 }}
                       >
-                        <ExternalLink className="w-2.5 h-2.5" />
+                        <ExternalLink className="w-2.5 h-2.5 shrink-0" />
                         <span>Live Demo</span>
                       </a>
                     )}
@@ -936,23 +936,23 @@ export function DynamicResumeCanvas({
                         href={normalizeUrl(githubHref)}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-0.5 text-xs font-medium hover:underline shrink-0"
-                        style={{ color: accentColor }}
+                        className="inline-flex items-center gap-1 text-xs font-medium hover:underline shrink-0 whitespace-nowrap"
+                        style={{ color: accentColor, lineHeight: 1.35 }}
                       >
-                        <Github className="w-2.5 h-2.5" />
+                        <Github className="w-2.5 h-2.5 shrink-0" />
                         <span>GitHub</span>
                       </a>
                     )}
                   </div>
                   {(proj.date || proj.period || proj.startDate || proj.endDate) && (
-                    <span className="text-xs font-medium shrink-0 whitespace-nowrap" style={{ color: accentColor }}>
+                    <span className="text-xs font-medium shrink-0 whitespace-nowrap" style={{ color: accentColor, lineHeight: 1.35 }}>
                       {proj.date || proj.period || [proj.startDate, proj.endDate].filter(Boolean).join(' — ')}
                     </span>
                   )}
                 </div>
 
                 {proj.technologies && (Array.isArray(proj.technologies) ? proj.technologies.length > 0 : String(proj.technologies).trim().length > 0) && (
-                  <div className="text-xs font-mono font-medium opacity-85" style={{ color: accentColor }}>
+                  <div className="text-xs font-mono font-medium opacity-85 mt-0.5 leading-snug" style={{ color: accentColor }}>
                     Tech Stack: {Array.isArray(proj.technologies) ? proj.technologies.join(', ') : proj.technologies}
                   </div>
                 )}

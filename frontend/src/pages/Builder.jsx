@@ -103,6 +103,69 @@ export function Builder() {
   const [condenseNotice, setCondenseNotice] = useState(null);
   const [undoSnapshot, setUndoSnapshot] = useState(null);
 
+  // Full-history Undo / Redo stack (debounced on edits)
+  const historyRef = useRef({ stack: [JSON.stringify(resumeData)], index: 0, isRestoring: false });
+  const [historyMeta, setHistoryMeta] = useState({ canUndo: false, canRedo: false });
+
+  useEffect(() => {
+    const serialized = JSON.stringify(resumeData);
+    const h = historyRef.current;
+    if (h.isRestoring) {
+      h.isRestoring = false;
+      return;
+    }
+    if (h.stack[h.index] === serialized) return;
+
+    const timer = setTimeout(() => {
+      const cur = historyRef.current;
+      if (cur.stack[cur.index] === serialized) return;
+      const sliced = cur.stack.slice(0, cur.index + 1);
+      sliced.push(serialized);
+      if (sliced.length > 40) sliced.shift();
+      cur.stack = sliced;
+      cur.index = sliced.length - 1;
+      setHistoryMeta({ canUndo: cur.index > 0, canRedo: false });
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [resumeData]);
+
+  const handleHistoryUndo = React.useCallback(() => {
+    const h = historyRef.current;
+    if (h.index <= 0) return;
+    h.index -= 1;
+    h.isRestoring = true;
+    setResumeData(JSON.parse(h.stack[h.index]));
+    setHistoryMeta({ canUndo: h.index > 0, canRedo: h.index < h.stack.length - 1 });
+  }, [setResumeData]);
+
+  const handleHistoryRedo = React.useCallback(() => {
+    const h = historyRef.current;
+    if (h.index >= h.stack.length - 1) return;
+    h.index += 1;
+    h.isRestoring = true;
+    setResumeData(JSON.parse(h.stack[h.index]));
+    setHistoryMeta({ canUndo: h.index > 0, canRedo: h.index < h.stack.length - 1 });
+  }, [setResumeData]);
+
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      const isMod = e.ctrlKey || e.metaKey;
+      if (!isMod) return;
+      const tag = (e.target?.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea') return;
+      if (e.key.toLowerCase() === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        handleHistoryUndo();
+      } else if (e.key.toLowerCase() === 'y' || (e.key.toLowerCase() === 'z' && e.shiftKey)) {
+        e.preventDefault();
+        handleHistoryRedo();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [handleHistoryUndo, handleHistoryRedo]);
+
   const handleSmartCondense = async (targetPages) => {
     setIsSmartCondensing(true);
     setCondenseNotice(null);
@@ -762,6 +825,10 @@ export function Builder() {
         onLoadSampleData={loadSampleData}
         onExportJSON={handleExportJSON}
         onImportJSONClick={handleImportJSONClick}
+        canUndo={historyMeta.canUndo}
+        canRedo={historyMeta.canRedo}
+        onUndo={handleHistoryUndo}
+        onRedo={handleHistoryRedo}
       />
 
       {/* Main Workspace Split View */}
