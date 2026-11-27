@@ -19,48 +19,74 @@ from app.schemas.job_schema import (
 
 logger = logging.getLogger("openrouter_provider")
 
+FREE_OPENROUTER_MODELS = [
+    "meta-llama/llama-3.3-70b-instruct:free",
+    "qwen/qwen3-235b-a22b:free",
+    "deepseek/deepseek-chat-v3-0324:free",
+    "google/gemini-2.0-flash-exp:free",
+    "mistralai/mistral-small-3.1-24b-instruct:free",
+    "openrouter/free",
+]
+
+
 class OpenRouterProvider(BaseAIProvider):
     def __init__(self, api_key: str = None, model_name: str = None):
         self.api_key = api_key or settings.OPENROUTER_API_KEY
-        self.model_name = model_name or settings.AI_MODEL or "meta-llama/llama-3.3-70b-instruct"
+        raw_model = model_name or settings.AI_MODEL
+        if raw_model and "/" not in raw_model:
+            raw_model = None
+        self.model_name = raw_model or FREE_OPENROUTER_MODELS[0]
         self.fallback = LocalHeuristicProvider()
 
-    async def _call_openrouter(self, prompt: str):
+    async def _call_openrouter(self, prompt: str, timeout_seconds: float = 12.0):
         if not self.api_key:
             return None
-        try:
-            async with httpx.AsyncClient(timeout=25.0) as client:
-                res = await client.post(
-                    "https://openrouter.ai/api/v1/chat/completions",
-                    headers={
-                        "Authorization": f"Bearer {self.api_key}",
-                        "Content-Type": "application/json",
-                        "HTTP-Referer": "https://ai-resume-builder.local",
-                        "X-Title": "AI Resume Builder"
-                    },
-                    json={
-                        "model": self.model_name,
-                        "messages": [
-                            {"role": "system", "content": "You are an expert career counselor. Return only valid JSON."},
-                            {"role": "user", "content": prompt}
-                        ],
-                        "temperature": 0.3
-                    }
-                )
-                if res.status_code == 200:
-                    data = res.json()
-                    content = data["choices"][0]["message"]["content"].strip()
-                    if content.startswith("```json"):
-                        content = content[7:]
-                    if content.startswith("```"):
-                        content = content[3:]
-                    if content.endswith("```"):
-                        content = content[:-3]
-                    return json.loads(content.strip())
-                return None
-        except Exception as e:
-            logger.warning("OpenRouter API request failed: %s", e)
-            return None
+
+        candidate_models = [self.model_name]
+        for fm in FREE_OPENROUTER_MODELS:
+            if fm not in candidate_models:
+                candidate_models.append(fm)
+
+        async with httpx.AsyncClient(timeout=timeout_seconds) as client:
+            for model in candidate_models:
+                try:
+                    res = await client.post(
+                        "https://openrouter.ai/api/v1/chat/completions",
+                        headers={
+                            "Authorization": f"Bearer {self.api_key}",
+                            "Content-Type": "application/json",
+                            "HTTP-Referer": "https://ai-resume-builder.local",
+                            "X-Title": "AI Resume Builder"
+                        },
+                        json={
+                            "model": model,
+                            "messages": [
+                                {"role": "system", "content": "You are an expert career counselor and resume parser. Return only valid JSON."},
+                                {"role": "user", "content": prompt}
+                            ],
+                            "temperature": 0.2
+                        }
+                    )
+                    if res.status_code == 200:
+                        data = res.json()
+                        choices = data.get("choices") or []
+                        if not choices:
+                            continue
+                        content = (choices[0].get("message", {}).get("content") or "").strip()
+                        if content.startswith("```json"):
+                            content = content[7:]
+                        if content.startswith("```"):
+                            content = content[3:]
+                        if content.endswith("```"):
+                            content = content[:-3]
+                        return json.loads(content.strip())
+                    logger.warning(
+                        "OpenRouter model %s busy/unavailable (%s); shifting to next free model.",
+                        model, res.status_code
+                    )
+                except Exception as e:
+                    logger.warning("OpenRouter model %s failed (%s); shifting to next free model.", model, e)
+        return None
 
     async def generate_summary(self, request: GenerateSummaryRequest) -> GenerateSummaryResponse:
         prompt = f"""Generate 3 professional summaries for {request.role}. Return JSON: {{"summaries": [...], "selected_summary": "...", "suggested_headline": "..."}}"""

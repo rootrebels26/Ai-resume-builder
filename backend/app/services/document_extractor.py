@@ -274,7 +274,7 @@ class DocumentExtractor:
             mid_blocks = []
             right_blocks = []
 
-            body_blocks = [b for b in enriched_text_blocks if b[1] >= page_height * 0.16 or (b[3] - b[1]) > page_height * 0.25]
+            body_blocks = [b for b in enriched_text_blocks if b[1] >= page_height * 0.11 or (b[3] - b[1]) > page_height * 0.25]
             if len(body_blocks) >= 3:
                 col1 = [b for b in body_blocks if b[2] <= page_width * 0.36]
                 col2 = [b for b in body_blocks if b[0] >= page_width * 0.31 and b[2] <= page_width * 0.69]
@@ -1060,6 +1060,54 @@ class DocumentExtractor:
                                 break
                 except Exception as e:
                     logger.warning("Gemini Vision OCR (%s) failed: %s", model_id, e)
+
+        openrouter_key = getattr(settings, "OPENROUTER_API_KEY", None)
+        if openrouter_key:
+            b64 = base64.b64encode(img_bytes).decode("utf-8")
+            for or_vision_model in (
+                "google/gemini-2.0-flash-exp:free",
+                "qwen/qwen2.5-vl-72b-instruct:free",
+                "meta-llama/llama-3.2-11b-vision-instruct:free",
+            ):
+                try:
+                    with httpx.Client(timeout=14.0) as client:
+                        resp = client.post(
+                            "https://openrouter.ai/api/v1/chat/completions",
+                            headers={
+                                "Authorization": f"Bearer {openrouter_key}",
+                                "Content-Type": "application/json",
+                                "HTTP-Referer": "https://ai-resume-builder.local",
+                                "X-Title": "AI Resume Builder",
+                            },
+                            json={
+                                "model": or_vision_model,
+                                "temperature": 0.0,
+                                "messages": [{
+                                    "role": "user",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "You are a universal resume OCR extraction engine. Transcribe ALL text from this resume image exactly as written, preserving all contact info, section headings, job titles, dates, companies, bullet points, skills, projects, and education. Read multi-column layouts column-by-column. Do not summarize or omit anything. Output the full text with clear line breaks."
+                                        },
+                                        {
+                                            "type": "image_url",
+                                            "image_url": {"url": f"data:{mime};base64,{b64}"}
+                                        }
+                                    ]
+                                }]
+                            }
+                        )
+                        if resp.status_code == 200:
+                            data = resp.json()
+                            choices = data.get("choices", [])
+                            if choices:
+                                txt = (choices[0].get("message", {}).get("content") or "").strip()
+                                if txt:
+                                    return txt
+                        else:
+                            logger.warning("OpenRouter Vision OCR (%s) returned %s", or_vision_model, resp.status_code)
+                except Exception as e:
+                    logger.warning("OpenRouter Vision OCR (%s) failed: %s", or_vision_model, e)
 
         rapid_text, rapid_conf = DocumentExtractor._try_local_rapidocr(img_bytes)
         if rapid_text and len(rapid_text) >= 40:

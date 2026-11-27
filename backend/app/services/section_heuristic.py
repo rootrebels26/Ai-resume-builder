@@ -566,7 +566,31 @@ def parse_skills_section(text: str) -> Dict[str, Any]:
             flat_items.extend(items)
 
     if flat_items:
-        groups.append({"category": None, "items": flat_items})
+        if not groups and len(flat_items) >= 3:
+            lang_kw = {"python", "javascript", "typescript", "java", "c++", "c#", "c", "go", "golang", "rust", "ruby", "php", "swift", "kotlin", "scala", "r", "sql", "html", "css", "bash", "shell"}
+            cloud_db_kw = {"postgresql", "postgres", "mysql", "mongodb", "redis", "elasticsearch", "sqlite", "dynamodb", "cassandra", "aws", "azure", "gcp", "google cloud", "docker", "kubernetes", "terraform", "snowflake", "bigquery"}
+            tool_kw = {"git", "github", "ci/cd", "jenkins", "jira", "linux", "webpack", "vite", "figma", "postman", "tableau", "power bi", "excel"}
+            cat_buckets = {
+                "Programming Languages": [],
+                "Cloud & Databases": [],
+                "Frameworks & Libraries": [],
+                "Developer Tools": [],
+            }
+            for it in flat_items:
+                low = it["name"].lower()
+                if low in lang_kw:
+                    cat_buckets["Programming Languages"].append(it)
+                elif low in cloud_db_kw or any(k in low for k in ("aws", "azure", "sql", "postgres", "mongo", "docker", "k8s", "kubernetes")):
+                    cat_buckets["Cloud & Databases"].append(it)
+                elif low in tool_kw or any(k in low for k in ("git", "ci/cd", "jira", "linux", "figma")):
+                    cat_buckets["Developer Tools"].append(it)
+                else:
+                    cat_buckets["Frameworks & Libraries"].append(it)
+            for c_name, c_items in cat_buckets.items():
+                if c_items:
+                    groups.append({"category": c_name, "items": c_items})
+        else:
+            groups.append({"category": None, "items": flat_items})
 
     return {"skills": groups, "unmapped": [], "warnings": []}
 

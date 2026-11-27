@@ -887,6 +887,9 @@ async def parse_resume_document_pipeline(
                 return True
             if any((w or {}).get("code") == "AMBIGUOUS_ORDER" for w in (r.get("warnings") or [])):
                 return True
+            # Trigger targeted AI cleanup when OCR merged words together (e.g. "MachineLearningEngineer")
+            if st in ("experience", "projects", "education", "summary") and re.search(r'[a-z]{3}[A-Z][a-z]{3}', txt):
+                return True
             if st == "header":
                 return not r.get("full_name") or (not r.get("email") and not r.get("phone"))
             if st == "summary":
