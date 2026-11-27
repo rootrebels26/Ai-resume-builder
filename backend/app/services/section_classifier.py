@@ -89,6 +89,51 @@ CUSTOM_HEADING_HINTS = re.compile(
 )
 
 
+_COMPACT_HEADING_MAP = {
+    "professionalsummary": "summary",
+    "executivesummary": "summary",
+    "careersummary": "summary",
+    "profilesummary": "summary",
+    "summary": "summary",
+    "aboutme": "summary",
+    "about": "summary",
+    "profile": "summary",
+    "objective": "summary",
+    "careerobjective": "summary",
+    "professionalexperience": "experience",
+    "workexperience": "experience",
+    "employmenthistory": "experience",
+    "experience": "experience",
+    "workhistory": "experience",
+    "careerhistory": "experience",
+    "internships": "experience",
+    "internshipexperience": "experience",
+    "keyprojectssystems": "projects",
+    "keyprojects": "projects",
+    "projects": "projects",
+    "personalprojects": "projects",
+    "academicprojects": "projects",
+    "selectedprojects": "projects",
+    "notableprojects": "projects",
+    "technicalcoreskills": "skills",
+    "technicalskills": "skills",
+    "coreskills": "skills",
+    "skills": "skills",
+    "corecompetencies": "skills",
+    "technologies": "skills",
+    "education": "education",
+    "academicbackground": "education",
+    "educationalbackground": "education",
+    "academics": "education",
+    "qualifications": "education",
+    "certificationscredentials": "certifications",
+    "certifications": "certifications",
+    "licensescertifications": "certifications",
+    "credentials": "certifications",
+    "certificates": "certifications",
+}
+
+
 def classify_heading(heading_text: str, following_lines: List[str] = None) -> Tuple[str, float]:
     """
     Classifies a candidate heading into a normalized resume category or 'custom'.
@@ -101,6 +146,10 @@ def classify_heading(heading_text: str, following_lines: List[str] = None) -> Tu
     for cat, pattern, conf in SECTION_PATTERNS:
         if pattern.match(clean):
             return (cat, conf)
+
+    compact = re.sub(r'[^a-z]', '', clean.lower())
+    if compact in _COMPACT_HEADING_MAP:
+        return (_COMPACT_HEADING_MAP[compact], 0.94)
 
     if CUSTOM_HEADING_HINTS.match(clean):
         return ("custom", 0.90)

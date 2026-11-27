@@ -15,13 +15,13 @@ TITLE_KEYWORDS = re.compile(
     re.IGNORECASE,
 )
 DATE_RANGE_RE = re.compile(
-    r'((?:expected\s+|pursuing\s+)?(?:(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?\s+[-,]?\s*(?:19|20)\d{2}|(?:spring|summer|fall|autumn|winter)\s+(?:19|20)\d{2}|(?:0?[1-9]|1[0-2])/(?:19|20)\d{2}|(?:\d{1,2}/\d{1,2}/(?:19|20)\d{2})|(?:19|20)\d{2}|\'\d{2}))'
+    r'((?:expected\s+|pursuing\s+)?(?:(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?\s+[-,]?\s*(?:19|20)\d{2}|(?:spring|summer|fall|autumn|winter)\s+(?:19|20)\d{2}|(?:19|20)\d{2}-(?:1[0-2]|0?[1-9])|(?:1[0-2]|0?[1-9])/(?:19|20)\d{2}|(?:\d{1,2}/\d{1,2}/(?:19|20)\d{2})|(?:19|20)\d{2}|\'\d{2}))'
     r'\s*(?:[-–—]+|\bto\b)\s*'
-    r'((?:expected\s+|pursuing\s+)?(?:present|current|till\s+date|to\s+date|ongoing|now|till\s+now|continuing|(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?\s+[-,]?\s*(?:19|20)\d{2}|(?:spring|summer|fall|autumn|winter)\s+(?:19|20)\d{2}|(?:0?[1-9]|1[0-2])/(?:19|20)\d{2}|(?:\d{1,2}/\d{1,2}/(?:19|20)\d{2})|(?:19|20)\d{2}|\'\d{2}))',
+    r'((?:expected\s+|pursuing\s+)?(?:present|current|till\s+date|to\s+date|ongoing|now|till\s+now|continuing|(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?\s+[-,]?\s*(?:19|20)\d{2}|(?:spring|summer|fall|autumn|winter)\s+(?:19|20)\d{2}|(?:19|20)\d{2}-(?:1[0-2]|0?[1-9])|(?:1[0-2]|0?[1-9])/(?:19|20)\d{2}|(?:\d{1,2}/\d{1,2}/(?:19|20)\d{2})|(?:19|20)\d{2}|\'\d{2}))',
     re.IGNORECASE,
 )
 SINGLE_DATE_RE = re.compile(
-    r'\b((?:expected\s+|pursuing\s+)?(?:(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?\s+(?:19|20)\d{2}|(?:0?[1-9]|1[0-2])/(?:19|20)\d{2}|(?:19|20)\d{2}))\b',
+    r'\b((?:expected\s+|pursuing\s+)?(?:(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?\s+(?:19|20)\d{2}|(?:19|20)\d{2}-(?:1[0-2]|0?[1-9])|(?:1[0-2]|0?[1-9])/(?:19|20)\d{2}|(?:19|20)\d{2}))\b',
     re.IGNORECASE,
 )
 
@@ -263,8 +263,22 @@ def parse_experience_section(text: str) -> Dict[str, Any]:
             if company and not title and i + 1 < len(lines):
                 nxt_raw = lines[i + 1].strip()
                 nxt_clean, nxt_bullet = _strip_bullet(nxt_raw)
-                if not nxt_bullet and not DATE_RANGE_RE.search(nxt_clean) and len(nxt_clean) < 70:
-                    title = nxt_clean
+                if not nxt_bullet and not DATE_RANGE_RE.search(nxt_clean) and len(nxt_clean) < 90:
+                    if "|" in nxt_clean:
+                        nxt_parts = [p.strip() for p in nxt_clean.split("|") if p.strip()]
+                        if len(nxt_parts) >= 2 and company.lower() in {"role", "position", "title", "experience"}:
+                            p0_l, p1_l = nxt_parts[0].lower(), nxt_parts[1].lower()
+                            role_hints = ("intern", "engineer", "developer", "manager", "analyst", "lead", "architect", "scientist", "consultant", "designer")
+                            if any(h in p0_l for h in role_hints) and not any(h in p1_l for h in role_hints):
+                                title, company = nxt_parts[0], nxt_parts[1]
+                            elif any(h in p1_l for h in role_hints) and not any(h in p0_l for h in role_hints):
+                                company, title = nxt_parts[0], nxt_parts[1]
+                            else:
+                                company, title, conf, prev_order = _disambiguate_company_title(nxt_parts[0], nxt_parts[1], prev_order)
+                        else:
+                            title = nxt_clean
+                    else:
+                        title = nxt_clean
                     i += 1
 
             if conf == "low" and company and title:
@@ -551,10 +565,16 @@ def parse_projects_section(text: str) -> Dict[str, Any]:
         if not cleaned:
             continue
 
-        # Explicit stack line inside project
+        # Explicit stack line inside project (including middle-dot separated tech lines)
         m_stack = re.match(r'^(?:tech(?:\s*stack)?|technologies|built\s+with|stack|tools)\s*:\s*(.+)$', cleaned, re.IGNORECASE)
         if m_stack and current:
-            for t in re.split(r'[,;|•]+', m_stack.group(1)):
+            for t in re.split(r'[,;|•·]+', m_stack.group(1)):
+                ts = t.strip()
+                if ts and ts not in current["tech_stack"]:
+                    current["tech_stack"].append(ts)
+            continue
+        if current and ("·" in cleaned or "•" in cleaned) and not cleaned.endswith(".") and len(cleaned) < 100 and not URL_REGEX.search(cleaned):
+            for t in re.split(r'[·•,;|]+', cleaned):
                 ts = t.strip()
                 if ts and ts not in current["tech_stack"]:
                     current["tech_stack"].append(ts)
@@ -568,9 +588,23 @@ def parse_projects_section(text: str) -> Dict[str, Any]:
             if m_gh:
                 link = "https://" + m_gh.group(1)
 
-        # New project header: non-bullet OR "Name | Stack | Link" OR first line
+        # New project header: first line, "Name | Stack | Link", or short non-sentence non-action-verb title
         has_pipe = "|" in cleaned
-        if (not is_bullet and len(cleaned) < 110) or has_pipe or not current:
+        starts_action_verb = bool(re.match(
+            r'^(?:designed|built|developed|trained|integrated|implemented|created|deployed|engineered|architected|automated|optimized|evaluated|managed|led|helped|utilized|delivered)',
+            cleaned,
+            re.IGNORECASE,
+        ))
+        looks_like_header = (
+            not is_bullet
+            and len(cleaned) < 80
+            and len(cleaned.split()) <= 8
+            and bool(cleaned)
+            and cleaned[0].isupper()
+            and not cleaned.endswith((".", "!", "?", ","))
+            and not starts_action_verb
+        )
+        if not current or has_pipe or looks_like_header:
             if current:
                 projects.append(current)
 

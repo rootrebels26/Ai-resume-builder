@@ -485,7 +485,7 @@ class LocalHeuristicProvider(BaseAIProvider):
         active_custom_block: Dict[str, Any] = None
 
         date_pattern = re.compile(
-            r'((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?[\s\-_]*\d{2,4}|\d{4}|(?:0[1-9]|1[0-2])/\d{2,4})\s*[-–—to/]+\s*((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?[\s\-_]*\d{2,4}|\d{4}|(?:0[1-9]|1[0-2])/\d{2,4}|Present|Current|Till\s*Date|Ongoing|Now)',
+            r'((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?[\s\-_]*\d{2,4}|\d{4}-\d{2}|\d{4}|(?:0[1-9]|1[0-2])/\d{2,4})\s*[-–—to/]+\s*((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?[\s\-_]*\d{2,4}|\d{4}-\d{2}|\d{4}|(?:0[1-9]|1[0-2])/\d{2,4}|Present|Current|Till\s*Date|Ongoing|Now)',
             re.IGNORECASE
         )
 
