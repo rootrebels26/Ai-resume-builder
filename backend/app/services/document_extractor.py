@@ -374,7 +374,7 @@ class DocumentExtractor:
             # If page text is empty but page has images, attempt OCR / vision recovery
             if len(page_text.strip()) < 30 and has_images:
                 try:
-                    pix = page.get_pixmap(dpi=150)
+                    pix = page.get_pixmap(dpi=200)
                     img_bytes = pix.tobytes("jpeg")
                     recovered_ocr = DocumentExtractor._ocr_image_bytes(img_bytes, mime="image/jpeg")
                     if recovered_ocr.strip():
@@ -685,35 +685,44 @@ class DocumentExtractor:
             return ""
 
         b64 = base64.b64encode(img_bytes).decode("utf-8")
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
-        payload = {
-            "contents": [{
-                "parts": [
-                    {
-                        "text": "You are a universal resume OCR extraction engine. Transcribe ALL text from this resume image exactly as written, preserving all contact info, section headings, job titles, dates, companies, bullet points, skills, projects, and education. Do not summarize or omit anything. Output the full text with clear line breaks."
-                    },
-                    {
-                        "inlineData": {
-                            "mimeType": mime,
-                            "data": b64
+        models_to_try = [settings.AI_MODEL or "gemini-2.5-flash", "gemini-2.0-flash"]
+        for model_id in dict.fromkeys(models_to_try):
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_id}:generateContent?key={api_key}"
+            gen_config: Dict[str, Any] = {"temperature": 0.0}
+            if "2.5" in model_id:
+                gen_config["thinkingConfig"] = {"thinkingBudget": 0}
+            payload = {
+                "contents": [{
+                    "parts": [
+                        {
+                            "text": "You are a universal resume OCR extraction engine. Transcribe ALL text from this resume image exactly as written, preserving all contact info, section headings, job titles, dates, companies, bullet points, skills, projects, and education. Do not summarize or omit anything. Output the full text with clear line breaks."
+                        },
+                        {
+                            "inlineData": {
+                                "mimeType": mime,
+                                "data": b64
+                            }
                         }
-                    }
-                ]
-            }],
-            "generationConfig": {"temperature": 0.0}
-        }
-        try:
-            with httpx.Client(timeout=15.0) as client:
-                resp = client.post(url, json=payload)
-                if resp.status_code == 200:
-                    data = resp.json()
-                    candidates = data.get("candidates", [])
-                    if candidates and "content" in candidates[0]:
-                        parts = candidates[0]["content"].get("parts", [])
-                        if parts and "text" in parts[0]:
-                            return parts[0]["text"].strip()
-        except Exception as e:
-            logger.warning("Gemini Vision OCR call failed: %s", e)
+                    ]
+                }],
+                "generationConfig": gen_config
+            }
+            try:
+                with httpx.Client(timeout=28.0) as client:
+                    resp = client.post(url, json=payload)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        candidates = data.get("candidates", [])
+                        if candidates and "content" in candidates[0]:
+                            parts = candidates[0]["content"].get("parts", [])
+                            if parts and "text" in parts[0]:
+                                txt = parts[0]["text"].strip()
+                                if txt:
+                                    return txt
+                    else:
+                        logger.warning("Gemini Vision OCR (%s) returned %s: %s", model_id, resp.status_code, resp.text[:160])
+            except Exception as e:
+                logger.warning("Gemini Vision OCR (%s) failed: %s", model_id, e)
 
         return ""
 

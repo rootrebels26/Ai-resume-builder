@@ -188,6 +188,34 @@ export const pdfService = {
         // Extract clickable hyperlinks for PDF annotation
         const pageRect = pageClone.getBoundingClientRect();
         const linkNodes = Array.from(pageClone.querySelectorAll('a[href]'));
+        // Extract visible text nodes & coordinates to embed an invisible searchable/ATS text layer
+        const textAnnotations = [];
+        try {
+          const walker = document.createTreeWalker(pageClone, NodeFilter.SHOW_TEXT, null);
+          let tNode;
+          while ((tNode = walker.nextNode())) {
+            const rawVal = (tNode.nodeValue || '').replace(/\s+/g, ' ').trim();
+            if (!rawVal) continue;
+            const parentEl = tNode.parentElement;
+            if (!parentEl) continue;
+            const pStyle = window.getComputedStyle(parentEl);
+            if (pStyle.display === 'none' || pStyle.visibility === 'hidden') continue;
+            const range = document.createRange();
+            range.selectNodeContents(tNode);
+            const tRect = range.getBoundingClientRect();
+            if (tRect.width <= 0 || tRect.height <= 0 || pageRect.width <= 0 || pageRect.height <= 0) continue;
+            const fontPx = parseFloat(pStyle.fontSize) || 10;
+            textAnnotations.push({
+              text: rawVal,
+              x: ((tRect.left - pageRect.left) / pageRect.width) * pdfWidthMm,
+              y: ((tRect.top - pageRect.top + fontPx * 0.85) / pageRect.height) * pdfHeightMm,
+              fontSizePt: Math.max(5, Math.min(28, fontPx * 0.75)),
+            });
+          }
+        } catch {
+          // Ignore text-layer extraction errors
+        }
+
         const linkAnnotations = linkNodes.map(link => {
           const rect = link.getBoundingClientRect();
           let href = link.getAttribute('href') || link.href;
@@ -254,6 +282,16 @@ export const pdfService = {
         if (i > 0) {
           pdf.addPage(format, 'portrait');
         }
+
+        // Paint invisible searchable text layer first so PDF is 100% ATS-parseable and re-uploadable
+        textAnnotations.forEach(item => {
+          try {
+            pdf.setFontSize(item.fontSizePt);
+            pdf.text(item.text, item.x, item.y, { renderingMode: 'invisible' });
+          } catch {
+            // Skip characters unsupported by standard PDF font
+          }
+        });
 
         pdf.addImage(imgData, 'PNG', 0, 0, pdfWidthMm, pdfHeightMm, undefined, 'FAST');
 

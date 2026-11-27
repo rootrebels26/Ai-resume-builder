@@ -108,77 +108,85 @@ export function smartCondenseResume(resumeData, targetPages = 1) {
   const target = targetPages === 1 ? 1 : 2;
   const original = JSON.parse(JSON.stringify(resumeData));
 
-  // 1. Condense Professional Summary
-  const condensedSummary = condenseSummary(original.professionalSummary || '', target);
+  // 1. Summary: summarize cleanly for 1P; NEVER shrink or cut for 2P
+  const condensedSummary =
+    target === 1
+      ? condenseSummary(original.professionalSummary || '', 1)
+      : (original.professionalSummary || '').trim();
 
-  // 2. Budget and tighten Work Experience
-  // In a 1-page resume: max 3-4 bullets for the top 2 roles, 1-2 bullets for older roles
-  // In a 2-page resume: max 4-5 bullets for top roles, 2-3 bullets for older roles
-  const maxRoles = target === 1 ? Math.min(original.experience?.length || 0, 5) : (original.experience?.length || 0);
-  const condensedExperience = (original.experience || []).slice(0, maxRoles).map((job, idx) => {
-    let bullets = Array.isArray(job.responsibilities)
+  // 2. Work Experience: keep ALL roles; tighten phrasing for 1P, preserve 100% of bullets for 2P
+  const condensedExperience = (original.experience || []).map((job) => {
+    const rawBullets = Array.isArray(job.responsibilities) && job.responsibilities.length > 0
       ? job.responsibilities
       : (job.description ? job.description.split('\n').filter(Boolean) : []);
 
-    // Tighten each bullet
-    bullets = bullets.map(tightenBullet).filter(b => b.length > 15);
-
-    // Budget bullets based on recency and target page count
-    let maxBullets;
-    if (target === 1) {
-      maxBullets = idx === 0 ? 4 : (idx === 1 ? 3 : 2);
-    } else {
-      maxBullets = idx < 2 ? 5 : (idx < 4 ? 4 : 3);
+    if (target === 2) {
+      return {
+        ...job,
+        responsibilities: rawBullets,
+        description: job.description || rawBullets.join('\n')
+      };
     }
 
-    const budgetedBullets = bullets.slice(0, maxBullets);
-
+    const tightened = rawBullets.map(tightenBullet).filter((b) => b.length > 5);
     return {
       ...job,
-      responsibilities: budgetedBullets,
-      description: budgetedBullets.join('\n')
+      responsibilities: tightened,
+      description: tightened.join('\n')
     };
   });
 
-  // 3. Budget Key Projects
-  // In a 1-page resume: keep top 2-3 projects with concise 1-line impact and tech stack
-  // In a 2-page resume: keep top 4-5 projects
-  const maxProjects = target === 1 ? 3 : 5;
-  const condensedProjects = (original.projects || []).slice(0, maxProjects).map(proj => {
-    let highlights = Array.isArray(proj.highlights)
-      ? proj.highlights
-      : (proj.description ? proj.description.split('\n').filter(Boolean) : []);
+  // 3. Key Projects: keep ALL projects (never drop any); summarize cleanly for 1P, preserve 100% for 2P
+  const condensedProjects = (original.projects || []).map((proj) => {
+    const rawDesc = String(proj.description || '').trim();
+    const rawHighlights = Array.isArray(proj.highlights) ? proj.highlights.filter(Boolean) : [];
 
-    highlights = highlights.map(tightenBullet).filter(Boolean);
-    const maxH = target === 1 ? 1 : 2;
+    if (target === 2) {
+      return {
+        ...proj,
+        description: rawDesc,
+        highlights: rawHighlights
+      };
+    }
 
+    // For 1P: combine & tighten sentences without losing key impact, metrics, or project visibility
+    const combinedLines = [];
+    if (rawDesc) {
+      const sents = rawDesc.split(/(?<=[.!?])\s+/).filter(Boolean);
+      combinedLines.push(...sents.map(tightenBullet));
+    }
+    rawHighlights.forEach((h) => {
+      const t = tightenBullet(h);
+      if (t && !combinedLines.some((c) => c.toLowerCase() === t.toLowerCase())) {
+        combinedLines.push(t);
+      }
+    });
+
+    const summarized = combinedLines.slice(0, 2);
     return {
       ...proj,
-      highlights: highlights.slice(0, maxH),
-      description: highlights.slice(0, maxH).join('\n')
+      description: summarized.join(' '),
+      highlights: summarized
     };
   });
 
-  // 4. Skills: deduplicate items within categories
-  const condensedSkills = (original.skills || []).map(cat => {
+  // 4. Skills: preserve ALL skills (deduplicated, never truncated)
+  const condensedSkills = (original.skills || []).map((cat) => {
     if (typeof cat === 'object' && Array.isArray(cat.items)) {
-      const unique = Array.from(new Set(cat.items.map(s => s.trim()))).filter(Boolean);
-      return {
-        ...cat,
-        items: target === 1 ? unique.slice(0, 10) : unique
-      };
+      const unique = Array.from(new Set(cat.items.map((s) => String(s).trim()))).filter(Boolean);
+      return { ...cat, items: unique };
     }
     return cat;
   });
 
-  // 5. Mathematically Calibrated Preferences for Target Pages
+  // 5. Calibrated Typography & Spacing for Target Pages
   const existingPrefs = original.preferences || {};
   const calibratedPreferences = {
     ...existingPrefs,
     paperFormat: existingPrefs.paperFormat || 'a4',
     layout: existingPrefs.layout || 'single-column',
-    fontScale: target === 1 ? 0.95 : 1.0,
-    lineHeight: target === 1 ? 1.28 : 1.38,
+    fontScale: target === 1 ? 0.90 : 1.0,
+    lineHeight: target === 1 ? 1.24 : 1.40,
     marginSize: target === 1 ? 'compact' : 'normal',
     bulletStyle: existingPrefs.bulletStyle || 'disc',
     dividerStyle: existingPrefs.dividerStyle || 'line',
