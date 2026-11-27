@@ -16,7 +16,7 @@ export function CareerFilters({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-ink">
           <Filter className="w-3.5 h-3.5" />
-          <span>Search &amp; Role Filters (Instant Client Filtering)</span>
+          <span>Filter Recommendations</span>
         </div>
         <button
           type="button"

@@ -172,17 +172,42 @@ export const storageService = {
         savedRoles: []
       };
       const saved = Array.isArray(existing.savedRoles) ? [...existing.savedRoles] : [];
-      const idx = saved.findIndex((r) => r.id === role.id || r.title === role.title);
+      const key = role.id || role.title;
+      const idx = saved.findIndex((r) => (r.id || r.title) === key || r.title === role.title);
       if (idx >= 0) {
         saved.splice(idx, 1);
       } else {
-        saved.push({ ...role, savedAt: new Date().toISOString() });
+        saved.push({
+          ...role,
+          status: role.status || 'Saved',
+          savedAt: new Date().toISOString()
+        });
       }
       const next = { ...existing, savedRoles: saved, updatedAt: new Date().toISOString() };
       await db.career.put(next);
       return saved;
     } catch (e) {
       console.error('Dexie toggleSavedRole error:', e);
+      return [];
+    }
+  },
+
+  async updateSavedJobStatus(roleOrId, status) {
+    try {
+      const existing = (await db.career.get('active_career_state')) || {
+        id: 'active_career_state',
+        savedRoles: []
+      };
+      const saved = Array.isArray(existing.savedRoles) ? [...existing.savedRoles] : [];
+      const key = typeof roleOrId === 'string' ? roleOrId : (roleOrId.id || roleOrId.title);
+      const nextSaved = saved.map((r) =>
+        (r.id || r.title) === key || r.title === key ? { ...r, status, updatedAt: new Date().toISOString() } : r
+      );
+      const next = { ...existing, savedRoles: nextSaved, updatedAt: new Date().toISOString() };
+      await db.career.put(next);
+      return nextSaved;
+    } catch (e) {
+      console.error('Dexie updateSavedJobStatus error:', e);
       return [];
     }
   },

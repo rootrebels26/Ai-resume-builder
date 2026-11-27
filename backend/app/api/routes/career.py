@@ -5,7 +5,9 @@ from app.schemas.career_schema import (
     RoleDetailsRequest,
     RoleDetailsResponse,
 )
+from app.schemas.job_match import CareerProfileGenerateRequest
 from app.services.career_service import analyze_resume_for_career, generate_role_details
+from app.services.job_matching_service import generate_editable_career_profile
 from app.services.job_provider_adapter import NoKeyExternalSearchProvider
 
 router = APIRouter()
@@ -59,6 +61,20 @@ async def get_recommendations(request: CareerAnalysisRequest):
         raise HTTPException(status_code=400, detail=str(ve))
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Failed to generate recommendations: {str(exc)}")
+
+
+@router.post("/profile/generate")
+async def generate_profile(request: CareerProfileGenerateRequest):
+    try:
+        profile = await generate_editable_career_profile(request.resume_data)
+        return {
+            "success": True,
+            "data": profile.model_dump(),
+            "message": "Editable career profile generated successfully.",
+            "error": None,
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to generate career profile: {str(exc)}")
 
 
 @router.post("/role-details")

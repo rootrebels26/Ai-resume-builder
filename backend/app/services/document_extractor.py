@@ -1,11 +1,28 @@
 import os
 import re
 import logging
+import unicodedata
 from typing import Dict, Any, List, Tuple, Optional
 import pymupdf as fitz
 import docx
 
 logger = logging.getLogger("document_extractor")
+
+_INVISIBLE_CHARS = re.compile(r"[\u200b\u200c\u200d\u200e\u200f\u2060\ufeff\u00ad]")
+_CID_ARTIFACT = re.compile(r"\(cid:\d+\)")
+_MOJIBAKE_TRANS = str.maketrans({
+    "\u2019": "'", "\u2018": "'", "\u201c": '"', "\u201d": '"', "\u00b4": "'",
+    "\u2013": "-", "\u2014": "-", "\u2212": "-", "\u2010": "-", "\u2011": "-",
+    "\u2015": "-", "\u00a0": " ", "\u2009": " ", "\u202f": " ", "\u2002": " ",
+    "\u2003": " ",
+})
+
+
+def _fix_mojibake(m: "re.Match[str]") -> str:
+    try:
+        return m.group(0).encode("latin-1").decode("utf-8")
+    except UnicodeError:
+        return m.group(0)
 
 class DocumentExtractor:
     """
@@ -22,10 +39,21 @@ class DocumentExtractor:
     @staticmethod
     def _clean_acquired_text(text: str) -> str:
         """
-        Stage 1 text cleanup: ligatures, hyphenated line-wraps, and icon-font glyphs.
+        Stage 1 text cleanup: mojibake recovery, NFKC normalization, (cid:N) & invisible char stripping,
+        ligatures, hyphenated line-wraps, and icon-font glyphs.
+        (Mojibake & glyph cleanup adapted from MenjliAymen/resume-parser, MIT License.)
         """
         if not text:
             return ""
+        if re.search(r"[Â-ô]", text):
+            text = text.replace("ï¼", " | ")
+            text = re.sub(r"â[—–€-][¢“”]?", " • ", text)
+            text = re.sub(r"Â(?=\s|$)", "", text)
+            text = re.sub(r"[Â-ô][\u0080-¿]+", _fix_mojibake, text)
+        text = unicodedata.normalize("NFKC", text)
+        text = _CID_ARTIFACT.sub(" ", text)
+        text = _INVISIBLE_CHARS.sub("", text)
+        text = text.translate(_MOJIBAKE_TRANS)
         # Ligatures
         for lig, rep in [("ﬁ", "fi"), ("ﬂ", "fl"), ("ﬀ", "ff"), ("ﬃ", "ffi"), ("ﬄ", "ffl")]:
             text = text.replace(lig, rep)
@@ -218,7 +246,9 @@ class DocumentExtractor:
 
             # Detect multi-column layout (2-column or 3-column) on body blocks below header:
             is_two_column = False
+            is_label_sidebar = False
             column_count = 1
+            best_cut = None
             left_blocks = []
             mid_blocks = []
             right_blocks = []
@@ -240,52 +270,98 @@ class DocumentExtractor:
                         right_blocks = sorted(col3, key=lambda b: (b[1], b[0]))
 
             if column_count == 1 and len(body_blocks) >= 2:
-                col_split = page_width * 0.42
-                left_col = [b for b in body_blocks if b[2] <= page_width * 0.52]
-                right_col = [b for b in body_blocks if b[0] >= col_split]
+                # Gutter-based dynamic 2-column detection (adapted from MenjliAymen/resume-parser, MIT)
+                # Handles any column split ratio (e.g. 30/70, 40/60, 50/50, 65/35) without fixed thresholds.
+                w_int = int(page_width) + 2
+                cover = [0] * w_int
+                for b in body_blocks:
+                    a, b_end = max(0, int(b[0])), min(w_int - 1, int(b[2]))
+                    for x_pos in range(a, b_end + 1):
+                        cover[x_pos] += 1
+                tol = max(1, int(len(body_blocks) * 0.15))
+                lo_x, hi_x = int(page_width * 0.22), int(page_width * 0.78)
+                best_cut = None
+                best_score = 0.0
+                x_cur = lo_x
+                while x_cur < hi_x:
+                    if cover[x_cur] > tol:
+                        x_cur += 1
+                        continue
+                    x_start = x_cur
+                    while x_cur < hi_x and cover[x_cur] <= tol:
+                        x_cur += 1
+                    gap_w = x_cur - x_start
+                    if gap_w < 8:
+                        continue
+                    cut_x = (x_start + x_cur) / 2.0
+                    l_cands = [b for b in body_blocks if b[2] <= cut_x + 4]
+                    r_cands = [b for b in body_blocks if b[0] >= cut_x - 4]
+                    if len(l_cands) >= 1 and len(r_cands) >= 1:
+                        has_overlap = any(not (lb[3] <= rb[1] or rb[3] <= lb[1]) for lb in l_cands for rb in r_cands)
+                        if has_overlap:
+                            l_span = max(b[3] for b in l_cands) - min(b[1] for b in l_cands)
+                            r_span = max(b[3] for b in r_cands) - min(b[1] for b in r_cands)
+                            if l_span > page_height * 0.22 and r_span > page_height * 0.22:
+                                score = min(len(l_cands), len(r_cands)) * min(gap_w, 40)
+                                if score > best_score:
+                                    best_score = score
+                                    best_cut = cut_x
 
-                # Confirm left and right columns actually sit side-by-side (vertical Y overlap)
-                has_vertical_overlap = any(
-                    not (lb[3] <= rb[1] or rb[3] <= lb[1])
-                    for lb in left_col
-                    for rb in right_col
-                )
+                if best_cut is not None:
+                    # Keep top spanning/header blocks above 12% height out of columns; assign side blocks below 12% to their column
+                    # so column headings like "WORK EXPERIENCE" stay attached to their column instead of jumping to top_headers.
+                    col_pool = [b for b in enriched_text_blocks if b[1] >= page_height * 0.12 or (b[3] - b[1]) > page_height * 0.25]
+                    left_col = [b for b in col_pool if b[2] <= best_cut + 4]
+                    right_col = [b for b in col_pool if b[0] >= best_cut - 4]
+                    is_two_column = True
+                    column_count = 2
+                    left_blocks = sorted(left_col, key=lambda b: (b[1], b[0]))
+                    right_blocks = sorted(right_col, key=lambda b: (b[1], b[0]))
 
-                if len(left_col) >= 1 and len(right_col) >= 1 and has_vertical_overlap:
-                    left_span = max(b[3] for b in left_col) - min(b[1] for b in left_col)
-                    right_span = max(b[3] for b in right_col) - min(b[1] for b in right_col)
-                    right_chars = sum(len(b[4]) for b in right_col)
-                    # True 2-column layout: both columns span substantial vertical height (not a short 4-row table)
-                    if left_span > page_height * 0.28 and right_span > page_height * 0.28 and right_chars > 250 and (len(left_col) >= 2 or left_span > page_height * 0.35):
-                        is_two_column = True
-                        column_count = 2
-                        left_blocks = sorted(left_col, key=lambda b: (b[1], b[0]))
-                        right_blocks = sorted(right_col, key=lambda b: (b[1], b[0]))
+                    # Label-sidebar detection (adapted from MenjliAymen/resume-parser _column_mode == "label", MIT):
+                    # If left column only holds short section labels beside a dense right column, fold labels by Y-order.
+                    left_chars = sum(len(b[4].strip()) for b in left_blocks)
+                    right_chars = sum(len(b[4].strip()) for b in right_blocks)
+                    if left_blocks and right_blocks and right_chars > 0:
+                        if (left_chars < 0.18 * right_chars and len(left_blocks) <= 12) or all(len(b[4].split()) <= 3 for b in left_blocks):
+                            is_label_sidebar = True
 
             # 5. Assemble page text in correct spatial reading order
             page_lines = []
             if is_two_column:
-                top_headers = [b for b in enriched_text_blocks if b[1] < page_height * 0.20 and (b[2] - b[0]) > (page_width * 0.6)]
+                col_ids = {b[5] for b in (left_blocks + mid_blocks + right_blocks)}
+                top_headers = [b for b in enriched_text_blocks if b[5] not in col_ids and b[1] < page_height * 0.25]
                 processed_ids = set()
 
-                for b in sorted(top_headers, key=lambda x: x[1]):
+                for b in sorted(top_headers, key=lambda x: (round(x[1] / 6), x[0])):
                     page_lines.append(b[4].strip())
                     processed_ids.add(b[5])
 
-                for b in left_blocks:
-                    if b[5] not in processed_ids:
-                        page_lines.append(b[4].strip())
-                        processed_ids.add(b[5])
+                if is_label_sidebar:
+                    # Normalize wrapped 2-line sidebar labels (e.g. "PROFESSIONAL\nEXPERIENCE" -> "PROFESSIONAL EXPERIENCE")
+                    folded_blocks = []
+                    for b in left_blocks:
+                        lbl_txt = re.sub(r'\s*\n\s*', ' ', b[4].strip())
+                        folded_blocks.append((b[0], b[1], b[2], b[3], lbl_txt, b[5], b[6]))
+                    for b in sorted(folded_blocks + right_blocks, key=lambda x: (round(x[1] / 10), x[0])):
+                        if b[5] not in processed_ids:
+                            page_lines.append(b[4].strip())
+                            processed_ids.add(b[5])
+                else:
+                    for b in left_blocks:
+                        if b[5] not in processed_ids:
+                            page_lines.append(b[4].strip())
+                            processed_ids.add(b[5])
 
-                for b in mid_blocks:
-                    if b[5] not in processed_ids:
-                        page_lines.append(b[4].strip())
-                        processed_ids.add(b[5])
+                    for b in mid_blocks:
+                        if b[5] not in processed_ids:
+                            page_lines.append(b[4].strip())
+                            processed_ids.add(b[5])
 
-                for b in right_blocks:
-                    if b[5] not in processed_ids:
-                        page_lines.append(b[4].strip())
-                        processed_ids.add(b[5])
+                    for b in right_blocks:
+                        if b[5] not in processed_ids:
+                            page_lines.append(b[4].strip())
+                            processed_ids.add(b[5])
             else:
                 sorted_blocks = sorted(enriched_text_blocks, key=lambda b: (round(b[1] / 6), b[0]))
                 for b in sorted_blocks:

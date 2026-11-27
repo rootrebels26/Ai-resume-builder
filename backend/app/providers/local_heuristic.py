@@ -404,15 +404,25 @@ class LocalHeuristicProvider(BaseAIProvider):
 
         # Candidate Full Name heuristic
         candidate_name = ""
-        skip_name_keywords = {"resume", "curriculum", "vitae", "cv", "page", "phone", "email", "contact", "summary", "profile", "portfolio", "linkedin", "github"}
-        for line in lines[:8]:
+        skip_name_keywords = {
+            "resume", "curriculum", "vitae", "cv", "page", "phone", "email", "contact",
+            "summary", "profile", "about", "about me", "portfolio", "linkedin", "github",
+            "skills", "education", "experience", "work experience", "projects", "languages",
+            "objective", "career objective", "personal details", "certifications", "awards",
+            "achievements", "interests", "references", "technical skills", "core competencies"
+        }
+        for line in lines[:12]:
             l_clean = line.strip()
             l_lower = l_clean.lower()
             if not l_clean or re.match(r'^[\[\](){}\s]+$', l_clean) or re.match(r'^\[\[page\s+\d+\]\]$', l_lower):
                 continue
-            if any(k in l_lower for k in skip_name_keywords):
+            if l_lower in skip_name_keywords or any(l_lower.startswith(k + ":") for k in skip_name_keywords):
+                continue
+            if any(k in l_lower for k in ("resume", "curriculum", "vitae", "phone", "email", "linkedin", "github")):
                 continue
             if "@" in l_clean or "http" in l_clean or re.search(r'\d{3,}', l_clean):
+                continue
+            if (location and l_clean == location) or re.search(r',\s*[A-Z]{2}\b', l_clean):
                 continue
             words = l_clean.split()
             if 1 <= len(words) <= 5 and all(w[0].isupper() for w in words if w.isalpha()) and len(l_clean) <= 45:
@@ -420,9 +430,15 @@ class LocalHeuristicProvider(BaseAIProvider):
                 break
 
         if not candidate_name:
-            for line in lines[:5]:
+            for line in lines[:8]:
                 l_clean = line.strip()
-                if l_clean and not re.match(r'^[\[\](){}\s]+$', l_clean) and not re.match(r'^\[\[page\s+\d+\]\]$', l_clean.lower()):
+                l_lower = l_clean.lower()
+                if (
+                    l_clean
+                    and l_lower not in skip_name_keywords
+                    and not re.match(r'^[\[\](){}\s]+$', l_clean)
+                    and not re.match(r'^\[\[page\s+\d+\]\]$', l_lower)
+                ):
                     candidate_name = l_clean[:40]
                     break
 
@@ -500,7 +516,15 @@ class LocalHeuristicProvider(BaseAIProvider):
                     and "," not in clean_l
                     and not date_pattern.search(clean_l)
                     and not any(c.isdigit() for c in clean_l)
-                    and (clean_l.isupper() or clean_l.endswith(":") or (len(clean_l.split()) <= 4 and clean_l.istitle()))
+                    and (
+                        clean_l.isupper()
+                        or clean_l.endswith(":")
+                        or (
+                            current_sec not in ("experience", "education", "projects", "internships")
+                            and len(clean_l.split()) <= 4
+                            and clean_l.istitle()
+                        )
+                    )
                 ):
                     matched_sec = "custom"
                     active_custom_block = {
@@ -596,10 +620,11 @@ class LocalHeuristicProvider(BaseAIProvider):
             summary_text = re.sub(r'^[a-zA-Z0-9.-]+\.(?:com|org|io|dev|in|co)\S*[\s:,-]*', '', summary_text).strip()
             summary_text = re.sub(r'^\.com\S*[\s:,-]*', '', summary_text).strip()
 
-        # 4. Parse Work Experience (Robust Multi-Item)
+        # 4. Parse Work Experience (Robust Multi-Item, supports single-line and multi-line Title/Company/Date headers)
         experience_items = []
         exp_lines = sections["experience"]
         current_job = None
+        pending_header_lines: List[str] = []
 
         for l in exp_lines:
             d_match = date_pattern.search(l)
@@ -611,8 +636,8 @@ class LocalHeuristicProvider(BaseAIProvider):
                 is_curr = any(w in end_d.lower() for w in ["present", "current", "now", "ongoing"])
 
                 remainder = l[:d_match.start()] + " | " + l[d_match.end():]
-                remainder = re.sub(r'[-–|,]+$', '', remainder).strip()
-                parts = [p.strip() for p in re.split(r'[-–|•—]', remainder) if p.strip()]
+                remainder = re.sub(r'^[\s(\[\-–|,]+|[\s)\]\-–|,]+$', '', remainder).strip()
+                parts = [p.strip() for p in re.split(r'[-–|•—]', remainder) if p.strip() and not re.match(r'^[()]+$', p.strip())]
 
                 # If current_job was just created without dates, hydrate its dates and location
                 if current_job and not current_job.get("responsibilities") and not current_job.get("startDate"):
@@ -621,37 +646,45 @@ class LocalHeuristicProvider(BaseAIProvider):
                     current_job["current"] = is_curr
                     if parts:
                         current_job["location"] = parts[-1]
+                    pending_header_lines.clear()
                     continue
 
-                if current_job and current_job.get("company"):
+                if current_job and (current_job.get("company") or current_job.get("responsibilities")):
                     experience_items.append(current_job)
 
-                comp = "Organization"
-                pos = prof_title or "Role"
+                comp = ""
+                pos = ""
                 loc = ""
 
+                # Merge any pending short header lines (e.g., Title on line 1, Company on line 2, Date on line 3)
+                combined_parts = pending_header_lines + parts
+                pending_header_lines = []
+
                 pos_idx = -1
-                for i, p in enumerate(parts):
+                for i, p in enumerate(combined_parts):
                     if role_regex.search(p):
                         pos_idx = i
                         break
 
                 if pos_idx != -1:
-                    pos = parts[pos_idx]
-                    other_parts = [p for i, p in enumerate(parts) if i != pos_idx]
+                    pos = combined_parts[pos_idx]
+                    other_parts = [p for i, p in enumerate(combined_parts) if i != pos_idx]
                     if other_parts:
                         comp = other_parts[0]
                         if len(other_parts) > 1:
                             loc = other_parts[-1]
                 else:
-                    if parts: comp = parts[0]
-                    if len(parts) > 1: pos = parts[1]
-                    if len(parts) > 2: loc = parts[2]
+                    if combined_parts:
+                        comp = combined_parts[0]
+                    if len(combined_parts) > 1:
+                        pos = combined_parts[1]
+                    if len(combined_parts) > 2:
+                        loc = combined_parts[2]
 
                 current_job = {
                     "id": str(uuid.uuid4())[:8],
-                    "company": comp,
-                    "position": pos,
+                    "company": comp or "Organization",
+                    "position": pos or prof_title or "Role",
                     "employmentType": "Full-time",
                     "location": loc,
                     "startDate": start_d,
@@ -661,13 +694,14 @@ class LocalHeuristicProvider(BaseAIProvider):
                     "achievements": []
                 }
             elif is_bullet:
+                pending_header_lines.clear()
                 clean_bullet = re.sub(r'^[#*\-•–+o\s]+', '', l).strip()
                 if clean_bullet:
                     if not current_job:
                         current_job = {
                             "id": str(uuid.uuid4())[:8],
                             "company": "Experience",
-                            "position": prof_title or "Engineer",
+                            "position": prof_title or "Role",
                             "employmentType": "Full-time",
                             "location": "",
                             "startDate": "",
@@ -678,18 +712,17 @@ class LocalHeuristicProvider(BaseAIProvider):
                         }
                     current_job["responsibilities"].append(clean_bullet)
             else:
-                # Line without dates or bullets
-                # Check if it is a new job header (e.g. pipe-separated company and role)
                 has_sep = any(sep in l for sep in ['—', '–', '-', '|'])
                 has_role = bool(role_regex.search(l))
                 if (has_sep and has_role and len(l) < 95 and l[0].isupper()) or ("|" in l and len(l.split("|")) >= 3 and len(l) < 120):
+                    pending_header_lines.clear()
                     if current_job and current_job.get("responsibilities"):
                         experience_items.append(current_job)
                         current_job = None
 
                     parts = [p.strip() for p in re.split(r'[-–|•—]', l) if p.strip()]
                     comp = parts[0] if parts else l
-                    pos = prof_title or "Engineer"
+                    pos = prof_title or "Role"
                     loc = ""
                     pos_idx = -1
                     for i, p in enumerate(parts):
@@ -722,15 +755,24 @@ class LocalHeuristicProvider(BaseAIProvider):
                         "responsibilities": [],
                         "achievements": []
                     }
+                elif len(l) < 65 and l[0].isupper() and not l.endswith(".") and (not current_job or current_job.get("responsibilities")):
+                    # Buffer short title/company lines that precede a date line on the next line
+                    pending_header_lines.append(l)
+                    if len(pending_header_lines) > 2:
+                        pending_header_lines = pending_header_lines[-2:]
                 elif current_job:
-                    # Append non-header text to the latest responsibility or description
-                    if current_job["responsibilities"]:
+                    # Skip pure location line immediately after date (e.g. "New York, NY")
+                    if not current_job["responsibilities"] and re.match(r'^[A-Z][a-zA-Z\s.-]+,\s*[A-Za-z\s.]{2,20}$', l) and len(l) < 40:
+                        if not current_job.get("location"):
+                            current_job["location"] = l
+                        continue
+                    # Treat unbulleted sentence lines as responsibilities
+                    if current_job["responsibilities"] and (l[0].islower() or not current_job["responsibilities"][-1].endswith((".", "!", "?"))):
                         current_job["responsibilities"][-1] = f"{current_job['responsibilities'][-1]} {l}".strip()
                     else:
                         current_job["responsibilities"].append(l)
-                        current_job["responsibilities"].append(l)
 
-        if current_job and current_job.get("company"):
+        if current_job and (current_job.get("company") or current_job.get("responsibilities")):
             experience_items.append(current_job)
 
         # 5. Parse Education (Multi-Item)

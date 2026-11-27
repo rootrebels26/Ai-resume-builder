@@ -73,6 +73,22 @@ export const careerService = {
     );
   },
 
+  async searchLiveJobs(payload) {
+    return apiClient.post('/jobs/search', payload, { timeout: 35000 });
+  },
+
+  async getJobSources() {
+    return apiClient.get('/jobs/sources', { timeout: 20000 });
+  },
+
+  async generateEditableProfile(resumeData) {
+    return apiClient.post(
+      '/career/profile/generate',
+      { resume_data: resumeData },
+      { timeout: 30000 }
+    );
+  },
+
   /**
    * Client-side safe external search URL generator so changing location/job-type
    * filters updates external search links instantaneously without extra Gemini calls.

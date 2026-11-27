@@ -91,6 +91,7 @@ app.include_router(resume.router, prefix=f"{settings.API_V1_PREFIX}/resume", tag
 app.include_router(ai.router, prefix=f"{settings.API_V1_PREFIX}/ai", tags=["AI"])
 app.include_router(ats.router, prefix=f"{settings.API_V1_PREFIX}/ats", tags=["ATS"])
 app.include_router(jobs.router, prefix=f"{settings.API_V1_PREFIX}/jobs", tags=["Jobs"])
+app.include_router(jobs.router, prefix="/api/jobs", tags=["Jobs"])
 app.include_router(career.router, prefix=f"{settings.API_V1_PREFIX}/career", tags=["Career"])
 app.include_router(career.router, prefix="/api/career", tags=["Career"])
 
