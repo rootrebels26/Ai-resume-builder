@@ -47,13 +47,13 @@ function normaliseError(error) {
 
 apiClient.interceptors.request.use((config) => {
   try {
-    const token = localStorage.getItem('resume_studio_access_token');
+    const token = sessionStorage.getItem('resume_studio_access_token');
     if (token) {
       config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${token}`;
     }
   } catch (e) {
-    // Ignore localStorage access failures
+    // Ignore sessionStorage access failures
   }
   return config;
 });

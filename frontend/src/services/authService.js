@@ -4,7 +4,9 @@ export const AUTH_TOKEN_KEY = 'resume_studio_access_token';
 
 export function getStoredToken() {
   try {
-    return localStorage.getItem(AUTH_TOKEN_KEY);
+    // Clean up any legacy persistent localStorage token so login is strictly session-only
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    return sessionStorage.getItem(AUTH_TOKEN_KEY);
   } catch (e) {
     return null;
   }
@@ -12,18 +14,20 @@ export function getStoredToken() {
 
 export function setStoredToken(token) {
   try {
+    localStorage.removeItem(AUTH_TOKEN_KEY);
     if (token) {
-      localStorage.setItem(AUTH_TOKEN_KEY, token);
+      sessionStorage.setItem(AUTH_TOKEN_KEY, token);
     } else {
-      localStorage.removeItem(AUTH_TOKEN_KEY);
+      sessionStorage.removeItem(AUTH_TOKEN_KEY);
     }
   } catch (e) {
-    // LocalStorage might be disabled or full
+    // SessionStorage might be disabled or full
   }
 }
 
 export function clearStoredToken() {
   try {
+    sessionStorage.removeItem(AUTH_TOKEN_KEY);
     localStorage.removeItem(AUTH_TOKEN_KEY);
   } catch (e) {
     // Ignore error
