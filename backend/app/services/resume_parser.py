@@ -370,8 +370,8 @@ def sanitize_and_hydrate_resume(data: Dict[str, Any], raw_text: str = "") -> Res
             except Exception as e:
                 logger.warning("Project recovery from raw_text failed: %s", e)
 
-    # Universal Recovery 4: If no projects were found anywhere, derive featured systems / projects from top experiences
-    if not project_items and len(experience_items) > 0:
+    # Recovery 4: Only recover projects from experience if raw_text explicitly mentions projects
+    if not project_items and len(experience_items) > 0 and raw_text and re.search(r'\b(?:projects?|capstone|portfolio|open\s+source)\b', raw_text, re.IGNORECASE):
         action_words = ['architected', 'designed', 'developed', 'engineered', 'built', 'created', 'implemented', 'orchestrated', 'automated']
         for exp in experience_items:
             for resp in exp.responsibilities:
@@ -398,8 +398,8 @@ def sanitize_and_hydrate_resume(data: Dict[str, Any], raw_text: str = "") -> Res
             if len(project_items) >= 4:
                 break
 
-    # Recovery 5: If education was empty but "education" was mentioned in raw_text or data
-    if not education_items:
+    # Recovery 5: Only recover education from raw_text when actual degree or institution text exists (never fabricate)
+    if not education_items and raw_text:
         deg_match = re.search(r'\b(Bachelor(?:\s+of\s+[A-Za-z\s&]+)?|Master(?:\s+of\s+[A-Za-z\s&]+)?|B\.?E\.?(?:\s+in\s+[A-Za-z\s&]+)?|B\.?Tech(?:\s+in\s+[A-Za-z\s&]+)?|M\.?Tech|B\.?Sc|M\.?Sc|BCA|MCA|MBA|Ph\.?D)\b', raw_text, re.IGNORECASE)
         inst_match = re.search(r'\b(?:University\s+of\s+[A-Za-z\s,]+|[A-Z][a-zA-Z\s,]+(?:University|College|Institute|School|Academy)\b[a-zA-Z\s,]*|(?:RGPV|IIT|NIT|BITS)(?:,\s*[A-Za-z]+)?)', raw_text, re.IGNORECASE)
         year_match = re.search(r'\b(19\d{2}|20\d{2})\b', raw_text)
@@ -407,36 +407,13 @@ def sanitize_and_hydrate_resume(data: Dict[str, Any], raw_text: str = "") -> Res
         if deg_match or inst_match:
             education_items.append(Education(
                 id=str(uuid.uuid4())[:8],
-                institution=inst_match.group(0).strip() if inst_match else "University / Institute",
-                degree=deg_match.group(0).strip() if deg_match else "Bachelor Degree",
-                fieldOfStudy="Information Technology / Computer Science" if ("engineer" in prof_title.lower() or "architect" in prof_title.lower()) else "",
+                institution=inst_match.group(0).strip() if inst_match else "",
+                degree=deg_match.group(0).strip() if deg_match else "",
+                fieldOfStudy="",
                 startDate="",
                 endDate=year_match.group(0).strip() if year_match else "",
                 cgpa="",
                 description=""
-            ))
-        elif "education" in raw_text.lower():
-            education_items.append(Education(
-                id=str(uuid.uuid4())[:8],
-                institution="University / Institute of Technology",
-                degree="Bachelor of Engineering (B.E. / B.Tech)",
-                fieldOfStudy="Information Technology / Computer Science" if ("engineer" in prof_title.lower() or "architect" in prof_title.lower() or "data" in prof_title.lower()) else "General Studies",
-                startDate="",
-                endDate="",
-                cgpa="",
-                description="Graduated with Honors. Click to update institution name and details."
-            ))
-        else:
-            # Universal fallback: ensure education is never 0 degrees for experienced or student profiles
-            education_items.append(Education(
-                id=str(uuid.uuid4())[:8],
-                institution="University / College",
-                degree="Bachelor Degree",
-                fieldOfStudy="Computer Science / Engineering" if ("engineer" in prof_title.lower() or "architect" in prof_title.lower() or "data" in prof_title.lower()) else "Business / General Studies",
-                startDate="",
-                endDate="",
-                cgpa="",
-                description="Click to specify your degree, graduation year, and university."
             ))
 
     # 6. Skills
@@ -581,7 +558,9 @@ def sanitize_and_hydrate_resume(data: Dict[str, Any], raw_text: str = "") -> Res
             custom_sections_items.append(CustomSection(
                 id=item.get("id") or str(uuid.uuid4())[:8],
                 sectionTitle=str(item.get("sectionTitle", "") or "Additional").strip(),
-                items=c_items
+                normalizedCategory=str(item.get("normalizedCategory", "") or "custom").strip(),
+                items=c_items,
+                sourcePage=item.get("sourcePage")
             ))
 
     raw_summary = str(data.get("professionalSummary", "") or "").strip()
@@ -597,11 +576,6 @@ def sanitize_and_hydrate_resume(data: Dict[str, Any], raw_text: str = "") -> Res
         clean_summary = re.sub(r'^(?:\+\d{1,3}[\s-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}\b[\s:,-]*', '', clean_summary).strip()
         clean_summary = re.sub(r'^\+\d{2}\s*\d{10}\b[\s:,-]*', '', clean_summary).strip()
         clean_summary = re.sub(r'^\d{10}\b[\s:,-]*', '', clean_summary).strip()
-
-    # If summary is still empty or too short, synthesize an executive summary
-    if len(clean_summary) < 20 and (prof_title or experience_items):
-        target_role = prof_title or (experience_items[0].position if experience_items else "Professional")
-        clean_summary = f"Accomplished {target_role} with proven track record of architecting scalable systems, leading cross-functional engineering teams, and delivering mission-critical enterprise solutions."
 
     return ResumeData(
         personalInfo=personal,
@@ -922,6 +896,27 @@ async def parse_resume_document_pipeline(
     blocks_and_results = await asyncio.gather(*(_process_block(b) for b in blocks))
     resume_data, structured_warnings, unmapped = assemble_resume_from_sections(list(blocks_and_results))
 
+    # Stage 5b: Deterministic safety-net merge for secondary/custom sections if section-scoped pass missed them
+    try:
+        from app.providers.local_heuristic import LocalHeuristicProvider
+        heuristic = LocalHeuristicProvider()
+        h_dict = heuristic.parse_resume_document_sync(raw_text, layout_metadata=layout_metadata)
+        h_resume = sanitize_and_hydrate_resume(h_dict, raw_text=raw_text)
+        if not resume_data.internships and h_resume.internships:
+            resume_data.internships = h_resume.internships
+        if not resume_data.achievements and h_resume.achievements:
+            resume_data.achievements = h_resume.achievements
+        if not resume_data.publications and h_resume.publications:
+            resume_data.publications = h_resume.publications
+        if not resume_data.volunteerExperience and h_resume.volunteerExperience:
+            resume_data.volunteerExperience = h_resume.volunteerExperience
+        if not resume_data.languages and h_resume.languages:
+            resume_data.languages = h_resume.languages
+        if not resume_data.customSections and h_resume.customSections:
+            resume_data.customSections = h_resume.customSections
+    except Exception as e:
+        logger.debug("Heuristic secondary merge skipped: %s", e)
+
     validation = ExtractionValidator.validate(
         raw_text,
         resume_data.model_dump(),
@@ -929,6 +924,97 @@ async def parse_resume_document_pipeline(
         structured_warnings=structured_warnings,
         unmapped=unmapped,
     )
+
+    # Populate sourceDocument, extractionReport, and fieldEvidence metadata
+    meta = layout_metadata or {}
+    resume_data.sourceDocument = {
+        "pageCount": meta.get("page_count") or len(re.findall(r'\[\[page\s+\d+\]\]', raw_text, re.IGNORECASE)) or 1,
+        "layoutType": meta.get("layout_type") or "single_column",
+        "columnCount": meta.get("column_count") or 1,
+        "extractionMethod": meta.get("extraction_method") or "text",
+        "language": meta.get("language") or "en",
+        "textCoverage": meta.get("text_coverage") or (1.0 if len(raw_text.strip()) > 0 else 0.0),
+    }
+
+    evidence: List[Dict[str, Any]] = []
+    if resume_data.personalInfo.fullName:
+        evidence.append({
+            "field": "personalInfo.fullName",
+            "value": resume_data.personalInfo.fullName,
+            "originalText": resume_data.personalInfo.fullName,
+            "sourcePage": 1,
+            "extractionMethod": resume_data.sourceDocument["extractionMethod"],
+            "confidence": 0.95,
+            "requiresReview": False,
+        })
+    if resume_data.personalInfo.email:
+        evidence.append({
+            "field": "personalInfo.email",
+            "value": resume_data.personalInfo.email,
+            "originalText": resume_data.personalInfo.email,
+            "sourcePage": 1,
+            "extractionMethod": "regex",
+            "confidence": 0.99,
+            "requiresReview": False,
+        })
+    if resume_data.personalInfo.phone:
+        evidence.append({
+            "field": "personalInfo.phone",
+            "value": resume_data.personalInfo.phone,
+            "originalText": resume_data.personalInfo.phone,
+            "sourcePage": 1,
+            "extractionMethod": "regex",
+            "confidence": 0.95,
+            "requiresReview": False,
+        })
+    for idx, exp in enumerate(resume_data.experience):
+        evidence.append({
+            "field": f"experience[{idx}].position",
+            "value": f"{exp.position} @ {exp.company}".strip(" @"),
+            "originalText": (exp.responsibilities[0] if exp.responsibilities else exp.position)[:160],
+            "sourcePage": exp.sourcePage or 1,
+            "extractionMethod": "section_pipeline",
+            "confidence": 0.9 if exp.company else 0.65,
+            "requiresReview": not bool(exp.company),
+        })
+    for idx, proj in enumerate(resume_data.projects):
+        evidence.append({
+            "field": f"projects[{idx}].name",
+            "value": proj.name,
+            "originalText": (proj.description or proj.name)[:160],
+            "sourcePage": proj.sourcePage or 1,
+            "extractionMethod": "section_pipeline",
+            "confidence": 0.9 if proj.description else 0.7,
+            "requiresReview": not bool(proj.description),
+        })
+    for idx, edu in enumerate(resume_data.education):
+        evidence.append({
+            "field": f"education[{idx}].degree",
+            "value": f"{edu.degree} — {edu.institution}".strip(" —"),
+            "originalText": f"{edu.degree} {edu.institution}".strip(),
+            "sourcePage": 1,
+            "extractionMethod": "section_pipeline",
+            "confidence": 0.9 if edu.institution else 0.65,
+            "requiresReview": not bool(edu.institution),
+        })
+
+    review_count = sum(1 for ev in evidence if ev.get("requiresReview"))
+    resume_data.fieldEvidence = evidence
+    resume_data.extractionReport = {
+        "detectedSections": [b.get("section_type") for b in blocks],
+        "sectionCount": len(blocks),
+        "experienceCount": len(resume_data.experience),
+        "internshipCount": len(resume_data.internships),
+        "educationCount": len(resume_data.education),
+        "projectCount": len(resume_data.projects),
+        "certificationCount": len(resume_data.certifications),
+        "skillCategoryCount": len(resume_data.skills),
+        "customSectionCount": len(resume_data.customSections),
+        "fieldsRequiringReview": review_count,
+        "confidence": validation.get("confidence", 0.0),
+        "warningsCount": len(validation.get("warnings") or []),
+    }
+
     return resume_data, validation
 
 def parse_resume_text(text: str) -> Tuple[ResumeData, List[str]]:

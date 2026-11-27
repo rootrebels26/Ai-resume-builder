@@ -3,6 +3,7 @@ import {
   Mail, Phone, MapPin, Globe, Linkedin, Github, ExternalLink,
   Award, Briefcase, GraduationCap, Wrench, FolderGit2, BookOpen, Star, Check
 } from 'lucide-react';
+import { getTemplateHeaderStyle } from '../../utils/templateStyleResolver';
 
 /**
  * Bullet point symbol resolver
@@ -505,21 +506,28 @@ export function TemplateDraftPaper({ template }) {
     );
   }
 
-  // 4. SINGLE-COLUMN ATS STANDARD (Default & ATS Professional Tier)
+  // 4. SINGLE-COLUMN ATS STANDARD (Matches DynamicResumeCanvas headerVariant)
+  const headerVariant = getTemplateHeaderStyle(template, layout);
+  const isCentered = headerVariant === 'centered';
+  const isAccentBar = headerVariant === 'accent-bar';
+
   return (
     <div
       className="w-full h-full p-2.5 sm:p-3 flex flex-col justify-between text-[6.5px] leading-tight select-none overflow-hidden"
       style={{ backgroundColor: bgColor, color: textColor, fontFamily }}
     >
-      {/* Header */}
-      <div className="pb-1 text-center space-y-0.5 border-b" style={{ borderColor: `${primaryColor}30` }}>
+      {/* Header matching exact template variant */}
+      <div
+        className={`pb-1 space-y-0.5 ${isCentered ? 'text-center border-b' : isAccentBar ? 'pl-1.5 border-l-2 text-left' : 'text-left border-b'}`}
+        style={{ borderColor: isAccentBar ? primaryColor : `${primaryColor}30` }}
+      >
         <div className="font-extrabold text-[10.5px] tracking-tight uppercase" style={{ color: primaryColor }}>
           Alex Rivera
         </div>
         <div className="text-[6.5px] font-bold tracking-wide uppercase" style={{ color: accentColor }}>
           {content.roleTitle}
         </div>
-        <div className="text-[5px] opacity-80 flex justify-center gap-1.5 flex-wrap">
+        <div className={`text-[5px] opacity-80 flex gap-1.5 flex-wrap ${isCentered ? 'justify-center' : 'justify-start'}`}>
           <span>alex.rivera@pro.io</span>
           <span>•</span>
           <span>+1 (555) 234-5678</span>

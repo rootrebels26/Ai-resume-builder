@@ -159,11 +159,13 @@ export function Builder() {
     { id: 'personal', label: 'Personal', icon: User },
     { id: 'summary', label: 'Summary', icon: Sparkles },
     { id: 'experience', label: 'Experience', icon: Briefcase },
+    { id: 'internships', label: 'Internships', icon: Briefcase },
     { id: 'education', label: 'Education', icon: GraduationCap },
     { id: 'skills', label: 'Skills', icon: Wrench },
     { id: 'projects', label: 'Projects', icon: FolderGit2 },
     { id: 'extras', label: 'Certifications', icon: Award },
     { id: 'languages', label: 'Languages', icon: Languages },
+    { id: 'custom', label: 'Custom', icon: Sparkles },
   ];
 
   // Calculate real-time base ATS readiness score
@@ -1903,6 +1905,178 @@ export function Builder() {
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 9. INTERNSHIPS */}
+            {activeTab === 'internships' && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                  <div>
+                    <h3 className="font-bold text-sm text-slate-900">
+                      Internships ({(resumeData.internships || []).length})
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Industrial training, summer internships, and apprenticeships.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() =>
+                      addItemToSection('internships', {
+                        company: 'Organization',
+                        position: 'Intern',
+                        location: '',
+                        startDate: '',
+                        endDate: '',
+                        responsibilities: ['']
+                      })
+                    }
+                    className="btn-secondary text-xs"
+                  >
+                    <Plus className="w-3.5 h-3.5 text-brand-600" />
+                    <span>Add Internship</span>
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {(resumeData.internships || []).map((intern, idx) => (
+                    <div key={intern.id || idx} className="card-surface p-3.5 space-y-2.5 text-xs border-slate-200">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={intern.position || ''}
+                          onChange={(e) =>
+                            updateItemInSection('internships', intern.id, { position: e.target.value })
+                          }
+                          placeholder="Internship Title"
+                          className="input-base flex-1 font-semibold"
+                        />
+                        <input
+                          type="text"
+                          value={intern.company || ''}
+                          onChange={(e) =>
+                            updateItemInSection('internships', intern.id, { company: e.target.value })
+                          }
+                          placeholder="Organization"
+                          className="input-base flex-1"
+                        />
+                        <button
+                          onClick={() => removeItemFromSection('internships', intern.id)}
+                          className="p-2 text-slate-400 hover:text-rose-600 rounded-xl hover:bg-rose-50"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        <input
+                          type="text"
+                          value={intern.startDate || ''}
+                          onChange={(e) =>
+                            updateItemInSection('internships', intern.id, { startDate: e.target.value })
+                          }
+                          placeholder="Start Date"
+                          className="input-base"
+                        />
+                        <input
+                          type="text"
+                          value={intern.endDate || ''}
+                          onChange={(e) =>
+                            updateItemInSection('internships', intern.id, { endDate: e.target.value })
+                          }
+                          placeholder="End Date"
+                          className="input-base"
+                        />
+                        <input
+                          type="text"
+                          value={intern.location || ''}
+                          onChange={(e) =>
+                            updateItemInSection('internships', intern.id, { location: e.target.value })
+                          }
+                          placeholder="Location"
+                          className="input-base"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 10. CUSTOM SECTIONS */}
+            {activeTab === 'custom' && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                  <div>
+                    <h3 className="font-bold text-sm text-slate-900">
+                      Custom Sections ({(resumeData.customSections || []).length})
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Patents, speaking engagements, awards, clinical rotations, or any custom resume section.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() =>
+                      addItemToSection('customSections', {
+                        sectionTitle: 'Custom Section',
+                        items: [{ title: '', subtitle: '', date: '', description: '' }]
+                      })
+                    }
+                    className="btn-secondary text-xs"
+                  >
+                    <Plus className="w-3.5 h-3.5 text-brand-600" />
+                    <span>Add Section</span>
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {(resumeData.customSections || []).map((sec, idx) => (
+                    <div key={sec.id || idx} className="card-surface p-3.5 space-y-2.5 text-xs border-slate-200">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={sec.sectionTitle || ''}
+                          onChange={(e) =>
+                            updateItemInSection('customSections', sec.id, { sectionTitle: e.target.value })
+                          }
+                          placeholder="Section Heading"
+                          className="input-base flex-1 font-bold"
+                        />
+                        <button
+                          onClick={() => removeItemFromSection('customSections', sec.id)}
+                          className="p-2 text-slate-400 hover:text-rose-600 rounded-xl hover:bg-rose-50"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                      {(sec.items || []).map((it, iIdx) => (
+                        <div key={iIdx} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                          <input
+                            type="text"
+                            value={it.title || ''}
+                            onChange={(e) => {
+                              const nextItems = [...(sec.items || [])];
+                              nextItems[iIdx] = { ...nextItems[iIdx], title: e.target.value };
+                              updateItemInSection('customSections', sec.id, { items: nextItems });
+                            }}
+                            placeholder="Entry Title"
+                            className="input-base w-full font-semibold"
+                          />
+                          <textarea
+                            rows={2}
+                            value={it.description || ''}
+                            onChange={(e) => {
+                              const nextItems = [...(sec.items || [])];
+                              nextItems[iIdx] = { ...nextItems[iIdx], description: e.target.value };
+                              updateItemInSection('customSections', sec.id, { items: nextItems });
+                            }}
+                            placeholder="Description / details"
+                            className="input-base w-full"
+                          />
+                        </div>
+                      ))}
                     </div>
                   ))}
                 </div>

@@ -28,6 +28,11 @@ class ResumeDatabase extends Dexie {
       drafts: 'id, title, updatedAt, createdAt, templateId',
       wizard: 'id, updatedAt, currentStep, selectedTemplateId'
     });
+    this.version(3).stores({
+      drafts: 'id, title, updatedAt, createdAt, templateId',
+      wizard: 'id, updatedAt, currentStep, selectedTemplateId',
+      career: 'id, updatedAt, resumeFingerprint'
+    });
   }
 }
 
@@ -124,9 +129,70 @@ export const storageService = {
     try {
       await db.drafts.clear();
       await db.wizard.clear();
+      if (db.career) await db.career.clear();
       return true;
     } catch (e) {
       console.error('Dexie clearAll error:', e);
+      return false;
+    }
+  },
+
+  // Career Recommendation State Persistence
+  async getCareerState() {
+    try {
+      const state = await db.career.get('active_career_state');
+      return state || null;
+    } catch (e) {
+      console.error('Dexie getCareerState error:', e);
+      return null;
+    }
+  },
+
+  async saveCareerState(careerState) {
+    try {
+      const existing = (await db.career.get('active_career_state')) || {};
+      const record = {
+        ...existing,
+        ...careerState,
+        id: 'active_career_state',
+        updatedAt: new Date().toISOString()
+      };
+      await db.career.put(record);
+      return record;
+    } catch (e) {
+      console.error('Dexie saveCareerState error:', e);
+      return null;
+    }
+  },
+
+  async toggleSavedRole(role) {
+    try {
+      const existing = (await db.career.get('active_career_state')) || {
+        id: 'active_career_state',
+        savedRoles: []
+      };
+      const saved = Array.isArray(existing.savedRoles) ? [...existing.savedRoles] : [];
+      const idx = saved.findIndex((r) => r.id === role.id || r.title === role.title);
+      if (idx >= 0) {
+        saved.splice(idx, 1);
+      } else {
+        saved.push({ ...role, savedAt: new Date().toISOString() });
+      }
+      const next = { ...existing, savedRoles: saved, updatedAt: new Date().toISOString() };
+      await db.career.put(next);
+      return saved;
+    } catch (e) {
+      console.error('Dexie toggleSavedRole error:', e);
+      return [];
+    }
+  },
+
+  async clearCareerState() {
+    try {
+      await db.career.delete('active_career_state');
+      return true;
+    } catch (e) {
+      console.error('Dexie clearCareerState error:', e);
       return false;
     }
   },

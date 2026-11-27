@@ -222,39 +222,40 @@ Return ONLY valid JSON matching this schema:
 Extract all information from the provided raw resume text into a strictly formatted JSON object matching the exact schema below.
 
 CRITICAL EXTRACTION RULES:
-1. ZERO HALLUCINATION: Extract only facts explicitly present in the text.
-2. CANDIDATE NAME & CONTACT DETAILS:
+1. ZERO HALLUCINATION: Extract only facts explicitly present in the text. Never invent degrees, institutions, summaries, or projects not present in the source text.
+2. MULTI-LANGUAGE & ORIGINAL WORDING PRESERVATION: Preserve the exact original language, wording, punctuation, and bullet structure of summaries, job responsibilities, and project descriptions. Do not summarize or shorten descriptions.
+3. CANDIDATE NAME & CONTACT DETAILS:
    - Identify the candidate's actual full name at the top of the resume.
    - Extract phone number (preserving international country code e.g. +91, +1, +44), email, city/state/country location.
-   - Extract LinkedIn profile URL, GitHub profile URL, and personal portfolio or website URL (into "portfolio" and "website").
-3. PROFESSIONAL SUMMARY (CRITICAL):
+   - Extract LinkedIn profile URL, GitHub profile URL, GitLab/Behance/Dribbble/StackOverflow URLs, and personal portfolio or website URL (into "portfolio" and "website").
+4. PROFESSIONAL SUMMARY (CRITICAL):
    - DO NOT prepend or include contact words or labels ("Email", "Contact", "Phone"), candidate name, links, or contact numbers inside "professionalSummary".
-   - "professionalSummary" must ONLY contain pure biographical and career narrative prose.
-4. PROFESSIONAL TITLE & TARGET ROLE (CRITICAL):
-   - Accurately determine the candidate's real professional title (e.g. "Full Stack Developer", "Backend Engineer", "Data Scientist", "Azure Data Engineer", "Software Engineer", "DevOps Engineer").
+   - "professionalSummary" must ONLY contain pure biographical and career narrative prose, preserving the original paragraph verbatim.
+5. PROFESSIONAL TITLE & TARGET ROLE (CRITICAL):
+   - Accurately determine the candidate's real professional title across any industry (e.g. "Full Stack Developer", "Registered Nurse", "Chartered Accountant", "Product Manager", "Mechanical Engineer", "Graphic Designer").
    - If a title is explicitly in the header, use it.
-   - If not in the header, inspect the most recent job title in their experience or primary technologies and set an accurate title. DO NOT default to a generic placeholder.
-5. EXPERIENCE & BULLETS (CRITICAL — DO NOT TRUNCATE):
+   - If not in the header, inspect the most recent job title in their experience. DO NOT default to a generic placeholder like "Engineer".
+6. EXPERIENCE, INTERNSHIPS & BULLETS (CRITICAL — DO NOT TRUNCATE):
    - Extract EVERY SINGLE work experience role from the entire document across all pages (if there are 7, 8, 9, or 10+ roles, extract ALL of them from newest to oldest!).
-   - For every position, extract exact company name, job title, start/end dates, location, and ALL bullet point responsibilities.
-6. PROJECTS (CRITICAL):
-   - Locate and extract all technical and personal projects.
-   - UNIVERSAL FALLBACK: If the resume does NOT have a separate "PROJECTS" section, extract the top 3-4 major engineering systems, platforms, or data architectures described in their work experience into "projects" so the projects list is never empty!
+   - Extract internships separately into "internships" when labeled as Internships / Industrial Training / Research Internship / Apprenticeship.
+   - For every position, extract exact company name, job title, start/end dates, location, and ALL bullet point responsibilities verbatim.
+7. PROJECTS (CRITICAL — DO NOT SUMMARIZE):
+   - Locate and extract all technical, academic, research, freelance, and personal projects.
    - CRITICAL: DO NOT dump live demo URLs, GitHub links, or labels like "[Demo]", "[GitHub]", "Live: https://..." into the "description" text or "highlights" bullets!
    - Put live deployment URLs strictly in "liveUrl" (e.g. Render, Vercel, Netlify, AWS, custom domain).
    - Put repository URLs strictly in "githubUrl".
-   - Keep "name" as the clean project title, and "description" as clean, professional narrative text describing the architecture, purpose, and impact.
+   - Keep "name" as the clean project title, and "description" / "highlights" preserving ALL original project details verbatim.
    - Extract "technologies" as an array of individual technology strings.
-7. SKILLS:
-   - If the resume explicitly organizes skills into named categories (e.g. "AI & Agents", "Data", "Languages", "ML / Frameworks", "Tools & Cloud", "Core CS"), PRESERVE those exact category names and items!
-   - Otherwise, group skills into clean categories: "Programming Languages", "Frameworks & AI/ML", "Cloud & DevOps", "Databases & Tools", "Core Competencies".
-8. EDUCATION:
-   - Extract institution, full degree (including field of study, e.g. "BS in Data Science and Applications" or "Bachelor of Engineering (Information and Technology)"), start/end dates, CGPA, and coursework in description.
-   - If education is mentioned anywhere in the document, extract it.
-9. CERTIFICATIONS, LEADERSHIP & EXTRA SECTIONS:
+8. SKILLS:
+   - If the resume explicitly organizes skills into named categories (e.g. "AI & Agents", "Clinical Skills", "Languages", "Tools & Cloud"), PRESERVE those exact category names and items!
+   - Otherwise, group skills cleanly without inventing skills not in the text.
+9. EDUCATION:
+   - Extract institution, full degree (including field of study), start/end dates, original CGPA/GPA/percentage without converting, and coursework in description.
+   - If no education is in the document, leave "education" as [].
+10. CERTIFICATIONS, LEADERSHIP & CUSTOM SECTIONS:
    - Extract EVERY certification. If multiple certifications are listed on the same bullet line separated by '|', split them into separate certification objects!
-   - Extract name, issuer (organization/platform e.g. Anthropic, Learn Depth, Simplilearn, HackerRank), and issue date.
-   - Extract any Leadership / Interpersonal Skills, Awards, Languages, Publications, or Volunteer sections into "achievements", "languages", "publications", "volunteerExperience", or "customSections" so ZERO information from the uploaded resume is lost.
+   - Extract name, issuer, credentialId (if any), and issue date.
+   - Extract any Leadership, Awards, Languages, Publications, Volunteer sections, AND any unrecognized/custom sections (e.g. Patents, Clinical Rotations, Exhibitions, Teaching, Confs, Grants, References) into "achievements", "languages", "publications", "volunteerExperience", or "customSections" (with "sectionTitle" and "items": [{"title", "subtitle", "date", "description"}]) so ZERO information from the uploaded resume is lost.
 
 Return ONLY valid JSON matching this exact structure:
 {{

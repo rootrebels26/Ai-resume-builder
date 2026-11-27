@@ -405,19 +405,26 @@ class LocalHeuristicProvider(BaseAIProvider):
         # Candidate Full Name heuristic
         candidate_name = ""
         skip_name_keywords = {"resume", "curriculum", "vitae", "cv", "page", "phone", "email", "contact", "summary", "profile", "portfolio", "linkedin", "github"}
-        for line in lines[:6]:
-            l_lower = line.lower()
+        for line in lines[:8]:
+            l_clean = line.strip()
+            l_lower = l_clean.lower()
+            if not l_clean or re.match(r'^[\[\](){}\s]+$', l_clean) or re.match(r'^\[\[page\s+\d+\]\]$', l_lower):
+                continue
             if any(k in l_lower for k in skip_name_keywords):
                 continue
-            if "@" in line or "http" in line or re.search(r'\d{3,}', line):
+            if "@" in l_clean or "http" in l_clean or re.search(r'\d{3,}', l_clean):
                 continue
-            words = line.split()
-            if 1 <= len(words) <= 4 and all(w[0].isupper() for w in words if w.isalpha()) and len(line) <= 40:
-                candidate_name = line
+            words = l_clean.split()
+            if 1 <= len(words) <= 5 and all(w[0].isupper() for w in words if w.isalpha()) and len(l_clean) <= 45:
+                candidate_name = l_clean
                 break
 
-        if not candidate_name and lines:
-            candidate_name = lines[0][:40]
+        if not candidate_name:
+            for line in lines[:5]:
+                l_clean = line.strip()
+                if l_clean and not re.match(r'^[\[\](){}\s]+$', l_clean) and not re.match(r'^\[\[page\s+\d+\]\]$', l_clean.lower()):
+                    candidate_name = l_clean[:40]
+                    break
 
         # Professional Title heuristic (Multi-industry: tech, medical, legal, finance, education, marketing, etc.)
         prof_title = ""
@@ -450,54 +457,71 @@ class LocalHeuristicProvider(BaseAIProvider):
                 prof_title = line_clean
                 break
 
-        # 2. Section Segmentation (Universal multi-industry semantic headings)
-        section_patterns = {
-            "summary": re.compile(r'^(?:professional\s+summary|summary|profile|about\s+me|career\s+objective|objective|focus|personal\s+statement)\b', re.IGNORECASE),
-            "experience": re.compile(r'^(?:work\s+experience|professional\s+experience|employment\s+history|experience|work\s+history|engineering\s+experience|career\s+history|relevant\s+experience|clinical\s+experience|teaching\s+experience|professional\s+background)\b', re.IGNORECASE),
-            "education": re.compile(r'^(?:education\s*(?:&|and)\s*academics|education\s*(?:&|and)\s*training|education|academic\s+background|academics|qualifications|educational\s+qualifications|degrees|academic\s+credentials)\b', re.IGNORECASE),
-            "projects": re.compile(r'^(?:(?:featured|key|technical|personal|academic|selected|notable|major|relevant|independent|open\s+source)?\s*projects|project\s+experience|project\s+work|portfolio\s+&\s+projects|architectures\s+&\s+systems|case\s+studies)\b', re.IGNORECASE),
-            "skills": re.compile(r'^(?:(?:core\s+)?technical\s+skills|core\s+skills|technical\s+competencies|technical\s+expertise|skills\s*(?:&|and)\s*competencies|skills\s*(?:&|and)\s*tools|skills|technologies|proficiencies|tools\s*(?:&|and)\s*technologies|core\s+competencies|key\s+skills|areas\s+of\s+expertise)\b', re.IGNORECASE),
-            "certifications": re.compile(r'^(?:certifications|certificates|licenses|courses|credentials|workshops|training|trainings|accreditations|bar\s+admissions)\b', re.IGNORECASE),
-            "internships": re.compile(r'^(?:internships?|internship\s+experience|practical\s+training|practicum|clerkship|residency)\b', re.IGNORECASE),
-            "publications": re.compile(r'^(?:publications?|research\s+papers|articles|whitepapers|patents|published\s+works)\b', re.IGNORECASE),
-            "volunteer": re.compile(r'^(?:volunteer\s+experience|volunteering|community\s+service|social\s+work|extracurricular\s+activities)\b', re.IGNORECASE),
-            "leadership": re.compile(r'^(?:leaderships?(?:\s*(?:&|and|interpersonal)?\s*skills)?|leadership\s+activities|interpersonal\s+skills|soft\s+skills)\b', re.IGNORECASE),
-            "languages": re.compile(r'^(?:languages|language\s+proficiency)\b', re.IGNORECASE),
-            "achievements": re.compile(r'^(?:achievements|awards|honors|honours|accomplishments)\b', re.IGNORECASE)
-        }
+        # 2. Dynamic Semantic Section Segmentation (Supports standard, creative, and custom sections)
+        from app.services.section_classifier import classify_heading
 
         sections: Dict[str, List[str]] = {
             "header": [], "summary": [], "experience": [], "education": [], "projects": [],
             "skills": [], "certifications": [], "internships": [], "publications": [], "volunteer": [],
             "leadership": [], "languages": [], "achievements": [], "other": []
         }
+        custom_blocks: List[Dict[str, Any]] = []
+        active_custom_block: Dict[str, Any] = None
 
         date_pattern = re.compile(
             r'((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?[\s\-_]*\d{2,4}|\d{4}|(?:0[1-9]|1[0-2])/\d{2,4})\s*[-–—to/]+\s*((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?[\s\-_]*\d{2,4}|\d{4}|(?:0[1-9]|1[0-2])/\d{2,4}|Present|Current|Till\s*Date|Ongoing|Now)',
             re.IGNORECASE
         )
 
+        # Preserve page markers while segmenting lines
+        raw_page_lines = [l.strip() for l in cleaned_text.splitlines() if l.strip()]
         current_sec = "header"
-        for line in lines:
+        current_page = 1
+
+        for idx_l, line in enumerate(raw_page_lines):
+            pm = re.match(r'^\[\[page\s+(\d+)\]\]$', line, re.IGNORECASE)
+            if pm:
+                current_page = int(pm.group(1))
+                continue
+
             matched_sec = None
             clean_l = re.sub(r'^[#*\-•\s]+', '', line).strip()
-            # A line is a section header ONLY if it's brief AND does not contain in-line content after a colon
-            if len(clean_l) < 50 and (":" not in clean_l or clean_l.endswith(":")):
-                for s_key, s_regex in section_patterns.items():
-                    if s_regex.match(clean_l):
-                        matched_sec = s_key
-                        break
+            if len(clean_l) < 55 and (":" not in clean_l or clean_l.endswith(":")):
+                next_lines = [nl for nl in raw_page_lines[idx_l + 1:idx_l + 6] if not nl.startswith("[[page")]
+                cat, conf = classify_heading(clean_l, next_lines)
+                if cat in sections and conf >= 0.75:
+                    matched_sec = cat
+                    active_custom_block = None
+                elif (
+                    cat == "custom"
+                    and conf >= 0.75
+                    and current_sec != "header"
+                    and "|" not in clean_l
+                    and "," not in clean_l
+                    and not date_pattern.search(clean_l)
+                    and not any(c.isdigit() for c in clean_l)
+                    and (clean_l.isupper() or clean_l.endswith(":") or (len(clean_l.split()) <= 4 and clean_l.istitle()))
+                ):
+                    matched_sec = "custom"
+                    active_custom_block = {
+                        "sectionTitle": clean_l.rstrip(":").strip(),
+                        "lines": [],
+                        "sourcePage": current_page,
+                    }
+                    custom_blocks.append(active_custom_block)
 
-            if matched_sec:
+            if matched_sec == "custom":
+                current_sec = "custom"
+            elif matched_sec:
                 current_sec = matched_sec
+            elif current_sec == "custom" and active_custom_block is not None:
+                active_custom_block["lines"].append(line)
             else:
-                # Merge multi-line wrapped items ONLY if it's true continuation and NOT a job header, category, or bullet
                 if sections[current_sec]:
                     prev = sections[current_sec][-1]
                     is_bullet = any(line.strip().startswith(sym) for sym in ['-', '*', '•', '–', '+', 'o '])
                     prev_is_bullet = any(prev.strip().startswith(sym) for sym in ['-', '*', '•', '–', '+', 'o '])
-                    
-                    # Guardrails: never merge if line is a job header or category
+
                     has_date_range = bool(date_pattern.search(line))
                     is_likely_job_hdr = ("|" in line or "—" in line or "–" in line) and bool(role_regex.search(line))
                     is_cat_colon = ":" in line and len(line.split(":", 1)[0].strip()) < 40
@@ -603,7 +627,7 @@ class LocalHeuristicProvider(BaseAIProvider):
                     experience_items.append(current_job)
 
                 comp = "Organization"
-                pos = prof_title or "Engineer"
+                pos = prof_title or "Role"
                 loc = ""
 
                 pos_idx = -1
@@ -848,18 +872,7 @@ class LocalHeuristicProvider(BaseAIProvider):
                     })
                     break
 
-        # If STILL empty and "education" is mentioned in the document
-        if not education_items and (any("education" in s.lower() for s in sections.keys()) or "education" in cleaned_text.lower()):
-            education_items.append({
-                "id": str(uuid.uuid4())[:8],
-                "institution": "University / Institute of Technology",
-                "degree": "Bachelor of Engineering (B.E. / B.Tech)",
-                "fieldOfStudy": "Information Technology / Computer Science" if ("engineer" in prof_title.lower() or "architect" in prof_title.lower() or "data" in prof_title.lower()) else "General Studies",
-                "startDate": "",
-                "endDate": "2010" if "10+" in summary_text else "",
-                "cgpa": "",
-                "description": "Graduated with Honors. Click to update institution name and details."
-            })
+        # Never invent fake education entries if none are present in the document
 
         # 6. Parse Skills into Structured Categories (Preserve explicit resume categories if present)
         explicit_skill_categories = []
@@ -1127,52 +1140,146 @@ class LocalHeuristicProvider(BaseAIProvider):
                             "credentialUrl": ""
                         })
 
-        # 9. Parse Languages
+        # 9. Parse Languages (explicit Languages section first, then document scan)
         languages = []
-        known_langs = ["English", "Hindi", "Bengali", "Spanish", "French", "German", "Mandarin", "Japanese", "Arabic"]
-        for kl in known_langs:
-            if re.search(r'\b' + kl + r'\b', cleaned_text, re.IGNORECASE):
-                languages.append({"name": kl, "proficiency": "Proficient"})
+        seen_langs = set()
+        for line in sections.get("languages", []):
+            clean_l = re.sub(r'^[#*\-•–\s]+', '', line).strip()
+            for part in re.split(r'[,;|]', clean_l):
+                part = part.strip()
+                if not part:
+                    continue
+                m_prof = re.match(r'^([A-Za-z\s]+?)\s*[\(\-–:]\s*([^\)]+)\)?$', part)
+                if m_prof:
+                    l_name = m_prof.group(1).strip()
+                    l_prof = m_prof.group(2).strip()
+                else:
+                    l_name = part
+                    l_prof = "Proficient"
+                if l_name and len(l_name) <= 25 and l_name.lower() not in seen_langs:
+                    seen_langs.add(l_name.lower())
+                    languages.append({"name": l_name, "proficiency": l_prof})
 
-        # 10. Parse Internships
+        if not languages:
+            known_langs = ["English", "Hindi", "Bengali", "Spanish", "French", "German", "Mandarin", "Japanese", "Arabic"]
+            for kl in known_langs:
+                if re.search(r'\b' + kl + r'\b', cleaned_text, re.IGNORECASE):
+                    languages.append({"name": kl, "proficiency": "Proficient"})
+
+        # 10. Parse Internships (structured extraction preserving organization, role, dates, responsibilities)
         internship_items = []
+        curr_int = None
         for line in sections.get("internships", []):
-            clean_l = re.sub(r'^[#*\-•\s]+', '', line).strip()
-            if clean_l and len(clean_l) > 5:
-                internship_items.append({
+            d_match = date_pattern.search(line)
+            is_bullet = any(line.startswith(sym) for sym in ['-', '*', '•', '–', '+', 'o '])
+            if d_match and not is_bullet:
+                if curr_int:
+                    internship_items.append(curr_int)
+                start_d = d_match.group(1).strip()
+                end_d = d_match.group(2).strip()
+                rem = re.sub(r'[-–|,]+$', '', (line[:d_match.start()] + " | " + line[d_match.end():])).strip()
+                parts = [p.strip() for p in re.split(r'[-–|•—]', rem) if p.strip()]
+                role_txt = parts[0] if parts else "Intern"
+                org_txt = parts[1] if len(parts) > 1 else "Organization"
+                curr_int = {
                     "id": str(uuid.uuid4())[:8],
-                    "role": clean_l[:50],
-                    "organization": "Internship",
-                    "duration": "",
-                    "responsibilities": [clean_l],
-                    "technologies": []
+                    "role": role_txt,
+                    "organization": org_txt,
+                    "location": parts[2] if len(parts) > 2 else "",
+                    "duration": f"{start_d} - {end_d}",
+                    "startDate": start_d,
+                    "endDate": end_d,
+                    "responsibilities": [],
+                    "technologies": extract_matching_skills(line)
+                }
+            elif is_bullet:
+                b_txt = re.sub(r'^[#*\-•–+o\s]+', '', line).strip()
+                if b_txt:
+                    if curr_int is None:
+                        curr_int = {"id": str(uuid.uuid4())[:8], "role": "Intern", "organization": "Organization", "location": "", "duration": "", "startDate": "", "endDate": "", "responsibilities": [], "technologies": []}
+                    curr_int["responsibilities"].append(b_txt)
+                    curr_int["technologies"] = list(dict.fromkeys(curr_int["technologies"] + extract_matching_skills(b_txt)))
+            else:
+                clean_l = re.sub(r'^[#*\-•\s]+', '', line).strip()
+                if clean_l:
+                    if curr_int is None:
+                        parts = [p.strip() for p in re.split(r'[-–|—]', clean_l, 1) if p.strip()]
+                        curr_int = {
+                            "id": str(uuid.uuid4())[:8],
+                            "role": parts[0],
+                            "organization": parts[1] if len(parts) > 1 else "",
+                            "location": "", "duration": "", "startDate": "", "endDate": "",
+                            "responsibilities": [],
+                            "technologies": extract_matching_skills(clean_l)
+                        }
+                    else:
+                        curr_int["responsibilities"].append(clean_l)
+        if curr_int:
+            internship_items.append(curr_int)
+
+        # 11. Parse Achievements & Leadership
+        achievement_items = []
+        for line in sections.get("achievements", []) + sections.get("leadership", []):
+            clean_l = re.sub(r'^[#*\-•–\s]+', '', line).strip()
+            if clean_l and len(clean_l) > 4:
+                d_m = re.search(r'\b(19\d{2}|20\d{2})\b', clean_l)
+                parts = re.split(r'[:–—-]\s+', clean_l, 1)
+                achievement_items.append({
+                    "id": str(uuid.uuid4())[:8],
+                    "title": parts[0].strip(),
+                    "description": parts[1].strip() if len(parts) > 1 else clean_l,
+                    "date": d_m.group(1) if d_m else ""
                 })
 
-        # 11. Parse Publications
+        # 12. Parse Publications
         publication_items = []
         for line in sections.get("publications", []):
-            clean_l = re.sub(r'^[#*\-•\s]+', '', line).strip()
+            clean_l = re.sub(r'^[#*\-•–\s]+', '', line).strip()
             if clean_l and len(clean_l) > 5:
+                d_m = re.search(r'\b(19\d{2}|20\d{2})\b', clean_l)
                 publication_items.append({
                     "id": str(uuid.uuid4())[:8],
                     "title": clean_l,
                     "publisher": "",
-                    "date": "",
+                    "date": d_m.group(1) if d_m else "",
                     "url": ""
                 })
 
-        # 12. Parse Volunteer Experience
+        # 13. Parse Volunteer Experience
         volunteer_items = []
         for line in sections.get("volunteer", []):
-            clean_l = re.sub(r'^[#*\-•\s]+', '', line).strip()
+            clean_l = re.sub(r'^[#*\-•–\s]+', '', line).strip()
             if clean_l and len(clean_l) > 5:
                 volunteer_items.append({
                     "id": str(uuid.uuid4())[:8],
                     "role": clean_l[:50],
                     "organization": "Volunteer",
-                    "startDate": "",
-                    "endDate": "",
+                    "duration": "",
                     "description": clean_l
+                })
+
+        # 14. Preserve Unrecognized / Custom Sections verbatim
+        custom_sections = []
+        for cb in custom_blocks:
+            cb_items = []
+            for cl in cb.get("lines", []):
+                clean_cl = re.sub(r'^[#*\-•–\s]+', '', cl).strip()
+                if not clean_cl:
+                    continue
+                parts = re.split(r'\s*[:–—|]\s*', clean_cl, 1)
+                cb_items.append({
+                    "title": parts[0].strip(),
+                    "subtitle": "",
+                    "date": "",
+                    "description": parts[1].strip() if len(parts) > 1 else clean_cl
+                })
+            if cb_items:
+                custom_sections.append({
+                    "id": str(uuid.uuid4())[:8],
+                    "sectionTitle": cb["sectionTitle"],
+                    "normalizedCategory": "custom",
+                    "sourcePage": cb.get("sourcePage", 1),
+                    "items": cb_items
                 })
 
         # Final title fallback: never default to software engineer for non-tech roles
@@ -1184,7 +1291,7 @@ class LocalHeuristicProvider(BaseAIProvider):
             elif education_items and education_items[0].get("fieldOfStudy"):
                 prof_title = education_items[0]["fieldOfStudy"]
             else:
-                prof_title = "Professional"
+                prof_title = ""
 
         return {
             "personalInfo": {
@@ -1205,11 +1312,11 @@ class LocalHeuristicProvider(BaseAIProvider):
             "projects": project_items,
             "skills": skill_categories,
             "certifications": certifications,
-            "achievements": [],
+            "achievements": achievement_items,
             "languages": languages,
             "publications": publication_items,
             "volunteerExperience": volunteer_items,
-            "customSections": []
+            "customSections": custom_sections
         }
 
     async def parse_resume_document(self, text: str, layout_metadata: Dict[str, Any] = None) -> Dict[str, Any]:

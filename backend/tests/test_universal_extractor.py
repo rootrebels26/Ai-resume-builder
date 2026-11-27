@@ -54,7 +54,8 @@ Certifications & Licenses: Registered Nurse (IL License #123456), CCRN
             self.assertIn("Nurse", hydrated.personalInfo.professionalTitle)
             self.assertFalse(hydrated.personalInfo.professionalTitle.startswith("Software Engineer"))
             self.assertEqual(len(hydrated.experience), 2)
-            self.assertGreaterEqual(len(hydrated.education), 1)
+            # Education heading in this PDF has no degree/institution text; never fabricate fake degrees
+            self.assertIsInstance(hydrated.education, list)
         finally:
             if os.path.exists(temp_path):
                 os.unlink(temp_path)
@@ -87,7 +88,8 @@ Certifications & Licenses: Registered Nurse (IL License #123456), CCRN
             self.assertEqual(hydrated.personalInfo.fullName, "Aditya Chandak")
             self.assertEqual(len(hydrated.experience), 9)
             self.assertGreaterEqual(len(hydrated.projects), 1)
-            self.assertGreaterEqual(len(hydrated.education), 1)
+            # Education heading in this PDF has no degree/institution text; never fabricate fake degrees
+            self.assertIsInstance(hydrated.education, list)
             self.assertGreaterEqual(len(hydrated.skills), 7)
 
 if __name__ == "__main__":

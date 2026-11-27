@@ -16,6 +16,7 @@ const Templates = lazy(() => import('./pages/Templates').then((m) => ({ default:
 const UploadResume = lazy(() => import('./pages/UploadResume').then((m) => ({ default: m.UploadResume })));
 const ATSChecker = lazy(() => import('./pages/ATSChecker').then((m) => ({ default: m.ATSChecker })));
 const Preview = lazy(() => import('./pages/Preview').then((m) => ({ default: m.Preview })));
+const CareerDashboard = lazy(() => import('./pages/CareerDashboard').then((m) => ({ default: m.CareerDashboard })));
 const Privacy = lazy(() => import('./pages/Privacy').then((m) => ({ default: m.Privacy })));
 const NotFound = lazy(() => import('./pages/NotFound').then((m) => ({ default: m.NotFound })));
 
@@ -33,6 +34,8 @@ export default function App() {
             <Route path="/templates" element={<Templates />} />
             <Route path="/upload" element={<ProtectedRoute><UploadResume /></ProtectedRoute>} />
             <Route path="/ats-checker" element={<ATSChecker />} />
+            <Route path="/jobs" element={<CareerDashboard />} />
+            <Route path="/career" element={<CareerDashboard />} />
             <Route path="/preview" element={<Preview />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="*" element={<NotFound />} />

@@ -44,6 +44,12 @@ export function Navbar() {
           >
             ATS Checker
           </Link>
+          <Link
+            to="/jobs"
+            className={`nav-link ${location.pathname === '/jobs' || location.pathname === '/career' ? 'text-[#5e48d7]' : ''}`}
+          >
+            Job Recommendations
+          </Link>
         </nav>
 
         {/* Right CTA Buttons */}
@@ -91,6 +97,7 @@ export function Navbar() {
               <Link to="/onboarding#1" onClick={() => setMenuOpen(false)} className="hover:text-[#5e48d7]">Create New</Link>
               <Link to="/templates" onClick={() => setMenuOpen(false)} className="hover:text-[#5e48d7]">Templates</Link>
               <Link to="/ats-checker" onClick={() => setMenuOpen(false)} className="hover:text-[#5e48d7]">ATS Checker</Link>
+              <Link to="/jobs" onClick={() => setMenuOpen(false)} className="hover:text-[#5e48d7]">Job Recommendations</Link>
               <div className="pt-2 border-t border-black/10 flex flex-col gap-2">
                 {isAuthenticated ? (
                   <div className="flex items-center justify-between py-1">

@@ -95,8 +95,11 @@ export function ExtractionReviewModal({
               </span>
             </div>
             <h2 className="text-xl sm:text-2xl font-extrabold text-ink tracking-tight">
-              Review Extracted Resume Data
+              Your Resume Information Has Been Extracted
             </h2>
+            <p className="text-xs text-ink-muted">
+              Review your information before creating your resume.
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -193,6 +196,26 @@ export function ExtractionReviewModal({
           >
             Certifications ({(resumeData.certifications || []).length})
           </button>
+          <button
+            onClick={() => setActiveTab('internships')}
+            className={`py-2 px-3 rounded-t-xl border-t border-x transition-colors ${
+              activeTab === 'internships'
+                ? 'bg-white border-ink/20 text-ink shadow-brutal-sm'
+                : 'border-transparent text-ink-muted hover:text-ink'
+            }`}
+          >
+            Internships ({(resumeData.internships || []).length})
+          </button>
+          <button
+            onClick={() => setActiveTab('customSections')}
+            className={`py-2 px-3 rounded-t-xl border-t border-x transition-colors ${
+              activeTab === 'customSections'
+                ? 'bg-white border-ink/20 text-ink shadow-brutal-sm'
+                : 'border-transparent text-ink-muted hover:text-ink'
+            }`}
+          >
+            Custom Sections ({(resumeData.customSections || []).length})
+          </button>
           {(unmappedItems.length > 0 || structuredWarnings.length > 0) && (
             <button
               onClick={() => setActiveTab('unmapped')}
@@ -266,6 +289,37 @@ export function ExtractionReviewModal({
                   <div className="text-xs text-ink-muted pt-1">
                     {(resumeData.education || []).length} Degree(s) • {totalSkillsCount} Skill(s) Categorized
                   </div>
+                </div>
+              </div>
+
+              {/* Extraction Summary Counters */}
+              <div className="p-4 rounded-2xl bg-canvas border border-ink/15 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono font-bold text-ink-muted uppercase">
+                    Extraction Summary
+                  </span>
+                  <span className="text-[11px] font-mono text-ink-muted">
+                    {resumeData.sourceDocument?.layoutType || 'standard'} • {resumeData.sourceDocument?.language || 'en'}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center">
+                  {[
+                    ['Pages', resumeData.sourceDocument?.pageCount || 1],
+                    ['Sections', resumeData.extractionReport?.sectionCount || 0],
+                    ['Employment', (resumeData.experience || []).length],
+                    ['Internships', (resumeData.internships || []).length],
+                    ['Education', (resumeData.education || []).length],
+                    ['Projects', (resumeData.projects || []).length],
+                    ['Certifications', (resumeData.certifications || []).length],
+                    ['Skills', totalSkillsCount],
+                    ['Custom', (resumeData.customSections || []).length],
+                    ['Needs Review', resumeData.extractionReport?.fieldsRequiringReview || 0],
+                  ].map(([label, val]) => (
+                    <div key={label} className="p-2 rounded-xl bg-white border border-ink/10">
+                      <div className="text-sm font-extrabold text-ink">{val}</div>
+                      <div className="text-[10px] font-mono text-ink-muted uppercase">{label}</div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -511,6 +565,136 @@ export function ExtractionReviewModal({
                     </div>
                   );
                 })
+              )}
+            </div>
+          )}
+
+          {/* TAB: INTERNSHIPS */}
+          {activeTab === 'internships' && (
+            <div className="space-y-4">
+              {(resumeData.internships || []).length === 0 ? (
+                <div className="p-6 text-center rounded-2xl bg-canvas border border-ink/15 text-xs text-ink-muted">
+                  No separate internships detected. Any internship roles under Experience are shown in the Experience tab.
+                </div>
+              ) : (
+                (resumeData.internships || []).map((intern, idx) => (
+                  <div key={intern.id || idx} className="p-4 rounded-2xl bg-canvas border border-ink/15 space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <input
+                        type="text"
+                        value={intern.position || ''}
+                        onChange={(e) => {
+                          const next = [...(resumeData.internships || [])];
+                          next[idx] = { ...next[idx], position: e.target.value };
+                          setResumeData(prev => ({ ...prev, internships: next }));
+                        }}
+                        placeholder="Internship Role"
+                        className="input-base text-xs font-bold"
+                      />
+                      <input
+                        type="text"
+                        value={intern.company || ''}
+                        onChange={(e) => {
+                          const next = [...(resumeData.internships || [])];
+                          next[idx] = { ...next[idx], company: e.target.value };
+                          setResumeData(prev => ({ ...prev, internships: next }));
+                        }}
+                        placeholder="Organization"
+                        className="input-base text-xs"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <input
+                        type="text"
+                        value={intern.startDate || ''}
+                        onChange={(e) => {
+                          const next = [...(resumeData.internships || [])];
+                          next[idx] = { ...next[idx], startDate: e.target.value };
+                          setResumeData(prev => ({ ...prev, internships: next }));
+                        }}
+                        placeholder="Start Date"
+                        className="input-base text-xs"
+                      />
+                      <input
+                        type="text"
+                        value={intern.endDate || ''}
+                        onChange={(e) => {
+                          const next = [...(resumeData.internships || [])];
+                          next[idx] = { ...next[idx], endDate: e.target.value };
+                          setResumeData(prev => ({ ...prev, internships: next }));
+                        }}
+                        placeholder="End Date"
+                        className="input-base text-xs"
+                      />
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          {/* TAB: CUSTOM SECTIONS */}
+          {activeTab === 'customSections' && (
+            <div className="space-y-4">
+              {(resumeData.customSections || []).length === 0 ? (
+                <div className="p-6 text-center rounded-2xl bg-canvas border border-ink/15 text-xs text-ink-muted">
+                  No additional custom sections detected.
+                </div>
+              ) : (
+                (resumeData.customSections || []).map((sec, sIdx) => (
+                  <div key={sec.id || sIdx} className="p-4 rounded-2xl bg-canvas border border-ink/15 space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <input
+                        type="text"
+                        value={sec.sectionTitle || ''}
+                        onChange={(e) => {
+                          const next = [...(resumeData.customSections || [])];
+                          next[sIdx] = { ...next[sIdx], sectionTitle: e.target.value };
+                          setResumeData(prev => ({ ...prev, customSections: next }));
+                        }}
+                        className="input-base text-xs font-bold flex-1"
+                      />
+                      {sec.sourcePage && (
+                        <span className="px-2 py-0.5 rounded bg-white border border-ink/10 text-[10px] font-mono text-ink-muted">
+                          Page {sec.sourcePage}
+                        </span>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      {(sec.items || []).map((it, iIdx) => (
+                        <div key={iIdx} className="p-2.5 rounded-xl bg-white border border-ink/10 space-y-1.5">
+                          <input
+                            type="text"
+                            value={it.title || ''}
+                            onChange={(e) => {
+                              const next = [...(resumeData.customSections || [])];
+                              const items = [...(next[sIdx].items || [])];
+                              items[iIdx] = { ...items[iIdx], title: e.target.value };
+                              next[sIdx] = { ...next[sIdx], items };
+                              setResumeData(prev => ({ ...prev, customSections: next }));
+                            }}
+                            placeholder="Title"
+                            className="input-base text-xs w-full font-semibold"
+                          />
+                          {it.description && (
+                            <textarea
+                              rows={2}
+                              value={it.description || ''}
+                              onChange={(e) => {
+                                const next = [...(resumeData.customSections || [])];
+                                const items = [...(next[sIdx].items || [])];
+                                items[iIdx] = { ...items[iIdx], description: e.target.value };
+                                next[sIdx] = { ...next[sIdx], items };
+                                setResumeData(prev => ({ ...prev, customSections: next }));
+                              }}
+                              className="input-base text-xs w-full"
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))
               )}
             </div>
           )}

@@ -216,13 +216,30 @@ class DocumentExtractor:
             if len(raw_page_text.strip()) > 40:
                 is_scanned_doc = False
 
-            # Detect multi-column layout on this page (strictly body blocks below header):
+            # Detect multi-column layout (2-column or 3-column) on body blocks below header:
             is_two_column = False
+            column_count = 1
             left_blocks = []
+            mid_blocks = []
             right_blocks = []
 
             body_blocks = [b for b in enriched_text_blocks if b[1] >= page_height * 0.16 or (b[3] - b[1]) > page_height * 0.25]
-            if len(body_blocks) >= 2:
+            if len(body_blocks) >= 3:
+                col1 = [b for b in body_blocks if b[2] <= page_width * 0.36]
+                col2 = [b for b in body_blocks if b[0] >= page_width * 0.31 and b[2] <= page_width * 0.69]
+                col3 = [b for b in body_blocks if b[0] >= page_width * 0.64]
+                if len(col1) >= 2 and len(col2) >= 2 and len(col3) >= 2:
+                    s1 = max(b[3] for b in col1) - min(b[1] for b in col1)
+                    s2 = max(b[3] for b in col2) - min(b[1] for b in col2)
+                    s3 = max(b[3] for b in col3) - min(b[1] for b in col3)
+                    if s1 > page_height * 0.22 and s2 > page_height * 0.22 and s3 > page_height * 0.22:
+                        column_count = 3
+                        is_two_column = True
+                        left_blocks = sorted(col1, key=lambda b: (b[1], b[0]))
+                        mid_blocks = sorted(col2, key=lambda b: (b[1], b[0]))
+                        right_blocks = sorted(col3, key=lambda b: (b[1], b[0]))
+
+            if column_count == 1 and len(body_blocks) >= 2:
                 col_split = page_width * 0.42
                 left_col = [b for b in body_blocks if b[2] <= page_width * 0.52]
                 right_col = [b for b in body_blocks if b[0] >= col_split]
@@ -241,6 +258,7 @@ class DocumentExtractor:
                     # True 2-column layout: both columns span substantial vertical height (not a short 4-row table)
                     if left_span > page_height * 0.28 and right_span > page_height * 0.28 and right_chars > 250 and (len(left_col) >= 2 or left_span > page_height * 0.35):
                         is_two_column = True
+                        column_count = 2
                         left_blocks = sorted(left_col, key=lambda b: (b[1], b[0]))
                         right_blocks = sorted(right_col, key=lambda b: (b[1], b[0]))
 
@@ -255,6 +273,11 @@ class DocumentExtractor:
                     processed_ids.add(b[5])
 
                 for b in left_blocks:
+                    if b[5] not in processed_ids:
+                        page_lines.append(b[4].strip())
+                        processed_ids.add(b[5])
+
+                for b in mid_blocks:
                     if b[5] not in processed_ids:
                         page_lines.append(b[4].strip())
                         processed_ids.add(b[5])
@@ -291,6 +314,7 @@ class DocumentExtractor:
                 "text": page_text,
                 "has_images": has_images,
                 "is_two_column": is_two_column,
+                "column_count": column_count,
                 "char_count": len(page_text)
             })
 
@@ -303,16 +327,43 @@ class DocumentExtractor:
             )
 
         full_extracted_text = "\n\n".join(combined_text_lines)
+        lang_info = DocumentExtractor.detect_language(full_extracted_text)
 
         return {
             "text": full_extracted_text,
             "pages": pages_content,
             "page_count": page_count,
             "is_scanned": is_scanned_doc,
-            "layout": "multi_column" if any(p["is_two_column"] for p in pages_content) else "single_column",
+            "layout": "three_column" if any(p.get("column_count") == 3 for p in pages_content) else ("multi_column" if any(p["is_two_column"] for p in pages_content) else "single_column"),
+            "language": lang_info,
             "links": all_extracted_links,
             "warnings": warnings
         }
+
+    @staticmethod
+    def detect_language(text: str) -> Dict[str, Any]:
+        """
+        Lightweight script & stopword language detector supporting English,
+        Hindi (Devanagari), Bengali, and common European scripts without heavy ML deps.
+        """
+        if not text or not text.strip():
+            return {"code": "unknown", "name": "Unknown", "confidence": 0.0}
+        devanagari = len(re.findall(r'[\u0900-\u097F]', text))
+        bengali = len(re.findall(r'[\u0980-\u09FF]', text))
+        arabic = len(re.findall(r'[\u0600-\u06FF]', text))
+        cjk = len(re.findall(r'[\u4E00-\u9FFF]', text))
+        latin = len(re.findall(r'[A-Za-z]', text))
+        total = max(1, devanagari + bengali + arabic + cjk + latin)
+
+        if devanagari / total > 0.15:
+            return {"code": "hi", "name": "Hindi / Devanagari" + (" (Mixed)" if latin / total > 0.15 else ""), "confidence": 0.92}
+        if bengali / total > 0.15:
+            return {"code": "bn", "name": "Bengali" + (" (Mixed)" if latin / total > 0.15 else ""), "confidence": 0.92}
+        if arabic / total > 0.15:
+            return {"code": "ar", "name": "Arabic", "confidence": 0.90}
+        if cjk / total > 0.15:
+            return {"code": "zh", "name": "CJK", "confidence": 0.90}
+        return {"code": "en", "name": "English / Latin", "confidence": 0.95}
 
     @staticmethod
     def extract_from_docx(file_path: str) -> Dict[str, Any]:
