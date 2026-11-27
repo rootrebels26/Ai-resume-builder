@@ -8,10 +8,7 @@ export function JobSearchPlatforms({ links = [], roleTitle = '' }) {
     <div className="space-y-2 pt-2 border-t border-ink/10">
       <div className="flex items-center justify-between gap-2">
         <span className="text-[11px] font-mono font-bold uppercase text-ink-muted">
-          External Job Search Links{roleTitle ? ` — ${roleTitle}` : ''}
-        </span>
-        <span className="text-[10px] font-mono text-ink-muted">
-          Public Search (No API Key)
+          Search Jobs{roleTitle ? ` — ${roleTitle}` : ''}
         </span>
       </div>
 
