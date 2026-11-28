@@ -32,9 +32,9 @@ class GroqProvider(BaseAIProvider):
         if not self.api_key:
             return None
 
-        # Build candidate models with auto-fallback if 404 or policy restriction
+        # Build candidate models with auto-fallback if 404 or rate-limit
         candidate_models = [self.model_name]
-        for fb in ["llama-3.3-70b-versatile", "openai/gpt-oss-120b", "llama-3.1-8b-instant"]:
+        for fb in ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768", "gemma2-9b-it"]:
             if fb not in candidate_models:
                 candidate_models.append(fb)
 
@@ -75,6 +75,8 @@ class GroqProvider(BaseAIProvider):
                         logger.warning("Groq API returned %s for model %s: %s", res.status_code, model, res.text)
             except Exception as e:
                 logger.warning("Groq API request error for model %s: %s", model, e)
+                if isinstance(e, (httpx.ConnectError, httpx.ConnectTimeout)):
+                    break
         return None
 
     async def generate_summary(self, request: GenerateSummaryRequest) -> GenerateSummaryResponse:

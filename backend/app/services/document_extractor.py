@@ -964,6 +964,11 @@ class DocumentExtractor:
 
             pil_img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
             img_w, img_h = pil_img.size
+            if max(img_w, img_h) > 1400:
+                scale = 1400.0 / float(max(img_w, img_h))
+                new_size = (int(img_w * scale), int(img_h * scale))
+                pil_img = pil_img.resize(new_size, Image.Resampling.LANCZOS)
+                img_w, img_h = pil_img.size
             engine = getattr(DocumentExtractor, "_rapidocr_engine", None)
             if engine is None:
                 engine = RapidOCR()
@@ -1044,68 +1049,26 @@ class DocumentExtractor:
         """
         Cloud-friendly OCR: uses Gemini Vision first when GEMINI_API_KEY is configured
         (zero ONNX RAM overhead on Render 512MB tier + clean spacing/punctuation),
-        with automatic fallback to local RapidOCR ONNX / Tesseract.
+        followed by OpenRouter free vision models, with safe fallback to local RapidOCR.
         """
         import base64
         from app.core.config import settings
         import httpx
 
-        groq_key = getattr(settings, "GROQ_API_KEY", None)
-        pref_provider = (getattr(settings, "AI_PROVIDER", "groq") or "groq").lower().strip()
-        if groq_key and pref_provider in ("groq", "auto"):
-            b64 = base64.b64encode(img_bytes).decode("utf-8")
-            for groq_vision_model in ("meta-llama/llama-4-scout-17b-16e-instruct", "llama-3.2-11b-vision-preview"):
-                try:
-                    with httpx.Client(timeout=15.0) as client:
-                        resp = client.post(
-                            "https://api.groq.com/openai/v1/chat/completions",
-                            headers={
-                                "Authorization": f"Bearer {groq_key}",
-                                "Content-Type": "application/json",
-                            },
-                            json={
-                                "model": groq_vision_model,
-                                "temperature": 0.0,
-                                "messages": [{
-                                    "role": "user",
-                                    "content": [
-                                        {
-                                            "type": "text",
-                                            "text": "You are a universal resume OCR extraction engine. Transcribe ALL text from this resume image exactly as written, preserving all contact info, section headings, job titles, dates, companies, bullet points, skills, projects, and education. Read multi-column layouts column-by-column. Do not summarize or omit anything. Output the full text with clear line breaks."
-                                        },
-                                        {
-                                            "type": "image_url",
-                                            "image_url": {"url": f"data:{mime};base64,{b64}"}
-                                        }
-                                    ]
-                                }]
-                            }
-                        )
-                        if resp.status_code == 200:
-                            data = resp.json()
-                            choices = data.get("choices", [])
-                            if choices:
-                                txt = (choices[0].get("message", {}).get("content") or "").strip()
-                                if txt:
-                                    return txt
-                        else:
-                            logger.warning("Groq Vision OCR (%s) returned %s: %s", groq_vision_model, resp.status_code, resp.text[:160])
-                            if resp.status_code in (401, 403, 429):
-                                break
-                except Exception as e:
-                    logger.warning("Groq Vision OCR (%s) failed: %s", groq_vision_model, e)
-
-        api_key = settings.GEMINI_API_KEY
+        # 1. Primary Cloud OCR: Gemini Vision (fastest, high accuracy, zero RAM overhead on Render)
+        api_key = getattr(settings, "GEMINI_API_KEY", None)
         if api_key:
             b64 = base64.b64encode(img_bytes).decode("utf-8")
             raw_model = settings.AI_MODEL
             if raw_model and not raw_model.lower().startswith("gemini"):
                 raw_model = None
-            models_to_try = [raw_model or "gemini-2.5-flash", "gemini-2.0-flash"]
+            models_to_try = [raw_model or "gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.0-flash-lite"]
             for model_id in dict.fromkeys(models_to_try):
+                if not model_id:
+                    continue
                 url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_id}:generateContent?key={api_key}"
                 gen_config: Dict[str, Any] = {"temperature": 0.0}
-                if "2.5" in model_id:
+                if "thinking" in model_id.lower():
                     gen_config["thinkingConfig"] = {"thinkingBudget": 0}
                 payload = {
                     "contents": [{
@@ -1124,7 +1087,7 @@ class DocumentExtractor:
                     "generationConfig": gen_config
                 }
                 try:
-                    with httpx.Client(timeout=15.0) as client:
+                    with httpx.Client(timeout=25.0) as client:
                         resp = client.post(url, json=payload)
                         if resp.status_code == 200:
                             data = resp.json()
@@ -1142,16 +1105,17 @@ class DocumentExtractor:
                 except Exception as e:
                     logger.warning("Gemini Vision OCR (%s) failed: %s", model_id, e)
 
+        # 2. Secondary Cloud OCR: OpenRouter Free Multimodal Models
         openrouter_key = getattr(settings, "OPENROUTER_API_KEY", None)
         if openrouter_key:
             b64 = base64.b64encode(img_bytes).decode("utf-8")
             for or_vision_model in (
                 "google/gemini-2.0-flash-exp:free",
-                "qwen/qwen2.5-vl-72b-instruct:free",
+                "qwen/qwen-2.5-vl-72b-instruct:free",
                 "meta-llama/llama-3.2-11b-vision-instruct:free",
             ):
                 try:
-                    with httpx.Client(timeout=14.0) as client:
+                    with httpx.Client(timeout=20.0) as client:
                         resp = client.post(
                             "https://openrouter.ai/api/v1/chat/completions",
                             headers={

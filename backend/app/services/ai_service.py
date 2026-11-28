@@ -16,7 +16,7 @@ def get_provider_chain() -> List[BaseAIProvider]:
     Orders configured cloud providers (starting with AI_PROVIDER) and ends with LocalHeuristicProvider.
     """
     provider_name = (settings.AI_PROVIDER or "auto").lower().strip()
-    if provider_name == "local":
+    if provider_name == "local" or getattr(settings, "APP_ENV", "").lower() == "testing":
         return [LocalHeuristicProvider()]
 
     available = []

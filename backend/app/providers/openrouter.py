@@ -86,6 +86,8 @@ class OpenRouterProvider(BaseAIProvider):
                     )
                 except Exception as e:
                     logger.warning("OpenRouter model %s failed (%s); shifting to next free model.", model, e)
+                    if isinstance(e, (httpx.ConnectError, httpx.ConnectTimeout)):
+                        break
         return None
 
     async def generate_summary(self, request: GenerateSummaryRequest) -> GenerateSummaryResponse:

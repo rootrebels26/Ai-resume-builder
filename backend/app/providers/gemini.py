@@ -26,7 +26,7 @@ class GeminiProvider(BaseAIProvider):
         raw_model = model_name or settings.AI_MODEL
         if raw_model and not raw_model.lower().startswith("gemini"):
             raw_model = None
-        self.model_name = raw_model or "gemini-2.5-flash"
+        self.model_name = raw_model or "gemini-2.0-flash"
         self.fallback = LocalHeuristicProvider()
 
     async def _call_gemini(self, prompt: str, schema_class: type = None, timeout_seconds: float = 25.0):
@@ -38,7 +38,7 @@ class GeminiProvider(BaseAIProvider):
             "temperature": 0.2,
             "responseMimeType": "application/json",
         }
-        if "2.5" in self.model_name:
+        if "thinking" in self.model_name.lower():
             gen_config["thinkingConfig"] = {"thinkingBudget": 0}
         payload = {
             "contents": [{"parts": [{"text": prompt}]}],
