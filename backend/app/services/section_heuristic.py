@@ -32,7 +32,7 @@ PROTECTED_SKILL_TOKENS = {
 }
 
 def _strip_bullet(line: str) -> Tuple[str, bool]:
-    m = re.match(r'^\s*(?:[-*•▪➢●◦]|\bo\s+)\s*(.+)$', line)
+    m = re.match(r'^\s*(?:[-*•▪▸▹►▶➢➤➔»●◦]|\bo\s+)\s*(.+)$', line)
     if m:
         return m.group(1).strip(), True
     return line.strip(), False
@@ -687,6 +687,191 @@ def parse_projects_section(text: str) -> Dict[str, Any]:
 
     return {"projects": projects, "unmapped": [], "warnings": []}
 
+def parse_internships_section(text: str) -> Dict[str, Any]:
+    """Reuse the experience header/bullet parser, then normalize into internship fields."""
+    parsed = parse_experience_section(text)
+    internships: List[Dict[str, Any]] = []
+    for entry in parsed.get("experience", []):
+        internships.append({
+            "organization": entry.get("company"),
+            "role": entry.get("title"),
+            "internship_type": entry.get("employment_type") or "Internship",
+            "location": entry.get("location"),
+            "start_date": entry.get("start_date"),
+            "end_date": entry.get("end_date"),
+            "is_current": entry.get("is_current", False),
+            "responsibilities": entry.get("bullets") or [],
+            "technologies": [],
+            "achievements": [],
+            "certificate": None,
+            "confidence": entry.get("confidence", "high"),
+        })
+    # Fallback: date-less internship blocks (e.g. "Data Intern, Acme — Remote")
+    if not internships:
+        lines = [l.strip() for l in text.splitlines() if l.strip()]
+        current: Optional[Dict[str, Any]] = None
+        for raw_line in lines:
+            cleaned, is_bullet = _strip_bullet(raw_line)
+            if not cleaned:
+                continue
+            looks_like_header = (
+                not is_bullet
+                and len(cleaned) <= 110
+                and (
+                    TITLE_KEYWORDS.search(cleaned)
+                    or COMPANY_SUFFIXES.search(cleaned)
+                    or "|" in cleaned
+                    or " at " in cleaned.lower()
+                )
+            )
+            if looks_like_header:
+                if current:
+                    internships.append(current)
+
+                header = cleaned
+                start_date = None
+                end_date = None
+                d_range = DATE_RANGE_RE.search(header)
+                if d_range:
+                    start_date = d_range.group(1)
+                    end_date = d_range.group(2)
+                    header = DATE_RANGE_RE.sub("", header).strip(" ,|–—-")
+                else:
+                    season_m = re.search(
+                        r'\b(?:spring|summer|fall|autumn|winter)\s+(?:19|20)\d{2}\b',
+                        header,
+                        re.IGNORECASE,
+                    )
+                    d_single = SINGLE_DATE_RE.search(header)
+                    if season_m:
+                        start_date = season_m.group(0)
+                        header = header.replace(season_m.group(0), " ").strip(" ,|–—-")
+                    elif d_single:
+                        start_date = d_single.group(1)
+                        header = header.replace(d_single.group(0), " ").strip(" ,|–—-")
+
+                parts = [
+                    p.strip()
+                    for p in re.split(r'\s*[|–—]\s*|\s+-\s+|\s+at\s+|,\s*', header)
+                    if p.strip()
+                ]
+                location = None
+                location_idx = None
+                for idx, p in enumerate(parts):
+                    if re.fullmatch(r'(?i)remote|hybrid|on[\s-]?site|wfh|work\s+from\s+home', p):
+                        location = p
+                        location_idx = idx
+                        break
+
+                role = next((p for p in parts if TITLE_KEYWORDS.search(p)), None)
+                organization = next(
+                    (
+                        p for idx, p in enumerate(parts)
+                        if p != role and idx != location_idx and COMPANY_SUFFIXES.search(p)
+                    ),
+                    None,
+                )
+                if not organization:
+                    organization = next(
+                        (p for idx, p in enumerate(parts) if p != role and idx != location_idx),
+                        None,
+                    )
+                if not role and parts:
+                    role = parts[0]
+
+                current = {
+                    "organization": organization,
+                    "role": role,
+                    "internship_type": _extract_employment_type(cleaned) or "Internship",
+                    "location": location,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "is_current": False,
+                    "responsibilities": [],
+                    "technologies": [],
+                    "achievements": [],
+                    "certificate": None,
+                    "confidence": "medium",
+                }
+            elif current:
+                current["responsibilities"].append(cleaned)
+            else:
+                current = {
+                    "organization": None,
+                    "role": None,
+                    "internship_type": "Internship",
+                    "location": None,
+                    "start_date": None,
+                    "end_date": None,
+                    "is_current": False,
+                    "responsibilities": [cleaned],
+                    "technologies": [],
+                    "achievements": [],
+                    "certificate": None,
+                    "confidence": "low",
+                }
+        if current:
+            internships.append(current)
+    return {
+        "internships": internships,
+        "unmapped": [] if internships else parsed.get("unmapped", []),
+        "warnings": parsed.get("warnings", []),
+    }
+
+
+def parse_leadership_section(text: str) -> Dict[str, Any]:
+    entries: List[Dict[str, Any]] = []
+    current: Optional[Dict[str, Any]] = None
+    for raw_line in text.splitlines():
+        cleaned, is_bullet = _strip_bullet(raw_line)
+        if not cleaned:
+            continue
+        looks_like_header = not is_bullet and len(cleaned) <= 110 and (
+            "|" in cleaned or bool(SINGLE_DATE_RE.search(cleaned)) or cleaned.istitle() or cleaned.isupper()
+        )
+        if looks_like_header:
+            if current:
+                entries.append(current)
+            parts = [p.strip() for p in re.split(r'\s*[|–—]\s*|\s+-\s+', cleaned) if p.strip()]
+            current = {
+                "title": parts[0] if parts else cleaned,
+                "subtitle": parts[1] if len(parts) > 1 else None,
+                "date_raw": (SINGLE_DATE_RE.search(cleaned).group(1) if SINGLE_DATE_RE.search(cleaned) else None),
+                "bullets": [],
+            }
+        elif current:
+            current["bullets"].append(cleaned)
+        else:
+            entries.append({"title": cleaned, "subtitle": None, "date_raw": None, "bullets": []})
+    if current:
+        entries.append(current)
+    return {
+        "custom_section": {"heading": "Leadership", "entries": entries},
+        "unmapped": [],
+        "warnings": [],
+    }
+
+
+def parse_references_section(text: str) -> Dict[str, Any]:
+    entries: List[Dict[str, Any]] = []
+    for raw_line in text.splitlines():
+        cleaned, _ = _strip_bullet(raw_line)
+        if not cleaned:
+            continue
+        parts = [p.strip() for p in re.split(r'\s*[|•,]\s*', cleaned) if p.strip()]
+        entries.append({
+            "title": parts[0] if parts else cleaned,
+            "subtitle": ", ".join(parts[1:]) if len(parts) > 1 else None,
+            "date_raw": None,
+            "bullets": [],
+        })
+    return {
+        "custom_section": {"heading": "References", "entries": entries},
+        "unmapped": [],
+        "warnings": [],
+    }
+
+
 def parse_section_deterministic(section_type: str, section_text: str, heading_raw: str = "") -> Dict[str, Any]:
     clean_text, pre_warnings = scan_and_strip_untrusted_lines(section_text)
     if not clean_text.strip():
@@ -699,51 +884,156 @@ def parse_section_deterministic(section_type: str, section_text: str, heading_ra
         res = {"summary": joined or None, "confidence": "high", "unmapped": [], "warnings": []}
     elif section_type == "experience":
         res = parse_experience_section(clean_text)
+    elif section_type == "internships":
+        res = parse_internships_section(clean_text)
     elif section_type == "education":
         res = parse_education_section(clean_text)
     elif section_type == "skills":
         res = parse_skills_section(clean_text)
     elif section_type == "projects":
         res = parse_projects_section(clean_text)
-    elif section_type == "certifications":
+    elif section_type in ("certifications", "courses", "training"):
         certs = []
         for l in clean_text.splitlines():
             c, _ = _strip_bullet(l)
             if not c:
                 continue
-            parts = [p.strip() for p in re.split(r'\s*[|–—]\s*|\s+-\s+', c) if p.strip()]
+            date_m = SINGLE_DATE_RE.search(c)
+            date_raw = date_m.group(1) if date_m else None
+            url_m = URL_REGEX.search(c)
+            url = url_m.group(0).rstrip(".,;)") if url_m else None
+            cred_m = re.search(r'\b(?:credential(?:\s+id)?|license\s+no\.?|cert(?:ificate)?\s+id)\s{0,5}[:#-]?\s{0,5}([A-Za-z0-9-]{4,})', c[:1000], re.IGNORECASE)
+            credential_id = cred_m.group(1) if cred_m else None
+
+            core = c
+            if date_m:
+                core = core.replace(date_m.group(1), " ")
+            if url:
+                core = core.replace(url, " ")
+            core = re.sub(r'\b(?:credential(?:\s+id)?|license\s+no\.?|cert(?:ificate)?\s+id)\s{0,5}[:#-]?\s{0,5}[A-Za-z0-9-]{4,}', '', core, flags=re.IGNORECASE)
+            parts = [p.strip(" ,|–—-") for p in re.split(r'\s*[|–—]\s*|\s+-\s+', core) if p.strip(" ,|–—-")]
+            if len(parts) <= 1 and core.count(",") >= 1:
+                parts = [p.strip() for p in core.split(",") if p.strip()]
             certs.append({
-                "name": parts[0],
+                "name": parts[0] if parts else core.strip(),
                 "issuer": parts[1] if len(parts) > 1 else None,
-                "date": None,
-                "credential_id": None,
-                "url": None,
+                "date": date_raw,
+                "credential_id": credential_id,
+                "url": url,
                 "confidence": "high",
             })
         res = {"certifications": certs, "unmapped": [], "warnings": []}
     elif section_type == "languages":
         langs = []
-        for tok in re.split(r'[,;\n•]+', clean_text):
+        for tok in re.split(r'[,;|\n•▪]+', clean_text):
             c, _ = _strip_bullet(tok)
             if not c:
                 continue
-            m = re.match(r'^([A-Za-z\s]+?)\s*\(([^)]+)\)$', c)
+            m = re.match(r'^([A-Za-z][A-Za-z\s/+-]{1,40}?)\s*(?:\(([^)]+)\)|[-–—:]\s*(.+))$', c)
             if m:
-                langs.append({"name": m.group(1).strip(), "proficiency": m.group(2).strip()})
+                langs.append({
+                    "name": m.group(1).strip(),
+                    "proficiency": (m.group(2) or m.group(3) or "").strip() or None,
+                })
             else:
                 langs.append({"name": c, "proficiency": None})
         res = {"languages": langs, "unmapped": [], "warnings": []}
     elif section_type == "references":
-        # Never place references in basics
-        res = {"unmapped": [{"raw_text": clean_text[:200], "reason": "References section excluded from candidate basics"}], "warnings": []}
+        res = parse_references_section(clean_text)
     elif section_type == "awards":
-        awards = [{"title": _strip_bullet(l)[0], "issuer": None, "date": None, "description": None} for l in clean_text.splitlines() if l.strip()]
+        awards = []
+        for l in clean_text.splitlines():
+            c, _ = _strip_bullet(l)
+            if not c:
+                continue
+            parts = [p.strip() for p in re.split(r'\s*[|–—]\s*|\s+-\s+', c) if p.strip()]
+            date_m = SINGLE_DATE_RE.search(c)
+            awards.append({
+                "title": parts[0] if parts else c,
+                "issuer": parts[1] if len(parts) > 1 else None,
+                "date": date_m.group(1) if date_m else None,
+                "description": None,
+            })
         res = {"awards": awards, "unmapped": [], "warnings": []}
+    elif section_type == "achievements":
+        achievements = []
+        for l in clean_text.splitlines():
+            c, _ = _strip_bullet(l)
+            if not c:
+                continue
+            parts = [p.strip() for p in re.split(r'\s*[|–—]\s*|\s+-\s+', c) if p.strip()]
+            date_m = SINGLE_DATE_RE.search(c)
+            achievements.append({
+                "title": parts[0] if parts else c,
+                "issuer": parts[1] if len(parts) > 1 else None,
+                "date": date_m.group(1) if date_m else None,
+                "description": None,
+            })
+        res = {"achievements": achievements, "unmapped": [], "warnings": []}
+    elif section_type == "leadership":
+        res = parse_leadership_section(clean_text)
     elif section_type == "publications":
-        pubs = [{"title": _strip_bullet(l)[0], "publisher": None, "date": None, "url": None, "description": None} for l in clean_text.splitlines() if l.strip()]
+        pubs = []
+        for l in clean_text.splitlines():
+            c, _ = _strip_bullet(l)
+            if not c:
+                continue
+            date_m = SINGLE_DATE_RE.search(c)
+            url_m = URL_REGEX.search(c)
+            core = c
+            if date_m:
+                core = core.replace(date_m.group(1), " ")
+            if url_m:
+                core = core.replace(url_m.group(0), " ")
+            parts = [p.strip(" ,|–—-") for p in re.split(r'\s*[|–—]\s*|\s+-\s+', core) if p.strip(" ,|–—-")]
+            pubs.append({
+                "title": parts[0] if parts else c,
+                "publisher": parts[1] if len(parts) > 1 else None,
+                "date": date_m.group(1) if date_m else None,
+                "url": url_m.group(0).rstrip(".,;)") if url_m else None,
+                "description": parts[2] if len(parts) > 2 else None,
+            })
         res = {"publications": pubs, "unmapped": [], "warnings": []}
     elif section_type == "volunteer":
-        vols = [{"organization": _strip_bullet(l)[0], "role": None, "duration": None, "description": None} for l in clean_text.splitlines() if l.strip()]
+        vols = []
+        current: Optional[Dict[str, Any]] = None
+        for l in clean_text.splitlines():
+            c, is_bullet = _strip_bullet(l)
+            if not c:
+                continue
+            d_range = DATE_RANGE_RE.search(c)
+            d_single = SINGLE_DATE_RE.search(c)
+            looks_like_header = not is_bullet and len(c) <= 110 and (
+                "|" in c or d_range or d_single or bool(TITLE_KEYWORDS.search(c))
+            )
+            if looks_like_header:
+                if current:
+                    vols.append(current)
+                duration = None
+                if d_range:
+                    duration = f"{d_range.group(1)} - {d_range.group(2)}"
+                    c = DATE_RANGE_RE.sub("", c).strip(" ,|–—-")
+                elif d_single:
+                    duration = d_single.group(1)
+                    c = SINGLE_DATE_RE.sub("", c).strip(" ,|–—-")
+                parts = [p.strip() for p in re.split(r'\s*[|–—]\s*|\s+-\s+|\s+at\s+', c) if p.strip()]
+                organization = parts[0] if parts else c
+                role = parts[1] if len(parts) > 1 else None
+                if role and not TITLE_KEYWORDS.search(role) and TITLE_KEYWORDS.search(organization):
+                    organization, role = role, organization
+                current = {
+                    "organization": organization,
+                    "role": role,
+                    "duration": duration,
+                    "description": None,
+                }
+            elif current:
+                desc = current.get("description") or ""
+                current["description"] = f"{desc} {c}".strip()
+            else:
+                vols.append({"organization": c, "role": None, "duration": None, "description": None})
+        if current:
+            vols.append(current)
         res = {"volunteer": vols, "unmapped": [], "warnings": []}
     else:
         entries = [{"title": _strip_bullet(l)[0], "subtitle": None, "date_raw": None, "bullets": []} for l in clean_text.splitlines() if l.strip()]

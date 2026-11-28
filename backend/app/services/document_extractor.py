@@ -24,6 +24,27 @@ def _fix_mojibake(m: "re.Match[str]") -> str:
     except UnicodeError:
         return m.group(0)
 
+_SECTION_HEADING_HINTS = re.compile(
+    r'\b(?:summary|profile|objective|experience|employment|internships?|education|skills|'
+    r'projects?|certifications?|courses?|training|languages?|awards?|achievements?|honors?|'
+    r'publications?|research|patents?|volunteer|leadership|references?|interests?|hobbies|'
+    r'contact|activities|memberships?|affiliations?)\b',
+    re.IGNORECASE,
+)
+
+
+def _looks_like_section_heading(text: str) -> bool:
+    """Cheap heading check used only to protect the main column's header zone."""
+    clean = re.sub(r'\s+', ' ', str(text or '')).strip().rstrip(':')
+    if not clean or len(clean) > 70:
+        return False
+    if clean.startswith(('-', '*', '•', '▪', '▸', '►', '➢')):
+        return False
+    words = clean.split()
+    if len(words) > 6:
+        return False
+    return bool(_SECTION_HEADING_HINTS.fullmatch(clean) or _SECTION_HEADING_HINTS.search(clean))
+
 class DocumentExtractor:
     """
     Universal Multi-Format Document Text and Layout Extractor.
@@ -121,6 +142,8 @@ class DocumentExtractor:
         pages_content: List[Dict[str, Any]] = []
         is_scanned_doc = True
         total_text_length = 0
+        ocr_pages_used = 0
+        ocr_page_budget = 8
         all_extracted_links: List[Dict[str, str]] = []
 
         try:
@@ -163,7 +186,7 @@ class DocumentExtractor:
                 "warnings": ["This PDF is password-protected. Please unlock or export an unprotected copy before uploading."]
             }
 
-        max_pages = 15
+        max_pages = 50
         if page_count > max_pages:
             warnings.append(f"PDF has {page_count} pages; processing the first {max_pages} pages to ensure fast extraction.")
             page_count = max_pages
@@ -368,6 +391,7 @@ class DocumentExtractor:
 
             # 5. Assemble page text in correct spatial reading order (zone-aware: top/mid/bottom spanning + columns)
             page_lines = []
+            sidebar_side = None
             if is_two_column:
                 col_blocks_all = left_blocks + mid_blocks + right_blocks
                 col_ids = {b[5] for b in col_blocks_all}
@@ -381,6 +405,22 @@ class DocumentExtractor:
                     page_lines.append(b[4].strip())
                     processed_ids.add(b[5])
 
+                # Detect a narrow sidebar column. Read the sidebar first so its
+                # headings (SKILLS / LANGUAGES / CONTACT) start clean section
+                # blocks instead of being appended to the last main-column job.
+                left_w = (max(b[2] for b in left_blocks) - min(b[0] for b in left_blocks)) if left_blocks else 0
+                right_w = (max(b[2] for b in right_blocks) - min(b[0] for b in right_blocks)) if right_blocks else 0
+                right_sidebar_first = (
+                    not is_label_sidebar
+                    and right_w > 0
+                    and right_w < page_width * 0.34
+                    and max(left_w, (max(b[2] for b in mid_blocks) - min(b[0] for b in mid_blocks)) if mid_blocks else 0) > right_w * 1.4
+                )
+                if right_sidebar_first:
+                    sidebar_side = "right"
+                elif left_w > 0 and left_w < page_width * 0.34 and max(right_w, (max(b[2] for b in mid_blocks) - min(b[0] for b in mid_blocks)) if mid_blocks else 0) > left_w * 1.4:
+                    sidebar_side = "left"
+
                 if is_label_sidebar:
                     # Normalize wrapped 2-line sidebar labels (e.g. "PROFESSIONAL\nEXPERIENCE" -> "PROFESSIONAL EXPERIENCE")
                     folded_blocks = []
@@ -392,17 +432,24 @@ class DocumentExtractor:
                             page_lines.append(b[4].strip())
                             processed_ids.add(b[5])
                 else:
-                    for b in left_blocks:
-                        if b[5] not in processed_ids:
-                            page_lines.append(b[4].strip())
-                            processed_ids.add(b[5])
-
-                    for b in mid_blocks:
-                        if b[5] not in processed_ids:
-                            page_lines.append(b[4].strip())
-                            processed_ids.add(b[5])
-
-                    for b in right_blocks:
+                    if right_sidebar_first or sidebar_side == "left":
+                        sidebar_blocks = right_blocks if right_sidebar_first else left_blocks
+                        main_blocks = (left_blocks + mid_blocks) if right_sidebar_first else (mid_blocks + right_blocks)
+                        main_sorted = sorted(main_blocks, key=lambda b: (b[1], b[0]))
+                        # Keep the main column's name/contact header zone ahead of the
+                        # sidebar so it is never swallowed by a sidebar section.
+                        header_prefix = []
+                        for b in main_sorted:
+                            if _looks_like_section_heading(b[4]):
+                                break
+                            header_prefix.append(b)
+                        prefix_ids = {b[5] for b in header_prefix}
+                        column_order = header_prefix + sidebar_blocks + [
+                            b for b in main_sorted if b[5] not in prefix_ids
+                        ]
+                    else:
+                        column_order = left_blocks + mid_blocks + right_blocks
+                    for b in column_order:
                         if b[5] not in processed_ids:
                             page_lines.append(b[4].strip())
                             processed_ids.add(b[5])
@@ -421,7 +468,8 @@ class DocumentExtractor:
             page_text = DocumentExtractor._clean_acquired_text("\n".join(page_lines))
 
             # If page text is empty but page has images, attempt OCR / vision recovery
-            if len(page_text.strip()) < 30 and has_images:
+            if len(page_text.strip()) < 30 and has_images and ocr_pages_used < ocr_page_budget:
+                ocr_pages_used += 1
                 try:
                     from app.core.config import settings
                     ocr_dpi = 180 if getattr(settings, "APP_ENV", "development") == "production" else 220
@@ -434,6 +482,12 @@ class DocumentExtractor:
                         is_scanned_doc = False
                 except Exception as ocr_err:
                     logger.debug("Page %d OCR fallback failed: %s", page_idx, ocr_err)
+            elif len(page_text.strip()) < 30 and has_images and ocr_pages_used >= ocr_page_budget:
+                if "OCR_PAGE_BUDGET" not in warnings:
+                    warnings.append(
+                        "OCR_PAGE_BUDGET: OCR fallback was limited to "
+                        f"{ocr_page_budget} pages; remaining pages kept native text only."
+                    )
 
             total_text_length += len(page_text)
 
@@ -452,6 +506,8 @@ class DocumentExtractor:
                 "has_images": has_images,
                 "is_two_column": is_two_column,
                 "column_count": column_count,
+                "has_sidebar": sidebar_side is not None,
+                "sidebar_side": sidebar_side,
                 "char_count": len(page_text)
             })
 
@@ -590,9 +646,14 @@ class DocumentExtractor:
                         break
 
             if is_layout_table:
-                # Read column-by-column (deduplicating merged cells by XML element identity)
+                # Read column-by-column (deduplicating merged cells by XML element identity).
+                # Sidebar-first ordering keeps a narrow sidebar's headings from being
+                # swallowed by the last main-column section.
                 seen_cells = set()
+                columns: List[List[Any]] = []
+                column_chars: List[int] = []
                 for col_idx in range(max_cols):
+                    col_cells = []
                     for row in tbl.rows:
                         if col_idx >= len(row.cells):
                             continue
@@ -601,6 +662,26 @@ class DocumentExtractor:
                         if cell_id in seen_cells:
                             continue
                         seen_cells.add(cell_id)
+                        col_cells.append(cell)
+                    columns.append(col_cells)
+                    column_chars.append(sum(len(c.text.strip()) for c in col_cells))
+
+                order = list(range(len(columns)))
+                if max_cols == 2 and column_chars[0] and column_chars[1]:
+                    if column_chars[1] < column_chars[0] * 0.55:
+                        first_main_text = ""
+                        for cell in columns[0]:
+                            for p in cell.paragraphs:
+                                if p.text.strip():
+                                    first_main_text = p.text.strip()
+                                    break
+                            if first_main_text:
+                                break
+                        # Never move a name/contact block behind a sidebar.
+                        if _looks_like_section_heading(first_main_text):
+                            order = [1, 0]
+                for idx in order:
+                    for cell in columns[idx]:
                         for cp in cell.paragraphs:
                             formatted = _format_paragraph(cp)
                             if formatted:

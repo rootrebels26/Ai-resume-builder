@@ -4,61 +4,110 @@ from typing import List, Dict, Any
 SECTION_SYNONYMS: Dict[str, List[str]] = {
     "header": [
         "contact", "contact info", "contact information", "contact details",
-        "personal details", "personal info", "personal information"
+        "personal details", "personal info", "personal information", "profile links",
+        "connect", "reach me"
     ],
     "summary": [
-        "summary", "professional summary", "profile", "about me",
+        "summary", "professional summary", "profile", "about me", "about",
         "objective", "career objective", "career summary", "executive summary",
-        "professional profile", "profil", "über mich", "uber mich", "resumen"
+        "professional profile", "personal profile", "career profile", "personal statement",
+        "professional statement", "career overview", "professional introduction",
+        "profil", "über mich", "uber mich", "resumen"
     ],
     "experience": [
         "experience", "work experience", "professional experience", "employment",
-        "employment history", "work history", "career history", "internships",
-        "internship experience", "relevant experience", "where i've worked",
+        "employment history", "work history", "career history", "relevant experience",
+        "where i've worked", "professional background", "industry experience",
+        "engineering experience", "consulting experience", "freelance experience",
+        "positions held", "career timeline", "career trajectory",
         "berufserfahrung", "erfahrung", "experience professionnelle", "expérience professionnelle",
         "experiencia laboral", "experiencia profesional"
     ],
+    "internships": [
+        "internship", "internships", "internship experience", "internships experience",
+        "summer internship", "summer internships", "research internship", "research internships",
+        "industrial training", "industrial experience", "practical training", "vocational training",
+        "work placement", "trainee experience", "apprenticeship", "apprenticeships",
+        "practicum", "clerkship", "clinical rotations", "internship & training",
+        "training experience", "on-the-job training"
+    ],
     "education": [
-        "education", "academic background", "academics", "qualifications",
-        "educational qualification", "educational qualifications", "academic profile",
-        "education & training", "ausbildung", "studium", "formation",
+        "education", "academic background", "academic history", "academics",
+        "academic credentials", "qualifications", "educational qualification",
+        "educational qualifications", "educational background", "academic profile",
+        "education & training", "degrees", "schooling", "scholastic record",
+        "where i studied", "ausbildung", "studium", "formation",
         "éducation", "educacion", "educación", "formacion"
     ],
     "skills": [
         "skills", "technical skills", "core competencies", "technical core competencies",
         "key skills", "expertise", "technologies", "tools", "tech stack", "skill set",
         "technical expertise", "skills & technologies", "tools & frameworks", "competencies",
-        "toolkit", "kenntnisse", "fähigkeiten", "fahigkeiten", "kompetenzen",
+        "toolkit", "software skills", "technical proficiency", "areas of expertise",
+        "domain expertise", "domain skills", "tools & platforms", "technical stack",
+        "programming languages", "languages & frameworks", "technologies & tools",
+        "kenntnisse", "fähigkeiten", "fahigkeiten", "kompetenzen",
         "compétences", "competences", "habilidades"
     ],
     "projects": [
-        "projects", "personal projects", "academic projects", "key projects",
-        "selected projects", "featured projects", "technical projects",
-        "notable projects", "portfolio", "project experience", "project work",
+        "project", "projects", "personal projects", "academic projects", "key projects",
+        "selected projects", "featured projects", "technical projects", "major projects",
+        "minor projects", "notable projects", "portfolio", "project experience",
+        "project work", "side projects", "freelance projects", "open source projects",
+        "open source contributions", "capstone project", "final year project",
+        "case studies", "selected work", "what i've built",
         "data & analytics projects", "software projects", "engineering projects"
     ],
     "certifications": [
-        "certifications", "certificates", "licenses", "licenses & certifications",
-        "courses", "training", "credentials", "licenses and certifications"
+        "certification", "certifications", "certificate", "certificates", "licenses",
+        "licenses & certifications", "licenses and certifications", "courses", "course",
+        "coursework", "training", "trainings", "training programs", "credentials",
+        "professional development", "workshops", "workshops & seminars",
+        "accreditations", "certifications & courses", "certifications and courses"
     ],
     "languages": [
-        "languages", "language proficiency", "spoken languages"
+        "languages", "language", "language proficiency", "spoken languages",
+        "languages known", "languages spoken"
     ],
     "awards": [
-        "awards", "honors", "honours", "achievements", "accomplishments",
-        "scholarships", "recognition", "honors & awards"
+        "award", "awards", "honor", "honors", "honour", "honours",
+        "achievements", "achievement", "accomplishments", "scholarships",
+        "recognition", "honors & awards", "awards & achievements",
+        "achievements & awards", "key achievements"
     ],
     "publications": [
-        "publications", "research", "papers", "patents", "research & publications"
+        "publication", "publications", "research", "papers", "research papers",
+        "patents", "research & publications", "published works", "articles",
+        "whitepapers", "conference papers", "citations"
     ],
     "volunteer": [
-        "volunteer", "volunteering", "community service", "leadership",
-        "extracurricular", "extracurricular activities", "activities", "volunteer experience"
+        "volunteer", "volunteering", "volunteer work", "volunteer experience",
+        "community service", "community involvement", "social service", "social work",
+        "extracurricular", "extracurricular activities", "extra-curricular activities",
+        "activities", "student organizations", "civic engagement"
+    ],
+    "leadership": [
+        "leadership", "leadership experience", "leadership & activities",
+        "positions of responsibility", "positions held", "student leadership",
+        "clubs & organizations", "memberships", "professional memberships",
+        "professional affiliations", "affiliations"
     ],
     "references": [
-        "references", "referees"
+        "references", "reference", "referees", "referee"
     ],
 }
+
+SECTION_TYPE_ALIASES = {
+    "achievement": "awards",
+    "achievements": "awards",
+    "accomplishments": "awards",
+    "courses": "certifications",
+    "training": "certifications",
+    "research": "publications",
+    "patents": "publications",
+    "internship": "internships",
+}
+
 
 CUSTOM_HEADING_ALLOWLIST = {
     "interests", "hobbies", "declaration", "open source", "talks",
@@ -71,19 +120,22 @@ PROGRAMMING_LANG_HINTS = {
 }
 
 def _normalize_heading_candidate(line: str) -> str:
-    clean = re.sub(r'^[#*\-•▪➢\s]+', '', line).strip()
+    clean = re.sub(r'^[#*\-•▪▸▹►▶➢➤➔»·\s]+', '', line).strip()
     clean = re.sub(r'[:\-–—|\s]+$', '', clean).strip()
     return clean.lower()
 
 def _is_probable_heading(line: str) -> bool:
     """
-    A heading is short (< 45 chars), has no sentence-ending period,
-    does not start with a bullet glyph, and does not contain an email/URL.
+    A heading is short, has no sentence-ending period, does not start with a
+    bullet glyph, and does not contain an email/URL.
     """
     raw = line.strip()
-    if not raw or len(raw) > 45:
+    if not raw:
         return False
-    if raw.startswith(('-', '*', '•', '▪', '➢')):
+    max_words = 7 if raw.isupper() else 5
+    if len(raw) > 60:
+        return False
+    if raw.startswith(('-', '*', '•', '▪', '▸', '▹', '►', '▶', '➢', '➤', '»')):
         return False
     if "@" in raw or "http" in raw.lower():
         return False
@@ -91,7 +143,7 @@ def _is_probable_heading(line: str) -> bool:
         return False
     # Reject lines that look like date ranges or sentences with many words
     words = raw.split()
-    if len(words) > 5:
+    if len(words) > max_words:
         return False
     return True
 
@@ -151,18 +203,43 @@ class SectionSegmenter:
                     heading_raw = stripped.rstrip(':').strip()
                 else:
                     from app.services.section_classifier import classify_heading
-                    cls_type, cls_conf = classify_heading(stripped)
+                    cls_type, cls_conf = classify_heading(stripped, current_lines[-6:])
+                    cls_type = SECTION_TYPE_ALIASES.get(cls_type, cls_type)
                     if cls_type != "custom" and cls_conf >= 0.85:
                         matched_type = cls_type
                         heading_raw = stripped.rstrip(':').strip()
-                    elif norm.endswith(("projects", "project work")):
+                    elif norm.endswith(("projects", "project work", "project", "portfolio")):
                         matched_type = "projects"
                         heading_raw = stripped.rstrip(':').strip()
-                    elif norm.endswith(("competencies", "skills", "tech stack")):
+                    elif norm.endswith(("competencies", "skills", "tech stack", "technologies", "toolkit")):
                         matched_type = "skills"
                         heading_raw = stripped.rstrip(':').strip()
-                    elif norm.endswith("experience"):
+                    elif norm.endswith(("experience", "employment", "history")):
                         matched_type = "experience"
+                        heading_raw = stripped.rstrip(':').strip()
+                    elif norm.endswith(("internships", "internship", "training", "apprenticeship")):
+                        matched_type = "internships"
+                        heading_raw = stripped.rstrip(':').strip()
+                    elif norm.endswith(("certifications", "certification", "certificates", "courses", "licenses", "credentials")):
+                        matched_type = "certifications"
+                        heading_raw = stripped.rstrip(':').strip()
+                    elif norm.endswith(("education", "qualifications", "academics")):
+                        matched_type = "education"
+                        heading_raw = stripped.rstrip(':').strip()
+                    elif norm.endswith(("achievements", "awards", "honors", "honours", "accomplishments", "scholarships")):
+                        matched_type = "awards"
+                        heading_raw = stripped.rstrip(':').strip()
+                    elif norm.endswith(("publications", "research", "papers", "patents")):
+                        matched_type = "publications"
+                        heading_raw = stripped.rstrip(':').strip()
+                    elif norm.endswith(("leadership", "memberships", "affiliations")):
+                        matched_type = "leadership"
+                        heading_raw = stripped.rstrip(':').strip()
+                    elif norm.endswith(("volunteer", "volunteering", "community service", "activities", "extracurriculars")):
+                        matched_type = "volunteer"
+                        heading_raw = stripped.rstrip(':').strip()
+                    elif norm.endswith(("references", "referees")):
+                        matched_type = "references"
                         heading_raw = stripped.rstrip(':').strip()
                     elif norm in CUSTOM_HEADING_ALLOWLIST or (
                         (current_type != "header" or has_header_content)

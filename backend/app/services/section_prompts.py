@@ -156,6 +156,24 @@ SECTION_SCHEMAS: Dict[str, str] = {
   "unmapped": [{ "raw_text": "string", "reason": "string" }],
   "warnings": [{ "code": "string", "message": "string" }]
 }""",
+    "internships": """{
+  "internships": [{
+    "organization": "string | null",
+    "role": "string | null",
+    "internship_type": "string | null",
+    "location": "string | null",
+    "start_date": { "value": "YYYY-MM | YYYY | null", "precision": "month | year | unknown", "raw": "string" },
+    "end_date": { "value": "YYYY-MM | YYYY | null", "precision": "month | year | unknown", "raw": "string" },
+    "is_current": "boolean",
+    "responsibilities": ["string (verbatim achievement/responsibility)"],
+    "technologies": ["string (only if explicitly listed)"],
+    "achievements": ["string"],
+    "certificate": "string | null",
+    "confidence": "high | medium | low"
+  }],
+  "unmapped": [{ "raw_text": "string", "reason": "string" }],
+  "warnings": [{ "code": "string", "message": "string" }]
+}""",
     "education": """{
   "education": [{
     "institution": "string | null",
@@ -215,6 +233,21 @@ SECTION_SCHEMAS: Dict[str, str] = {
 }""",
     "awards": """{
   "awards": [{ "title": "string", "issuer": "string | null", "date": "string | null", "description": "string | null" }],
+  "unmapped": [{ "raw_text": "string", "reason": "string" }],
+  "warnings": [{ "code": "string", "message": "string" }]
+}""",
+    "achievements": """{
+  "achievements": [{ "title": "string", "issuer": "string | null", "date": "string | null", "description": "string | null" }],
+  "unmapped": [{ "raw_text": "string", "reason": "string" }],
+  "warnings": [{ "code": "string", "message": "string" }]
+}""",
+    "leadership": """{
+  "leadership": [{ "title": "string", "organization": "string | null", "date": "string | null", "description": "string | null", "bullets": ["string"] }],
+  "unmapped": [{ "raw_text": "string", "reason": "string" }],
+  "warnings": [{ "code": "string", "message": "string" }]
+}""",
+    "references": """{
+  "references": [{ "name": "string", "title": "string | null", "organization": "string | null", "email": "string | null", "phone": "string | null", "relationship": "string | null" }],
   "unmapped": [{ "raw_text": "string", "reason": "string" }],
   "warnings": [{ "code": "string", "message": "string" }]
 }""",

@@ -8,8 +8,9 @@ def _norm_for_grounding(s: str) -> str:
     return re.sub(r'[\W_]+', ' ', str(s).lower()).strip()
 
 SKIP_GROUNDING_KEYS = {
-    "id", "confidence", "employment_type", "precision", "value", "type",
-    "is_current", "is_expected", "scale", "code", "reason", "page", "provenance"
+    "id", "confidence", "employment_type", "internship_type", "precision", "value", "type",
+    "is_current", "is_expected", "scale", "code", "reason", "page", "provenance",
+    "proficiency", "level", "relationship", "heading"
 }
 
 class ExtractionValidator:

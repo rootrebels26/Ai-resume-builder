@@ -51,6 +51,22 @@ def reconcile_extraction(
         if isinstance(cert, dict):
             mapped_parts.append(f"{cert.get('name', '')} {cert.get('issuer', '')}")
 
+    for ach in resume_dict.get("achievements") or []:
+        if isinstance(ach, dict):
+            mapped_parts.append(f"{ach.get('title', '')} {ach.get('description', '')} {ach.get('date', '')}")
+
+    for lang in resume_dict.get("languages") or []:
+        if isinstance(lang, dict):
+            mapped_parts.append(f"{lang.get('name', '')} {lang.get('proficiency', '')}")
+
+    for pub in resume_dict.get("publications") or []:
+        if isinstance(pub, dict):
+            mapped_parts.append(f"{pub.get('title', '')} {pub.get('publisher', '')} {pub.get('description', '')}")
+
+    for vol in resume_dict.get("volunteerExperience") or []:
+        if isinstance(vol, dict):
+            mapped_parts.append(f"{vol.get('organization', '')} {vol.get('role', '')} {vol.get('description', '')}")
+
     for csec in resume_dict.get("customSections") or []:
         if isinstance(csec, dict):
             mapped_parts.append(str(csec.get("sectionTitle") or ""))

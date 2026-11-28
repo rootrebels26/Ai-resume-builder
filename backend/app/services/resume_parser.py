@@ -11,6 +11,7 @@ from app.schemas.resume_schema import (
 from app.services.document_extractor import DocumentExtractor
 from app.services.ai_service import ai_service
 from app.services.extraction_validator import ExtractionValidator
+from app.services.section_prompts import scan_and_strip_untrusted_lines
 
 from app.utils.text_utils import (
     EMAIL_REGEX, PHONE_REGEX, LINKEDIN_REGEX, GITHUB_REGEX,
@@ -731,6 +732,25 @@ def assemble_resume_from_sections(
                     achievements=[]
                 ))
 
+        elif sec_type == "internships":
+            for item in res.get("internships") or res.get("experience") or []:
+                if not isinstance(item, dict):
+                    continue
+                is_curr = bool(item.get("is_current", False))
+                bullets = item.get("responsibilities") or item.get("bullets") or []
+                internship_items.append(Internship(
+                    id=str(item.get("id") or f"int_{len(internship_items)+1}"),
+                    organization=str(item.get("organization") or item.get("company") or "").strip(),
+                    role=str(item.get("role") or item.get("title") or "").strip(),
+                    location=str(item.get("location") or "").strip(),
+                    duration=str(item.get("duration") or "").strip(),
+                    startDate=_format_date_for_builder(item.get("start_date"), False),
+                    endDate=_format_date_for_builder(item.get("end_date"), is_curr),
+                    responsibilities=[str(b).strip() for b in bullets if str(b).strip()],
+                    technologies=[str(t).strip() for t in (item.get("technologies") or []) if str(t).strip()],
+                    sourcePage=page_num,
+                ))
+
         elif sec_type == "education":
             for edu in res.get("education") or []:
                 if not isinstance(edu, dict):
@@ -780,6 +800,7 @@ def assemble_resume_from_sections(
                 project_items.append(Project(
                     id=str(proj.get("id") or f"proj_{len(project_items)+1}"),
                     name=str(proj.get("name") or "").strip(),
+                    category=str(proj.get("category") or "").strip(),
                     description=str(proj.get("description") or "").strip(),
                     technologies=[str(t).strip() for t in (proj.get("tech_stack") or []) if str(t).strip()],
                     githubUrl=gh_url,
@@ -797,9 +818,10 @@ def assemble_resume_from_sections(
                     id=str(cert.get("id") or f"cert_{len(certification_items)+1}"),
                     name=str(cert.get("name") or "").strip(),
                     issuer=str(cert.get("issuer") or "").strip(),
+                    credentialId=str(cert.get("credential_id") or cert.get("credentialId") or "").strip(),
                     issueDate=_format_date_for_builder(cert.get("date"), False),
-                    expiryDate="",
-                    credentialUrl=str(cert.get("url") or "").strip()
+                    expiryDate=_format_date_for_builder(cert.get("expiry_date"), False),
+                    credentialUrl=str(cert.get("url") or cert.get("credentialUrl") or "").strip()
                 ))
 
         elif sec_type == "languages":
@@ -816,6 +838,23 @@ def assemble_resume_from_sections(
                     achievements_items.append(Achievement(
                         id=f"awd_{len(achievements_items)+1}",
                         title=str(aw["title"]).strip(),
+                        description=str(aw.get("description") or aw.get("issuer") or "").strip(),
+                        date=str(aw.get("date") or "").strip()
+                    ))
+
+        elif sec_type == "achievements":
+            for aw in res.get("achievements") or res.get("awards") or []:
+                if isinstance(aw, str) and aw.strip():
+                    achievements_items.append(Achievement(
+                        id=f"awd_{len(achievements_items)+1}",
+                        title=aw.strip(),
+                        description="",
+                        date=""
+                    ))
+                elif isinstance(aw, dict) and (aw.get("title") or aw.get("name")):
+                    achievements_items.append(Achievement(
+                        id=f"awd_{len(achievements_items)+1}",
+                        title=str(aw.get("title") or aw.get("name")).strip(),
                         description=str(aw.get("description") or aw.get("issuer") or "").strip(),
                         date=str(aw.get("date") or "").strip()
                     ))
@@ -843,22 +882,76 @@ def assemble_resume_from_sections(
                         description=str(vol.get("description") or "").strip()
                     ))
 
-        elif sec_type == "custom":
+        else:
+            # Universal safety net: any section type that has no dedicated field is
+            # preserved verbatim as a custom section instead of being dropped.
             csec = res.get("custom_section")
-            if isinstance(csec, dict) and csec.get("entries"):
-                c_items = []
-                for ent in csec.get("entries") or []:
-                    if isinstance(ent, dict):
-                        c_items.append(CustomSectionItem(
-                            title=str(ent.get("title") or "").strip(),
-                            subtitle=str(ent.get("subtitle") or "").strip(),
-                            date=str(ent.get("date_raw") or "").strip(),
-                            description=" ".join(str(b).strip() for b in (ent.get("bullets") or []) if str(b).strip())
-                        ))
+            heading = (
+                (csec.get("heading") if isinstance(csec, dict) else None)
+                or blk.get("heading_raw")
+                or "Additional"
+            )
+            entries = []
+            if isinstance(csec, dict):
+                entries = csec.get("entries") or csec.get("items") or []
+            if not entries:
+                for key in (
+                    "leadership", "references", "achievements", "awards", "courses",
+                    "publications", "research", "patents", "volunteer", "items",
+                ):
+                    value = res.get(key)
+                    if isinstance(value, list) and value:
+                        entries = value
+                        break
+            c_items: List[CustomSectionItem] = []
+            for ent in entries or []:
+                if isinstance(ent, str) and ent.strip():
+                    c_items.append(CustomSectionItem(title=ent.strip()))
+                    continue
+                if not isinstance(ent, dict):
+                    continue
+                bullets = [str(b).strip() for b in (ent.get("bullets") or ent.get("bullet_points") or []) if str(b).strip()]
+                description = str(ent.get("description") or "").strip()
+                if bullets:
+                    description = "\n".join([description] + bullets).strip()
+                if not description:
+                    extra = [
+                        str(ent.get(k)).strip()
+                        for k in ("email", "phone", "relationship", "credential_url", "url")
+                        if ent.get(k)
+                    ]
+                    description = " · ".join(x for x in extra if x)
+                title = (
+                    ent.get("title") or ent.get("name") or ent.get("role")
+                    or ent.get("organization") or ent.get("issuer") or ""
+                )
+                subtitle = (
+                    ent.get("subtitle") or ent.get("organization") or ent.get("issuer")
+                    or ent.get("publisher") or ""
+                )
+                date_val = ent.get("date_raw") or ent.get("date") or ent.get("year") or ""
+                c_items.append(CustomSectionItem(
+                    title=str(title).strip(),
+                    subtitle=str(subtitle).strip(),
+                    date=str(date_val).strip(),
+                    description=description,
+                ))
+            if not c_items and isinstance(blk.get("text"), str) and blk["text"].strip():
+                scrubbed_text, _ = scan_and_strip_untrusted_lines(blk["text"])
+                if scrubbed_text.strip():
+                    c_items.append(CustomSectionItem(
+                        title=str(heading).strip(),
+                        subtitle="",
+                        date="",
+                        description=scrubbed_text.strip(),
+                    ))
+            if c_items:
                 custom_sections_items.append(CustomSection(
                     id=f"cust_{len(custom_sections_items)+1}",
-                    sectionTitle=str(csec.get("heading") or blk.get("heading_raw") or "Additional").strip(),
-                    items=c_items
+                    sectionTitle=str(heading).strip() or "Additional",
+                    normalizedCategory=str(sec_type or "custom"),
+                    items=c_items,
+                    sourcePage=page_num,
                 ))
 
     return ResumeData(
@@ -927,12 +1020,20 @@ async def parse_resume_document_pipeline(
             if st == "skills":
                 return not (r.get("categories") or [])
             if st in ("experience", "internships"):
-                return not (r.get("experience") or []) and len(txt.strip()) >= 20
+                key_data = r.get("experience") or r.get("internships")
+                return not (key_data or []) and len(txt.strip()) >= 20
             if st in ("education", "projects", "certifications", "languages", "awards", "publications", "volunteer"):
                 key = "awards" if st == "awards" else st
                 return not (r.get(key) or []) and len(txt.strip()) >= 20
+            if st in ("achievements", "leadership", "references", "courses", "training"):
+                key = "achievements" if st == "achievements" else (
+                    "certifications" if st in ("courses", "training") else st
+                )
+                return not (r.get(key) or r.get("custom_section") or []) and len(txt.strip()) >= 20
             if st == "custom":
-                return not (r.get("items") or []) and len(txt.strip()) >= 20
+                csec = r.get("custom_section")
+                has_entries = isinstance(csec, dict) and (csec.get("entries") or csec.get("items"))
+                return not (has_entries or r.get("items")) and len(txt.strip()) >= 20
             return False
 
         res = det_res
