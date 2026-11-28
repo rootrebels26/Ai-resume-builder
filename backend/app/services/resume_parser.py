@@ -1070,9 +1070,11 @@ async def parse_resume_document_pipeline(
     # Stage 5b: Deterministic safety-net recovery for any primary or secondary section missed by section-scoped pass
     try:
         from app.providers.local_heuristic import LocalHeuristicProvider
+        from app.services.section_prompts import scan_and_strip_untrusted_lines
         heuristic = LocalHeuristicProvider()
-        h_dict = heuristic.parse_resume_document_sync(raw_text, layout_metadata=layout_metadata)
-        h_resume = sanitize_and_hydrate_resume(h_dict, raw_text=raw_text)
+        scrubbed_raw, _ = scan_and_strip_untrusted_lines(raw_text)
+        h_dict = heuristic.parse_resume_document_sync(scrubbed_raw, layout_metadata=layout_metadata)
+        h_resume = sanitize_and_hydrate_resume(h_dict, raw_text=scrubbed_raw)
         if not resume_data.personalInfo.fullName and h_resume.personalInfo.fullName:
             resume_data.personalInfo.fullName = h_resume.personalInfo.fullName
         if not resume_data.personalInfo.email and h_resume.personalInfo.email:
@@ -1121,9 +1123,11 @@ async def parse_resume_document_pipeline(
     ))
     if core_missing or body_missing:
         try:
-            doc_dict = await ai_service.parse_resume_document(raw_text, layout_metadata)
+            from app.services.section_prompts import scan_and_strip_untrusted_lines
+            scrubbed_doc_raw, _ = scan_and_strip_untrusted_lines(raw_text)
+            doc_dict = await ai_service.parse_resume_document(scrubbed_doc_raw, layout_metadata)
             if isinstance(doc_dict, dict) and doc_dict:
-                doc_resume = sanitize_and_hydrate_resume(doc_dict, raw_text=raw_text)
+                doc_resume = sanitize_and_hydrate_resume(doc_dict, raw_text=scrubbed_doc_raw)
                 for field in (
                     "experience", "internships", "projects", "education", "skills",
                     "certifications", "achievements", "languages", "publications",
@@ -1143,7 +1147,9 @@ async def parse_resume_document_pipeline(
             logger.warning("Whole-document extraction fallback skipped: %s", e)
 
     from app.services.extraction_reconciliation import reconcile_extraction
-    reconciliation = reconcile_extraction(resume_data.model_dump(), raw_text, layout_metadata)
+    from app.services.section_prompts import scan_and_strip_untrusted_lines
+    scrubbed_for_recon, _ = scan_and_strip_untrusted_lines(raw_text)
+    reconciliation = reconcile_extraction(resume_data.model_dump(), scrubbed_for_recon, layout_metadata)
 
     # Ensure substantial unmapped source blocks are never silently discarded
     combined_unmapped = list(unmapped or [])
@@ -1269,7 +1275,9 @@ async def parse_resume_document_pipeline(
         })
 
     from app.services.extraction_reconciliation import reconcile_extraction
-    reconciliation = reconcile_extraction(resume_data.model_dump(), raw_text, layout_metadata)
+    from app.services.section_prompts import scan_and_strip_untrusted_lines
+    scrubbed_for_recon, _ = scan_and_strip_untrusted_lines(raw_text)
+    reconciliation = reconcile_extraction(resume_data.model_dump(), scrubbed_for_recon, layout_metadata)
 
     review_count = sum(1 for ev in evidence if ev.get("requiresReview"))
     resume_data.fieldEvidence = evidence
